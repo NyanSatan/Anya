@@ -1,0 +1,190 @@
+namespace eval ::custom {
+    #
+    # Data providers 
+    #
+
+    proc main_core {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return PCORE0 }
+            "M9 B0"     -
+            "M9 B1"     { return CPU0 }
+            "Cebu B1"   { return ECORE0 }
+            default  {
+                error [format "failed to get main_core for %s" $soc]
+            }
+        }
+    }
+
+    proc platform_copy_boot_trampoline_end {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x100006644 }
+            "M9 B0"     -
+            "M9 B1"     { return 0x1000069D4 }
+            "Cebu B1"   { return 0x100006C74 }
+            default  {
+                error [format "failed to get platform_copy_boot_trampoline_end for %s" $soc]
+            }
+        }
+    }
+
+    proc arm_mmu_map_mode {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x100001628 }
+            "M9 B0"     -
+            "M9 B1"     { return 0x10000161C }
+            "Cebu B1"   { return 0x100001730 }
+            default  {
+                error [format "failed to get arm_mmu_map_mode for %s" $soc]
+            }
+        }
+    }
+
+    proc platform_get_force_dfu_ret {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x1000072CC }
+            "M9 B0"     -
+            "M9 B1"     { return 0x100007690 }
+            "Cebu B1"   { return 0x1000079AC }
+            default  {
+                error [format "failed to get platform_get_force_dfu_ret for %s" $soc]
+            }
+        }
+    }
+
+    proc trampoline {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x19C018000 }
+            "M9 B0"     -
+            "M9 B1"     { return 0x1801C8000 }
+            "Cebu B1"   { return 0x19C018000 }
+            default  {
+                error [format "failed to get trampoline for %s" $soc]
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x10000E390 }
+            "M9 B0"     -
+            "M9 B1"     { return 0x10000E334 }
+            "Cebu B1"   { return 0x10000EF04 }
+            default  {
+                error [format "failed to get handle_interface_request_intercept for %s" $soc]
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept_reg {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return x9 }
+            "M9 B0"     -
+            "M9 B1"     { return x9 }
+            "Cebu B1"   { return x9 }
+            default  {
+                error [format "failed to get handle_interface_request_intercept_reg for %s" $soc]
+            }
+        }
+    }
+
+    proc platform_get_iboot_flags_ret {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x10000616C }
+            "M9 B0"     -
+            "M9 B1"     { return 0x1000064FC }
+            "Cebu B1"   { return 0x10000679C }
+            default  {
+                error [format "failed to get platform_get_iboot_flags_ret for %s" $soc]
+            }
+        }
+    }
+
+    proc trampoline_mmu_entry {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cebu B1"   { return 0x19C004030 }
+            default  {
+                # not applicable then
+                return 0
+            }
+        }
+    }
+
+    #
+    # Useful routines
+    #
+
+    proc wait_for_state {state} {
+        while {true} {
+            if {[::astris::console::native::support::check_state [list $state]]} {
+                return
+            } else {
+                after 100
+            }
+        }
+    }
+
+    proc wait_for_bp {addr} {
+        set bp [::astris::console::native::bp set $addr]
+        ::astris::console::native::go
+        wait_for_state "HardwareBreak"
+        ::astris::console::native::bp clear $bp
+    }
+
+    proc wait_for_run {} {
+        ::astris::console::native::go 
+        wait_for_state "Run"
+    }
+
+    #
+    # Actual logic
+    #
+
+    if { ![info exists env(ANYA_PAYLOAD)] } {
+        error "ANYA_PAYLOAD variable not set"
+    }
+
+    set payload $::env(ANYA_PAYLOAD)
+
+    ::astris::soc::fromreset
+
+    ::astris::console::native::cpu [main_core]
+
+    puts "Dealing with MMU..."
+    wait_for_bp [platform_copy_boot_trampoline_end]
+    wait_for_bp [arm_mmu_map_mode]
+    set mmu_entry [trampoline_mmu_entry]
+    if {$mmu_entry} {
+        ::astris::console::native::reg x3 0x7
+        ::astris::console::native::reg x4 0x0
+        ::astris::console::native::mem -64 $mmu_entry 0x0
+    } else {
+        ::astris::console::native::reg x3 0x6
+    }
+
+    puts "Uploading USB handler..."
+    ::astris::console::native::load $payload [trampoline]
+
+
+    puts "Forcing DFU..."
+    wait_for_bp [platform_get_force_dfu_ret]
+    ::astris::console::native::reg x0 0x1
+
+    puts "Patching iBoot flags..."
+    wait_for_bp [platform_get_iboot_flags_ret]
+    ::astris::console::native::reg x0 [expr [::astris::console::native::reg x0] | [expr 1 << 6]]
+
+    puts "Overriding USB handler ptr..."
+    wait_for_bp [handle_interface_request_intercept]
+    ::astris::console::native::reg [handle_interface_request_intercept_reg] [trampoline]
+
+    wait_for_run
+}
