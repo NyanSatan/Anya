@@ -169,6 +169,6 @@ noone@Mac-mini-noone anya %
 
 ## Credits
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
-* @pimskeks and other people behind **llibimobiledevice** project - for **libirecovery**
+* @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @1nsane_dev - for a lot of tests on Cebu
 
