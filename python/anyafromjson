@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+
+import sys
+import json
+from time import time
+
+from anya import *
+from anya.exceptions import *
+
+def print_help():
+    print("usage: %s <input> <output> [ecid (hex)]" % sys.argv[0])
+    print()
+    print("description:")
+    print()
+    print("a dumb utility that takes KBAGs from an input JSON")
+    print("and decrypts them with Anya. The input JSON must be")
+    print("a list of dicts where every member must have \"kbag\"")
+    print("field. The output JSON will be same, but with \"key\".")
+    print("Thus, you can have arbitrary metadata in the dicts")
+    print("that will be preserved in the output")
+    print()
+
+def main():
+    try:
+        in_path = sys.argv[1]
+        out_path = sys.argv[2]
+    except IndexError:
+        print_help()
+        exit(-1)
+
+    try:
+        ecid = int(sys.argv[3], 16)
+    except IndexError:
+        ecid = None
+    except ValueError:
+        print("invalid ECID!")
+        exit(-1)
+
+    with open(in_path, "r") as f:
+        kbags = json.loads(f.read())
+        
+    if type(kbags) is not list:
+        print("you must provide a list")
+        print()
+        print_help()
+        exit(-1)
+
+
+    dev = AnyaDevice(ecid=ecid)
+
+    try:
+        dev.connect()
+    except AnyaError as e:
+        print("failed to connect: %s" % str(e))
+        exit(-1)
+
+    count = 0
+    total_count = len(kbags)
+
+    def print_count():
+        print("\r%d/%d" % (count, total_count), end="")
+
+    start = time()
+
+    for kbag in kbags:
+        print_count()
+
+        try:
+            kbag["key"] = encode_key(dev.decrypt_kbag(decode_kbag(kbag["kbag"])))
+        except AnyaValueError:
+            print("invalid KBAG (?): %s" % kbag[kbag])
+        except AnyaUSBError as e:
+            print("couldn't decrypt due to USB error: %s" % str(e))
+
+        count += 1
+
+    end = time()
+
+    print_count()
+    print()
+
+    with open(out_path, "w") as f:
+        f.write(json.dumps(kbags, indent=4))
+
+    print("succesfully decrypted %d KBAGs in %.6f seconds" % (total_count, end - start))
+
+if __name__ == '__main__':
+    main()

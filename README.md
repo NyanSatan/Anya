@@ -161,14 +161,81 @@ noone@Mac-mini-noone anya %
 
 ***Warning**: since we're using prototype devices here, you obviously need to provide a development KBAG, not production (development one usually comes second in an Image4)!*
 
+## Python
+### Requirements
+* pyusb
+
+### Library usage
+Placed in `python/anya` folder. Usage is quite straightforward:
+
+```python
+from anya import *
+from anya.exceptions import *
+
+dev = AnyaDevice(ecid=ECID)	# creating connection class
+
+try:
+    dev.connect()	# connecting
+except AnyaError as e:
+    print("failed to connect: %s" % str(e))
+    exit(-1)
+
+
+try:
+    decoded = decode_kbag(KBAG)	# decoding a KBAG string to bytes
+except AnyaValueError as e:
+    print("failed to parse KBAG: %s" % str(e))
+    exit(-1)
+
+try:
+    key = dev.decrypt_kbag(decoded)	# decrypting 
+except AnyaUSBError as e:
+    print("failed to decrypt KBAG: %s" % str(e))
+    exit(-1)
+
+print(encode_key(key, to_upper=True)) # encoding key to a string (and printing)
+```
+
+### Tools usage
+Placed in `python/` folder. There're two of them - **anyactl** (basically the same thing as the C variant of the ctl):
+
+```
+noone@Mac-mini-noone anya % build/python/anyactl 
+usage: anyactl [-h] [-k KBAG] [-b COUNT] [-e ECID]
+
+Decrypt some KBAG or run a benchmark
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -k KBAG     decrypt a KBAG
+  -b COUNT    run benchmark
+  -e ECID     ECID to look for
+
+```
+
+...and **anyafromjson** - this one is used to decrypt KBAGs in batch from a JSON file:
+
+```
+noone@Mac-mini-noone anya % build/python/anyafromjson 
+usage: build/python/anyafromjson <input> <output> [ecid (hex)]
+
+description:
+
+a dumb utility that takes KBAGs from an input JSON
+and decrypts them with Anya. The input JSON must be
+a list of dicts where every member must have "kbag"
+field. The output JSON will be same, but with "key".
+Thus, you can have arbitrary metadata in the dicts
+that will be preserved in the output
+
+```
+
 ## TODO
 * SEP KBAG decryption - very complex task, as it will require a lot of RE on SEPROM and the way to communicate with it from SecureROM
 * Improve build system - for the current one is really bad
 * Common offset database - so there won't be a need to duplicate some offsets/values in Astris script and USB handlers configs
-* ~~**libanya** dynamic library with Python bindings - to simplify scripting~~ - no, it's easier to actually implement in pure Python
 
 ## Credits
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @1nsane_dev - for a lot of tests on Cebu
-

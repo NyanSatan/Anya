@@ -21,19 +21,21 @@ HANDLER_BUILD_DIR = $(HANDLER_DIR)/build
 HANDLER_BUILD_TARGET = $(HANDLER_BUILD_DIR)/*.bin
 HANDLER_FINAL_BUILD_DIR = $(BUILD_DIR)/payloads
 
+PYTHON_DIR = python
+
 DIR_HELPER = mkdir -p $(BUILD_DIR) $(HANDLER_FINAL_BUILD_DIR)
 PACKAGE_DIR_HELPER = mkdir -p $(PACKAGE_DIR)
 
-.PHONY: all astris ctl handler package clean
+.PHONY: all astris ctl handler python package clean
 
-all: astris ctl handler
+all: astris ctl handler python
 	@echo "%%%%%% all done"
 
-package: astris ctl handler
+package: astris ctl handler python
 	@echo "%%%%%% packaging"
 	@$(PACKAGE_DIR_HELPER)
 	@rm -rf $(PACKAGE_FILE)
-	@zip -x .DS_Store -r9 $(PACKAGE_FILE) $(BUILD_DIR)/*
+	@zip -x "*.DS_Store*" -x "*__pycache__*" -r9 $(PACKAGE_FILE) $(BUILD_DIR)/*
 	@echo "%%%%%% packaging done"
 
 astris:
@@ -56,6 +58,10 @@ $(VALID_HANDLER_TARGETS):
 	@$(DIR_HELPER)
 	@echo "%%%%%% copying the handler payload"
 	@cp -a $(HANDLER_BUILD_TARGET) $(HANDLER_FINAL_BUILD_DIR)
+
+python:
+	@echo "%%%%%% copying the Python control utility"
+	@cp -a $(PYTHON_DIR) $(BUILD_DIR)
 
 clean:
 	@make -C $(CTL_DIR) clean
