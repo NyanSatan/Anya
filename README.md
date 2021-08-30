@@ -7,6 +7,7 @@
 * **M9 B0/B1** - Apple S4/S5
 * **Cyprus B1** - Apple A12
 * **Cebu B1** - Apple A13
+* **Sicily A0** - Apple A14 (since beta 3)
 
 *Although SEP support is planned (when applicable), currently Anya only supports AP (application processor) KBAGs*
 
@@ -31,15 +32,23 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - objcopy to cut out raw binary out of an ELF. Suppresses need of `TOOLCHAIN`
 * `CC` - C compiler used to compile **anyactl** (client utility)
 * `AR` - archiver used to build **libanya** (client library - the utility is based on it)
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B1** and **Cebu/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B1**, **Cebu/B1** and **Sicily/A0**
 
 In the end you'll get a structure like this in the `build/` folder:
 ```
 build/anya.ax
 build/anyactl
 build/payloads/anya_handler.M9-B0_B1.bin
+build/payloads/anya_handler.Sicily-A0.bin
 build/payloads/anya_handler.Cyprus-B1.bin
 build/payloads/anya_handler.Cebu-B1.bin
+build/python/ (stored 0%)
+build/python/requirements.txt
+build/python/anyactl
+build/python/anya/
+build/python/anya/__init__.py
+build/python/anya/exceptions.py
+build/python/anyafromjson
 ```
 
 ## Usage
@@ -162,6 +171,8 @@ noone@Mac-mini-noone anya %
 ***Warning**: since we're using prototype devices here, you obviously need to provide a development KBAG, not production (development one usually comes second in an Image4)!*
 
 ## Python
+*Available since beta 2*
+
 ### Requirements
 * pyusb
 
@@ -238,4 +249,4 @@ that will be preserved in the output
 ## Credits
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
-* @1nsane_dev - for a lot of tests on Cebu
+* @1nsane_dev - for a lot of tests on Cebu and Sicily

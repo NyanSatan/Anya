@@ -10,6 +10,7 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return CPU0 }
             "Cebu B1"   { return ECORE0 }
+            "Sicily A0" { return ECORE0 }
             default  {
                 error [format "failed to get main_core for %s" $soc]
             }
@@ -23,6 +24,7 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return 0x1000069D4 }
             "Cebu B1"   { return 0x100006C74 }
+            "Sicily A0" { return 0x100007908 }
             default  {
                 error [format "failed to get platform_copy_boot_trampoline_end for %s" $soc]
             }
@@ -36,21 +38,21 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return 0x10000161C }
             "Cebu B1"   { return 0x100001730 }
+            "Sicily A0" { return 0x10000CAFC }
             default  {
                 error [format "failed to get arm_mmu_map_mode for %s" $soc]
             }
         }
     }
 
-    proc platform_get_force_dfu_ret {} {
+    proc trampoline_mmu_entry {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
-            "Cyprus B1" { return 0x1000072CC }
-            "M9 B0"     -
-            "M9 B1"     { return 0x100007690 }
-            "Cebu B1"   { return 0x1000079AC }
+            "Cebu B1"   { return 0x19C004030 }
+            "Sicily A0" { return 0x1FC004058 }
             default  {
-                error [format "failed to get platform_get_force_dfu_ret for %s" $soc]
+                # not applicable then
+                return 0
             }
         }
     }
@@ -62,8 +64,23 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return 0x1801C8000 }
             "Cebu B1"   { return 0x19C018000 }
+            "Sicily A0" { return 0x1FC02C000 }
             default  {
                 error [format "failed to get trampoline for %s" $soc]
+            }
+        }
+    }
+
+    proc platform_get_force_dfu_ret {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Cyprus B1" { return 0x1000072CC }
+            "M9 B0"     -
+            "M9 B1"     { return 0x100007690 }
+            "Cebu B1"   { return 0x1000079AC }
+            "Sicily A0" { return 0x100008898 }
+            default  {
+                error [format "failed to get platform_get_force_dfu_ret for %s" $soc]
             }
         }
     }
@@ -75,6 +92,7 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return 0x10000E334 }
             "Cebu B1"   { return 0x10000EF04 }
+            "Sicily A0" { return 0x1000126EC }
             default  {
                 error [format "failed to get handle_interface_request_intercept for %s" $soc]
             }
@@ -88,6 +106,7 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return x9 }
             "Cebu B1"   { return x9 }
+            "Sicily A0" { return x9 }
             default  {
                 error [format "failed to get handle_interface_request_intercept_reg for %s" $soc]
             }
@@ -101,19 +120,9 @@ namespace eval ::custom {
             "M9 B0"     -
             "M9 B1"     { return 0x1000064FC }
             "Cebu B1"   { return 0x10000679C }
+            "Sicily A0" { return 0x100007370 }
             default  {
                 error [format "failed to get platform_get_iboot_flags_ret for %s" $soc]
-            }
-        }
-    }
-
-    proc trampoline_mmu_entry {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "Cebu B1"   { return 0x19C004030 }
-            default  {
-                # not applicable then
-                return 0
             }
         }
     }
@@ -154,9 +163,9 @@ namespace eval ::custom {
 
     set payload $::env(ANYA_PAYLOAD)
 
-    ::astris::soc::fromreset
-
     ::astris::console::native::cpu [main_core]
+
+    ::astris::soc::fromreset
 
     puts "Dealing with MMU..."
     wait_for_bp [platform_copy_boot_trampoline_end]
@@ -172,7 +181,6 @@ namespace eval ::custom {
 
     puts "Uploading USB handler..."
     ::astris::console::native::load $payload [trampoline]
-
 
     puts "Forcing DFU..."
     wait_for_bp [platform_get_force_dfu_ret]
