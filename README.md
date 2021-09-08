@@ -1,11 +1,11 @@
-﻿# Anya
+﻿![](repo/anya_logo_with_girl.png)
 
 ***It's a beta, so be extremely careful when using this software and always validate results it gives you***
 
 **Anya** is a KBAG decryption kit for JTAGable prototypes. Here is the list of platforms currently supported:
 
 * **M9 B0/B1** - Apple S4/S5
-* **Cyprus B1** - Apple A12
+* **Cyprus B0/B1** - Apple A12 (B0 since beta 4)
 * **Cebu B1** - Apple A13
 * **Sicily A0** - Apple A14 (since beta 3)
 
@@ -32,7 +32,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - objcopy to cut out raw binary out of an ELF. Suppresses need of `TOOLCHAIN`
 * `CC` - C compiler used to compile **anyactl** (client utility)
 * `AR` - archiver used to build **libanya** (client library - the utility is based on it)
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B1**, **Cebu/B1** and **Sicily/A0**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B0**, **Cyprus/B1**, **Cebu/B1** and **Sicily/A0**
 
 In the end you'll get a structure like this in the `build/` folder:
 ```
@@ -54,14 +54,14 @@ build/python/anyafromjson
 ## Usage
 ### Requirements
 * Compiled Anya
-* Astris
+* Astris (Yukon tools or later)
 
 ### Usage
 First of all, you need to put your device into Anya mode (basically SecureROM DFU with custom USB control request handler) via Astris:
 ```
 ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 ```
-***Warning**: this will force reset your device! Better put your device into iBoot recovery or SecureROM DFU mode before doing this!*
+***Warning**: this will force reset your device! Better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or even potentially damage it!*
 
 Upon successful execution you will get a log like this one:
 ```
@@ -205,6 +205,8 @@ except AnyaUSBError as e:
     exit(-1)
 
 print(encode_key(key, to_upper=True)) # encoding key to a string (and printing)
+
+dev.disconnect() # disconnecting
 ```
 
 ### Tools usage
@@ -250,3 +252,5 @@ that will be preserved in the output
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @1nsane_dev - for a lot of tests on Cebu and Sicily
+* @mcg29_ - for tests on Cyprus B0
+* dellaquila.federica (that's Instagram handle) - for the mascot

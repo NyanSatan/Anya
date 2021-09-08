@@ -6,6 +6,7 @@ namespace eval ::custom {
     proc main_core {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" -
             "Cyprus B1" { return PCORE0 }
             "M9 B0"     -
             "M9 B1"     { return CPU0 }
@@ -20,6 +21,7 @@ namespace eval ::custom {
     proc platform_copy_boot_trampoline_end {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" -
             "Cyprus B1" { return 0x100006644 }
             "M9 B0"     -
             "M9 B1"     { return 0x1000069D4 }
@@ -34,6 +36,7 @@ namespace eval ::custom {
     proc arm_mmu_map_mode {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" -
             "Cyprus B1" { return 0x100001628 }
             "M9 B0"     -
             "M9 B1"     { return 0x10000161C }
@@ -60,6 +63,7 @@ namespace eval ::custom {
     proc trampoline {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" -
             "Cyprus B1" { return 0x19C018000 }
             "M9 B0"     -
             "M9 B1"     { return 0x1801C8000 }
@@ -74,6 +78,7 @@ namespace eval ::custom {
     proc platform_get_force_dfu_ret {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" { return 0x1000072A4 }
             "Cyprus B1" { return 0x1000072CC }
             "M9 B0"     -
             "M9 B1"     { return 0x100007690 }
@@ -88,6 +93,7 @@ namespace eval ::custom {
     proc handle_interface_request_intercept {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" { return 0x10000E350 }
             "Cyprus B1" { return 0x10000E390 }
             "M9 B0"     -
             "M9 B1"     { return 0x10000E334 }
@@ -102,6 +108,7 @@ namespace eval ::custom {
     proc handle_interface_request_intercept_reg {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" { return x9 }
             "Cyprus B1" { return x9 }
             "M9 B0"     -
             "M9 B1"     { return x9 }
@@ -116,6 +123,7 @@ namespace eval ::custom {
     proc platform_get_iboot_flags_ret {} {
         set soc [::astris::console::native::soc full]
         switch $soc {
+            "Cyprus B0" -
             "Cyprus B1" { return 0x10000616C }
             "M9 B0"     -
             "M9 B1"     { return 0x1000064FC }
