@@ -2,6 +2,7 @@
 #define ANYA_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <libirecovery.h>
 
 #define CPFM_SECURE_STATUS      (1 << 0)
@@ -26,8 +27,14 @@ typedef enum {
 #define KBAG_SIZE   0x30
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid);
-anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbag[KBAG_SIZE], uint8_t key[KBAG_SIZE]);
+
+anya_error_t anya_decrypt_internal(anya_device_t *dev, uint8_t kbag[KBAG_SIZE], uint8_t key[KBAG_SIZE], bool sep);
+#define anya_decrypt_ap(dev, kbag, key)   anya_decrypt_internal(dev, kbag, key, false)
+#define anya_decrypt_sep(dev, kbag, key)  anya_decrypt_internal(dev, kbag, key, true)
+#define anya_decrypt    anya_decrypt_ap
+
 anya_error_t anya_reboot(anya_device_t *dev);
+anya_error_t anya_ping_sep(anya_device_t *dev, bool *result);
 anya_error_t anya_close(anya_device_t **dev);
 
 void anya_print_device(anya_device_t *dev);

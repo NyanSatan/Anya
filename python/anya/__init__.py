@@ -21,6 +21,8 @@ DFU_ABORT = 6
 ANYA_DECRYPT_KBAG = 7
 ANYA_CLEAR_KBAG = 8
 ANYA_REBOOT = 9
+ANYA_PING_SEP = 10
+ANYA_DECRYPT_SEP_KBAG = 11
 
 
 def decode_kbag(kbag: str) -> bytes:
@@ -81,6 +83,15 @@ class AnyaDevice:
     def disconnect(self):
         usb.util.dispose_resources(self._device)
 
+    def ping_sep(self) -> bool:
+        try:
+            result = self._device.ctrl_transfer(0xA1, ANYA_PING_SEP, 0, 0, 1)
+            assert len(result) == 1
+        except Exception:
+            raise AnyaUSBError("failed to decrypt KBAG")
+
+        return bool(result[0])
+
     def clear_kbag(self):
         try:
             self._device.ctrl_transfer(0x21, ANYA_CLEAR_KBAG, 0, 0, None)
@@ -96,18 +107,18 @@ class AnyaDevice:
         except Exception:
             raise AnyaUSBError("failed to send KBAG")
 
-    def get_key(self) -> bytes:
+    def get_key(self, sep: bool = False) -> bytes:
         try:
-            key = self._device.ctrl_transfer(0xA1, ANYA_DECRYPT_KBAG, 0, 0, KBAG_SIZE)
+            key = self._device.ctrl_transfer(0xA1, ANYA_DECRYPT_SEP_KBAG if sep else ANYA_DECRYPT_KBAG, 0, 0, KBAG_SIZE)
             assert len(key) == KBAG_SIZE
         except Exception:
             raise AnyaUSBError("failed to decrypt KBAG")
 
         return bytes(key)
 
-    def decrypt_kbag(self, kbag: bytes) -> bytes:
+    def decrypt_kbag(self, kbag: bytes, sep: bool = False) -> bytes:
         self.send_kbag(kbag)
-        return self.get_key()
+        return self.get_key(sep=sep)
 
     def reboot(self):
         try:

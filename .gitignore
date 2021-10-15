@@ -2,4 +2,4 @@ build
 package
 .DS_Store
 __pycache__
-misc
+/misc

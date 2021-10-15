@@ -16,7 +16,9 @@ enum {
     DFU_ABORT,
     ANYA_DECRYPT_KBAG,
     ANYA_CLEAR_KBAG,
-    ANYA_REBOOT
+    ANYA_REBOOT,
+    ANYA_PING_SEP,
+    ANYA_DECRYPT_SEP_KBAG
 };
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
@@ -91,12 +93,20 @@ anya_error_t anya_reboot(anya_device_t *dev) {
     return ANYA_E_SUCCESS;
 }
 
-anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbag[], uint8_t key[]) {
+anya_error_t anya_ping_sep(anya_device_t *dev, bool *result) {
+    if (irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_PING_SEP, 0, 0, (unsigned char *)result, sizeof(bool), ANYA_USB_TIMEOUT) != sizeof(bool)) {
+        return ANYA_E_USB_ERROR;
+    }
+
+    return ANYA_E_SUCCESS;
+}
+
+anya_error_t anya_decrypt_internal(anya_device_t *dev, uint8_t kbag[], uint8_t key[], bool sep) {
     if (irecv_usb_control_transfer(dev->conn, 0x21, DFU_DNLOAD, 0, 0, kbag, KBAG_SIZE, ANYA_USB_TIMEOUT) != KBAG_SIZE) {
         return ANYA_E_USB_ERROR;
     }
 
-    if (irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_DECRYPT_KBAG, 0, 0, key, KBAG_SIZE, ANYA_USB_TIMEOUT) != KBAG_SIZE) {
+    if (irecv_usb_control_transfer(dev->conn, 0xA1, sep ? ANYA_DECRYPT_SEP_KBAG : ANYA_DECRYPT_KBAG, 0, 0, key, KBAG_SIZE, ANYA_USB_TIMEOUT) != KBAG_SIZE) {
         return ANYA_E_USB_ERROR;
     }
 

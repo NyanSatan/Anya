@@ -136,6 +136,94 @@ namespace eval ::custom {
     }
 
     #
+    # Data providers (SEP)
+    #
+
+    proc seprom_boot_trampoline {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x242200000 }
+            "Cyprus B1" { return 0x242200000 }
+            default  {
+                error [format "failed to get seprom_prepare_boot_trampoline for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_boot_trampoline_mmu_entry {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x242210400 }
+            "Cyprus B1" { return 0x242210400 }
+            default  {
+                error [format "failed to get seprom_boot_trampoline_mmu_entry for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_boot_trampoline_mmu_value {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x242200607 }
+            "Cyprus B1" { return 0x242200607 }
+            default  {
+                error [format "failed to get seprom_boot_trampoline_mmu_value for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_reload_tlb {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x2400056BC }
+            "Cyprus B1" { return 0x2400056C4 }
+            default  {
+                error [format "failed to get seprom_reload_tlb for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_mmu_something {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x2400056E8 }
+            "Cyprus B1" { return 0x2400056F0 }
+            default  {
+                error [format "failed to get seprom_write_ktrr_unknown_el1 for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_write_ktrr_unknown_el1 {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x240005704 }
+            "Cyprus B1" { return 0x24000570C }
+            default  {
+                error [format "failed to get seprom_write_ktrr_unknown_el1 for %s" $soc]
+            }
+        }
+    }
+
+    proc seprom_mailbox_get_message_lr_sp {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "M9 B0"     -
+            "M9 B1"     { return 0x24221BF28 }
+            "Cyprus B1" { return 0x24221BF28 }
+            default  {
+                error [format "failed to get seprom_mailbox_get_message_lr_sp for %s" $soc]
+            }
+        }
+    }
+
+    #
     # Useful routines
     #
 
@@ -159,6 +247,15 @@ namespace eval ::custom {
     proc wait_for_run {} {
         ::astris::console::native::go 
         wait_for_state "Run"
+    }
+
+    proc call {addr} {
+        set pc [::astris::console::native::reg pc]
+        set lr [::astris::console::native::reg lr]
+        ::astris::console::native::reg pc $addr
+        ::astris::console::native::reg lr $pc
+        wait_for_bp $pc
+        ::astris::console::native::reg lr $lr
     }
 
     #
@@ -201,6 +298,38 @@ namespace eval ::custom {
     puts "Overriding USB handler ptr..."
     wait_for_bp [handle_interface_request_intercept]
     ::astris::console::native::reg [handle_interface_request_intercept_reg] [trampoline]
+
+    if { [info exists env(ANYA_SEP_PAYLOAD)] } {
+        set sep_payload $::env(ANYA_SEP_PAYLOAD)
+
+        puts "Setting up SEP..."
+
+        ::astris::console::native::cpu SEP
+        ::astris::console::native::halt -q
+
+        puts "Uploading SEP handler..."
+        ::astris::console::native::physical ::astris::console::native::load $sep_payload [seprom_boot_trampoline]
+
+        puts "Dealing with SEP MMU..."
+        ::astris::console::native::mem -64 [seprom_boot_trampoline_mmu_entry] [seprom_boot_trampoline_mmu_value]
+
+        ::astris::console::native::reg x0 0x1
+        ::astris::console::native::reg x1 [seprom_boot_trampoline]
+        ::astris::console::native::reg x2 [seprom_boot_trampoline]
+        call [seprom_mmu_something]
+
+        ::astris::console::native::reg x0 0xff
+        call [seprom_write_ktrr_unknown_el1]
+
+        call [seprom_reload_tlb]
+
+        puts "Replacing SEP LR with our handler..."
+        ::astris::console::native::mem -64 [seprom_mailbox_get_message_lr_sp] [seprom_boot_trampoline]
+
+        ::astris::console::native::go
+
+        ::astris::console::native::cpu [main_core]
+    }
 
     wait_for_run
 }
