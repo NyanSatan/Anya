@@ -11,6 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description='Decrypt some KBAG or run a benchmark')
     parser.add_argument("-k", dest="kbag", help="decrypt a KBAG")
     parser.add_argument("-b", dest="count", type=int, help="run benchmark")
+    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
     parser.add_argument("-e", dest="ecid", type=int, help="ECID to look for")
     args = parser.parse_args()
 
@@ -26,17 +27,30 @@ def main():
         print("failed to connect: %s" % str(e))
         exit(-1)
 
+    if args.sep:
+        try:
+            if not dev.ping_sep():
+                print("SEP is unreachable")
+                dev.disconnect()
+                exit(-1)
+        except AnyaUSBError as e:
+            print("failed to ping SEP: %s" % str(e))
+            dev.disconnect()
+            exit(-1)
+
     if args.kbag:
         try:
             decoded = decode_kbag(args.kbag)
         except AnyaValueError as e:
             print("failed to parse KBAG: %s" % str(e))
+            dev.disconnect()
             exit(-1)
 
         try:
-            key = dev.decrypt_kbag(decoded)
+            key = dev.decrypt_kbag(decoded, sep=args.sep)
         except AnyaUSBError as e:
             print("failed to decrypt KBAG: %s" % str(e))
+            dev.disconnect()
             exit(-1)
 
         print(encode_key(key, True))
@@ -53,9 +67,10 @@ def main():
 
         for kbag in kbags:
             try:
-                key = dev.decrypt_kbag(kbag)
+                key = dev.decrypt_kbag(kbag, sep=args.sep)
             except AnyaUSBError as e:
                 print("failed to decrypt KBAG: %s" % str(e))
+                dev.disconnect()
                 exit(-1)
 
         end = time()

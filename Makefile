@@ -4,6 +4,9 @@
 #
 
 VALID_HANDLER_TARGETS ?= M9/B0_B1 Cyprus/B1 Cebu/B1 Sicily/A0 Cyprus/B0
+VALID_SEP_HANDLER_TARGETS ?= M9/B0_B1 Cyprus/B1
+PYTHON ?= python3
+
 
 BUILD_DIR = build
 
@@ -16,22 +19,26 @@ ASTRIS_TARGET = $(ASTRIS_DIR)/anya.ax
 CTL_DIR = ctl
 CTL_BUILD_TARGET = $(CTL_DIR)/build/anyactl
 
+HANDLER_BUILDER = tools/build_targets.py
 HANDLER_DIR = handler
 HANDLER_BUILD_DIR = $(HANDLER_DIR)/build
-HANDLER_BUILD_TARGET = $(HANDLER_BUILD_DIR)/*.bin
 HANDLER_FINAL_BUILD_DIR = $(BUILD_DIR)/payloads
+
+SEP_HANDLER_DIR = sep_handler
+SEP_HANDLER_BUILD_DIR = $(SEP_HANDLER_DIR)/build
+SEP_HANDLER_FINAL_BUILD_DIR = $(BUILD_DIR)/sep_payloads
 
 PYTHON_DIR = python
 
-DIR_HELPER = mkdir -p $(BUILD_DIR) $(HANDLER_FINAL_BUILD_DIR)
+DIR_HELPER = mkdir -p $(BUILD_DIR) $(HANDLER_FINAL_BUILD_DIR) $(SEP_HANDLER_FINAL_BUILD_DIR)
 PACKAGE_DIR_HELPER = mkdir -p $(PACKAGE_DIR)
 
-.PHONY: all astris ctl handler python package clean
+.PHONY: all astris ctl handler sep_handler python package clean
 
-all: astris ctl handler python
+all: astris ctl handler sep_handler python
 	@echo "%%%%%% all done"
 
-package: astris ctl handler python
+package: astris ctl handler sep_handler python
 	@echo "%%%%%% packaging"
 	@$(PACKAGE_DIR_HELPER)
 	@rm -rf $(PACKAGE_FILE)
@@ -50,14 +57,15 @@ ctl:
 	@echo "%%%%%% copying the control utility"
 	@cp -a $(CTL_BUILD_TARGET) $(BUILD_DIR)
 
-handler: $(VALID_HANDLER_TARGETS)
-
-$(VALID_HANDLER_TARGETS):
-	@echo "%%%%%% building the handler payload for $@"
-	@TARGET=$@ make -C $(HANDLER_DIR)
+handler:
 	@$(DIR_HELPER)
-	@echo "%%%%%% copying the handler payload"
-	@cp -a $(HANDLER_BUILD_TARGET) $(HANDLER_FINAL_BUILD_DIR)
+	@echo "%%%%%% building the handlers payloads for: $(VALID_HANDLER_TARGETS)"
+	@$(PYTHON) $(HANDLER_BUILDER) $(HANDLER_DIR) $(HANDLER_FINAL_BUILD_DIR) $(VALID_HANDLER_TARGETS)
+
+sep_handler:
+	@$(DIR_HELPER)
+	@echo "%%%%%% building the SEP handlers payloads for: $(VALID_SEP_HANDLER_TARGETS)"
+	@$(PYTHON) $(HANDLER_BUILDER) $(SEP_HANDLER_DIR) $(SEP_HANDLER_FINAL_BUILD_DIR) $(VALID_SEP_HANDLER_TARGETS)
 
 python:
 	@echo "%%%%%% copying the Python control utility"
@@ -66,6 +74,7 @@ python:
 clean:
 	@make -C $(CTL_DIR) clean
 	@make -C $(HANDLER_DIR) clean
+	@make -C $(SEP_HANDLER_DIR) clean
 	@rm -rf $(BUILD_DIR)/*
 	@rm -rf $(PACKAGE_DIR)/*
 	@echo "%%%%%% all cleaned"

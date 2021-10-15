@@ -2,47 +2,64 @@
 
 import sys
 import json
+import argparse
 from time import time
 
 from anya import *
 from anya.exceptions import *
 
-def print_help():
-    print("usage: %s <input> <output> [ecid (hex)]" % sys.argv[0])
-    print()
-    print("description:")
-    print()
-    print("a dumb utility that takes KBAGs from an input JSON")
-    print("and decrypts them with Anya. The input JSON must be")
-    print("a list of dicts where every member must have \"kbag\"")
-    print("field. The output JSON will be same, but with \"key\".")
-    print("Thus, you can have arbitrary metadata in the dicts")
-    print("that will be preserved in the output")
-    print()
+DESCRIPTION = \
+"""
+a dumb utility that takes KBAGs from an input JSON
+and decrypts them with Anya. The input JSON must be
+a list of dicts where every member must have "kbag"
+field. The output JSON will be same, but with "key"
+Thus, you can have arbitrary metadata in the dicts
+that will be preserved in the output
+
+to decrypt all KBAGs with SEP GID use "-s" flag, if
+you wanna supply mixed file (both AP and SEP) KBAGs,
+then try "-d" flag - in this case it will try to 
+detect SEP KBAGs by looking at "filename" field -
+if it starts with "SEP" (case does not matter),
+then SEP GID is gonna be used. If none of those is
+provided, everything will be decrypted with AP GID
+"""
+
+SEP_NAME = "SEP"
 
 def main():
-    try:
-        in_path = sys.argv[1]
-        out_path = sys.argv[2]
-    except IndexError:
-        print_help()
-        exit(-1)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("-e", dest="ecid", type=int, help="(hexadecimal) ECID to look for")
+    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
+    parser.add_argument("-d", dest="sep_detect", action="store_true", help="try to detect SEP KBAGs")
+    parser.add_argument(dest="in_path", help="input file")
+    parser.add_argument(dest="out_path", help="output file")
+    args = parser.parse_args()
 
-    try:
-        ecid = int(sys.argv[3], 16)
-    except IndexError:
+
+    if args.ecid:
+        try:
+            ecid = int(sys.argv[3], 16)
+        except ValueError:
+            print("invalid ECID!")
+            exit(-1)
+    else:
         ecid = None
-    except ValueError:
-        print("invalid ECID!")
+
+    if args.sep and args.sep_detect:
+        print("can't have both \"-s\" and \"-d\"")
         exit(-1)
 
-    with open(in_path, "r") as f:
+    sep_expected = args.sep or args.sep_detect
+
+    with open(args.in_path, "r") as f:
         kbags = json.loads(f.read())
         
     if type(kbags) is not list:
         print("you must provide a list")
         print()
-        print_help()
+        parser.print_help()
         exit(-1)
 
 
@@ -53,6 +70,18 @@ def main():
     except AnyaError as e:
         print("failed to connect: %s" % str(e))
         exit(-1)
+
+    if sep_expected:
+        try:
+            if not dev.ping_sep():
+                print("SEP is unreachable")
+                dev.disconnect()
+                exit(-1)
+        except AnyaUSBError as e:
+            print("failed to ping SEP: %s" % str(e))
+            dev.disconnect()
+            exit(-1)
+
 
     count = 0
     total_count = len(kbags)
@@ -65,12 +94,29 @@ def main():
     for kbag in kbags:
         print_count()
 
+        if args.sep:
+            sep = True
+        elif args.sep_detect:
+            try:
+                filename = kbag["filename"]
+            except KeyError:
+                sep = False
+            else:
+                sep = filename.upper().startswith(SEP_NAME)
+
+        else:
+            sep = False    
+
         try:
-            kbag["key"] = encode_key(dev.decrypt_kbag(decode_kbag(kbag["kbag"])))
+            kbag["key"] = encode_key(dev.decrypt_kbag(decode_kbag(kbag["kbag"]), sep=sep))
         except AnyaValueError:
             print("invalid KBAG (?): %s" % kbag[kbag])
+            dev.disconnect()
+            exit(-1)
         except AnyaUSBError as e:
             print("couldn't decrypt due to USB error: %s" % str(e))
+            dev.disconnect()
+            exit(-1)
 
         count += 1
 
@@ -79,7 +125,7 @@ def main():
     print_count()
     print()
 
-    with open(out_path, "w") as f:
+    with open(args.out_path, "w") as f:
         f.write(json.dumps(kbags, indent=4))
 
     print("succesfully decrypted %d KBAGs in %.6f seconds" % (total_count, end - start))
