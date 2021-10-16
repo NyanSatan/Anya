@@ -385,7 +385,6 @@ noone@Mac-mini-noone Anya %
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @1nsane_dev - for a lot of tests on Cebu and Sicily
-* @mcg29_ - for tests on Cyprus B0
 * dellaquila.federica (that's Instagram handle) - for the mascot
 * People behind **pongoOS** - for SEP AES decryption algorithm 
 * @matteyeux - for help with SEP support for Cyprus B1
