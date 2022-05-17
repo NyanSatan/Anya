@@ -8,7 +8,7 @@
 
 * **M9 B0/B1** - Apple S4/S5
 * **Cyprus B0/B1** - Apple A12 (B0 since beta 4)
-* **Cebu B1** - Apple A13
+* **Cebu B0/B1** - Apple A13
 * **Sicily A0** - Apple A14 (since beta 3)
 
 ### SEP
