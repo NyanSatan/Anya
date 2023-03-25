@@ -1,32 +1,38 @@
 CC ?= clang
-AR ?= ar
 
 BUILD_ROOT = build
-BUILD_LIB_ROOT = $(BUILD_ROOT)/lib
 SOURCE_ROOT = src
 
-LDFLAGS = -L$(BUILD_LIB_ROOT)
-LDFLAGS += -lanya
+STATIC_LIBS = static-libs
+
+ifneq ($(wildcard $(STATIC_LIBS)),)
+CFLAGS += -arch arm64
+CFLAGS += -arch x86_64
+LDFLAGS += -L$(STATIC_LIBS) 
+LDFLAGS += -limobiledevice-glue-1.0
+LDFLAGS += -framework IOKit 
+LDFLAGS += -framework CoreFoundation
+endif
+
 LDFLAGS += -lirecovery-1.0
 
-SOURCE = $(SOURCE_ROOT)/anyactl.c
+SOURCES_ = anyactl.c \
+		   libanya/anya.c
+
+SOURCES = $(addprefix $(SOURCE_ROOT)/, $(SOURCES_))
+
 RESULT = $(BUILD_ROOT)/anyactl
 
 DIR_HELPER = mkdir -p $(@D)
 
-.DEFAULT_GOAL := all
 
-include $(SOURCE_ROOT)/libanya/library.mk
-
-all: $(LIBANYA_STATIC) $(RESULT)
+all: $(RESULT)
 	@echo "%%%% done building"
 
-staticlib: $(LIBANYA_STATIC)
-
-$(RESULT): $(LIBANYA_STATIC) $(SOURCE)
+$(RESULT): $(SOURCES)
 	@echo "\tbuilding anyactl"
 	@$(DIR_HELPER)
-	@$(CC) $(LDFLAGS) $(SOURCE) -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES) -o $@
 
 .PHONY: clean
 

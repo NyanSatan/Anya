@@ -8,8 +8,10 @@
 
 * **M9 B0/B1** - Apple S4/S5
 * **Cyprus B0/B1** - Apple A12 (B0 since beta 4)
-* **Cebu B0/B1** - Apple A13
+* **Cebu B0/B1** - Apple A13 (B0 since beta 6)
 * **Sicily A0** - Apple A14 (since beta 3)
+* **Tonga A0** - Apple M1 (since beta 6)
+* **Turks B0** - Apple S6/S7 (since beta 6)
 
 ### SEP
 
@@ -39,9 +41,8 @@ List of environmental variables you *might* need to provide:
 * `ARM_LD` - linker capable of using *linker scripts*. Suppresses need of `TOOLCHAIN`
 * `ARM_OBJCOPY` - objcopy to cut out raw binary out of an ELF. Suppresses need of `TOOLCHAIN`
 * `CC` - C compiler used to compile **anyactl** (client utility)
-* `AR` - archiver used to build **libanya** (client library - the utility is based on it)
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B0**, **Cyprus/B1**, **Cebu/B1** and **Sicily/A0**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **M9/B0_B1**, **Cyprus/B0**, **Cyprus/B1**, **Cebu/B0_B1**, **Sicily/A0**, **Tonga/A0** and **Turks/B0**
 * `VALID_SEP_HANDLER_TARGETS` - list of targets to build SEP mailbox handler for. Current list of valid targets is **M9/B0_B1** and **Cyprus/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
@@ -53,7 +54,9 @@ payloads/anya_handler.M9-B0_B1.bin
 payloads/anya_handler.Sicily-A0.bin
 payloads/anya_handler.Cyprus-B0.bin
 payloads/anya_handler.Cyprus-B1.bin
-payloads/anya_handler.Cebu-B1.bin
+payloads/anya_handler.Cebu-B0_B1.bin
+build/payloads/anya_handler.Tonga-A0.bin
+build/payloads/anya_handler.Turks-B0.bin
 python/
 python/requirements.txt
 python/anyactl
@@ -379,7 +382,10 @@ noone@Mac-mini-noone Anya %
 
 ## TODO
 * Improve build system - for the current one is really bad
-* Common offset database - so there won't be a need to duplicate some offsets/values in Astris script and USB handlers configs
+* Common offset database - so there won't be a need to duplicate some offsets/values in the Astris script and USB handlers configs
+* A13+ SEP support - gonna be a tough task, because of Secure Enclave Boot monitor that's present on these platforms
+* Replace USB backend with C **libanya** in the Python library - to improve performance of it
+* Improve backend with ability of sending KBAGs in batch - to vastly improve performance when decrypting a big count of KBAGs
 
 ## Credits
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
@@ -387,4 +393,4 @@ noone@Mac-mini-noone Anya %
 * @1nsane_dev - for a lot of tests on Cebu and Sicily
 * dellaquila.federica (that's Instagram handle) - for the mascot
 * People behind **pongoOS** - for SEP AES decryption algorithm 
-* @matteyeux - for help with SEP support for Cyprus B1
+* @matteyeux - for help with SEP support for Cyprus B1 and AP support for Cebu B0

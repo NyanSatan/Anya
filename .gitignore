@@ -3,3 +3,4 @@ package
 .DS_Store
 __pycache__
 /misc
+/ctl/static-libs

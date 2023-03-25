@@ -13,8 +13,20 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return ECORE0 }
             "Sicily A0" { return ECORE0 }
+            "Tonga A0"  { return ECORE0 }
+            "Turks B0"  { return CPU0 }
             default  {
                 error [format "failed to get main_core for %s" $soc]
+            }
+        }
+    }
+
+    proc mmu_early_deal {} {
+        set soc [::astris::console::native::soc full]
+        switch $soc {
+            "Tonga A0"  { return 0 }
+            default  {
+                return 1
             }
         }
     }
@@ -29,6 +41,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x100006C74 }
             "Sicily A0" { return 0x100007908 }
+            "Tonga A0"  { return 0x100007A70 }
+            "Turks B0"  { return 0x100007E24 }
             default  {
                 error [format "failed to get platform_copy_boot_trampoline_end for %s" $soc]
             }
@@ -45,6 +59,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x100001730 }
             "Sicily A0" { return 0x10000CAFC }
+            "Tonga A0"  { return 0x10000CC20 }
+            "Turks B0"  { return 0x10000CCCC }
             default  {
                 error [format "failed to get arm_mmu_map_mode for %s" $soc]
             }
@@ -57,6 +73,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x19C004030 }
             "Sicily A0" { return 0x1FC004058 }
+            "Tonga A0"  { return 0x1FC004058 }
+            "Turks B0"  { return 0x180378740 }
             default  {
                 # not applicable then
                 return 0
@@ -74,6 +92,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x19C018000 }
             "Sicily A0" { return 0x1FC02C000 }
+            "Tonga A0"  { return 0x1FC02C000 }
+            "Turks B0"  { return 0x1803A0000 }
             default  {
                 error [format "failed to get trampoline for %s" $soc]
             }
@@ -90,6 +110,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x1000079AC }
             "Sicily A0" { return 0x100008898 }
+            "Tonga A0"  { return 0x100008AA8 }
+            "Turks B0"  { return 0x100008E64 }
             default  {
                 error [format "failed to get platform_get_force_dfu_ret for %s" $soc]
             }
@@ -106,6 +128,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x10000EF04 }
             "Sicily A0" { return 0x1000126EC }
+            "Tonga A0"  { return 0x100012B50 }
+            "Turks B0"  { return 0x1000121A0 }
             default  {
                 error [format "failed to get handle_interface_request_intercept for %s" $soc]
             }
@@ -122,6 +146,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return x9 }
             "Sicily A0" { return x9 }
+            "Tonga A0"  { return x9 }
+            "Turks B0"  { return x9 }
             default  {
                 error [format "failed to get handle_interface_request_intercept_reg for %s" $soc]
             }
@@ -138,6 +164,8 @@ namespace eval ::custom {
             "Cebu B0"   -
             "Cebu B1"   { return 0x10000679C }
             "Sicily A0" { return 0x100007370 }
+            "Tonga A0"  { return 0x1000074D8 }
+            "Turks B0"  { return 0x100007898 }
             default  {
                 error [format "failed to get platform_get_iboot_flags_ret for %s" $soc]
             }
@@ -271,6 +299,23 @@ namespace eval ::custom {
     # Actual logic
     #
 
+    proc mmu_deal {payload} {
+        puts "Dealing with MMU..."
+        wait_for_bp [platform_copy_boot_trampoline_end]
+        wait_for_bp [arm_mmu_map_mode]
+        set mmu_entry [trampoline_mmu_entry]
+        if {$mmu_entry} {
+            ::astris::console::native::reg x3 0x7
+            ::astris::console::native::reg x4 0x0
+            ::astris::console::native::mem -64 $mmu_entry 0x0
+        } else {
+            ::astris::console::native::reg x3 0x6
+        }
+
+        puts "Uploading USB handler..."
+        ::astris::console::native::load $payload [trampoline]
+    }
+
     if { ![info exists env(ANYA_PAYLOAD)] } {
         error "ANYA_PAYLOAD variable not set"
     }
@@ -281,24 +326,19 @@ namespace eval ::custom {
 
     ::astris::soc::fromreset
 
-    puts "Dealing with MMU..."
-    wait_for_bp [platform_copy_boot_trampoline_end]
-    wait_for_bp [arm_mmu_map_mode]
-    set mmu_entry [trampoline_mmu_entry]
-    if {$mmu_entry} {
-        ::astris::console::native::reg x3 0x7
-        ::astris::console::native::reg x4 0x0
-        ::astris::console::native::mem -64 $mmu_entry 0x0
-    } else {
-        ::astris::console::native::reg x3 0x6
-    }
 
-    puts "Uploading USB handler..."
-    ::astris::console::native::load $payload [trampoline]
+    set is_early_mmu_deal [mmu_early_deal]
+    if {$is_early_mmu_deal} {
+        mmu_deal $payload
+    }
 
     puts "Forcing DFU..."
     wait_for_bp [platform_get_force_dfu_ret]
     ::astris::console::native::reg x0 0x1
+
+    if {!$is_early_mmu_deal} {
+        mmu_deal $payload
+    }
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]

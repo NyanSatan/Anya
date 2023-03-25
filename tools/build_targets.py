@@ -1,3 +1,4 @@
+import os
 import sys
 import glob
 import shutil
@@ -16,7 +17,7 @@ def main():
         try:
             subprocess.run(
                 ["make", "-C", src_dir],
-                env={"TARGET" : target},
+                env={"TARGET" : target} | os.environ,
                 check=True
             )
         except subprocess.CalledProcessError:
