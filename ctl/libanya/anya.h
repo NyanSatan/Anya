@@ -8,12 +8,7 @@
 #define CPFM_SECURE_STATUS      (1 << 0)
 #define CPFM_PRODUCTION_STATUS  (1 << 1)
 
-typedef struct {
-    irecv_client_t  conn;
-    uint16_t        cpid;
-    uint8_t         cpfm;
-    uint64_t        ecid;
-} anya_device_t;
+typedef struct anya_device anya_device_t;
 
 typedef enum {
     ANYA_E_SUCCESS = 0,
@@ -21,6 +16,7 @@ typedef enum {
     ANYA_E_NO_DEVICE,
     ANYA_E_NOT_ANYA_DEVICE,
     ANYA_E_USB_ERROR,
+    ANYA_E_HANDLER_ERROR,
     ANYA_E_UNKNOWN_ERROR
 } anya_error_t;
 
@@ -28,13 +24,9 @@ typedef enum {
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid);
 
-anya_error_t anya_decrypt_internal(anya_device_t *dev, uint8_t kbag[KBAG_SIZE], uint8_t key[KBAG_SIZE], bool sep);
-#define anya_decrypt_ap(dev, kbag, key)   anya_decrypt_internal(dev, kbag, key, false)
-#define anya_decrypt_sep(dev, kbag, key)  anya_decrypt_internal(dev, kbag, key, true)
-#define anya_decrypt    anya_decrypt_ap
+anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count);
 
 anya_error_t anya_reboot(anya_device_t *dev);
-anya_error_t anya_ping_sep(anya_device_t *dev, bool *result);
 anya_error_t anya_close(anya_device_t **dev);
 
 void anya_print_device(anya_device_t *dev);

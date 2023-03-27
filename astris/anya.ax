@@ -1,267 +1,130 @@
-namespace eval ::custom {
+#
+# Anya's Astris script
+# 
+# Brings up device to Anya mode - basically SecureROM DFU,
+# but with custom handle_interface_request() that decrypts
+# KBAGs sent over USB
+#
+# The custom handler is at tarmpoline base, thus we need
+# to make that place executable
+#
+# Please note that only 16K devices are supported at this moment
+#
+
+namespace eval ::anya {
     #
     # Data providers 
     #
 
+    set soc [::astris::console::native::soc full]
+
+    proc data_provider_error {} {
+        variable soc
+        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
+    }
+
+    proc l2_page_size {} {
+        return 0x2000000
+    }
+
+    proc l3_page_size {} {
+        return 0x4000
+    }
+
     proc main_core {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" -
-            "Cyprus B1" { return PCORE0 }
-            "M9 B0"     -
-            "M9 B1"     { return CPU0 }
             "Cebu B0"   -
             "Cebu B1"   { return ECORE0 }
-            "Sicily A0" { return ECORE0 }
-            "Tonga A0"  { return ECORE0 }
-            "Turks B0"  { return CPU0 }
             default  {
-                error [format "failed to get main_core for %s" $soc]
+                data_provider_error
             }
         }
     }
 
-    proc mmu_early_deal {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "Tonga A0"  { return 0 }
-            default  {
-                return 1
-            }
-        }
+    proc is_mmu_late_deal {} {
+        return 0
     }
 
-    proc platform_copy_boot_trampoline_end {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "Cyprus B0" -
-            "Cyprus B1" { return 0x100006644 }
-            "M9 B0"     -
-            "M9 B1"     { return 0x1000069D4 }
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x100006C74 }
-            "Sicily A0" { return 0x100007908 }
-            "Tonga A0"  { return 0x100007A70 }
-            "Turks B0"  { return 0x100007E24 }
-            default  {
-                error [format "failed to get platform_copy_boot_trampoline_end for %s" $soc]
-            }
-        }
-    }
-
-    proc arm_mmu_map_mode {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "Cyprus B0" -
-            "Cyprus B1" { return 0x100001628 }
-            "M9 B0"     -
-            "M9 B1"     { return 0x10000161C }
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x100001730 }
-            "Sicily A0" { return 0x10000CAFC }
-            "Tonga A0"  { return 0x10000CC20 }
-            "Turks B0"  { return 0x10000CCCC }
-            default  {
-                error [format "failed to get arm_mmu_map_mode for %s" $soc]
-            }
-        }
-    }
-
-    proc trampoline_mmu_entry {} {
-        set soc [::astris::console::native::soc full]
+    proc before_tlb_flush {} {
+        variable soc
         switch $soc {
             "Cebu B0"   -
-            "Cebu B1"   { return 0x19C004030 }
-            "Sicily A0" { return 0x1FC004058 }
-            "Tonga A0"  { return 0x1FC004058 }
-            "Turks B0"  { return 0x180378740 }
+            "Cebu B1"   { return 0x10000180C }
             default  {
-                # not applicable then
-                return 0
+                data_provider_error
+            }
+        }
+    }
+
+    proc sram_base {} {
+        variable soc
+        switch $soc {
+            "Cebu B0"   -
+            "Cebu B1"   { return 0x19C000000 }
+            default  {
+                data_provider_error
             }
         }
     }
 
     proc trampoline {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" -
-            "Cyprus B1" { return 0x19C018000 }
-            "M9 B0"     -
-            "M9 B1"     { return 0x1801C8000 }
             "Cebu B0"   -
             "Cebu B1"   { return 0x19C018000 }
-            "Sicily A0" { return 0x1FC02C000 }
-            "Tonga A0"  { return 0x1FC02C000 }
-            "Turks B0"  { return 0x1803A0000 }
             default  {
-                error [format "failed to get trampoline for %s" $soc]
+                data_provider_error
             }
         }
     }
 
     proc platform_get_force_dfu_ret {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" { return 0x1000072A4 }
-            "Cyprus B1" { return 0x1000072CC }
-            "M9 B0"     -
-            "M9 B1"     { return 0x100007690 }
             "Cebu B0"   -
             "Cebu B1"   { return 0x1000079AC }
-            "Sicily A0" { return 0x100008898 }
-            "Tonga A0"  { return 0x100008AA8 }
-            "Turks B0"  { return 0x100008E64 }
             default  {
-                error [format "failed to get platform_get_force_dfu_ret for %s" $soc]
+                data_provider_error
             }
         }
     }
 
     proc handle_interface_request_intercept {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" { return 0x10000E350 }
-            "Cyprus B1" { return 0x10000E390 }
-            "M9 B0"     -
-            "M9 B1"     { return 0x10000E334 }
             "Cebu B0"   -
             "Cebu B1"   { return 0x10000EF04 }
-            "Sicily A0" { return 0x1000126EC }
-            "Tonga A0"  { return 0x100012B50 }
-            "Turks B0"  { return 0x1000121A0 }
             default  {
-                error [format "failed to get handle_interface_request_intercept for %s" $soc]
+                data_provider_error
             }
         }
     }
 
     proc handle_interface_request_intercept_reg {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" { return x9 }
-            "Cyprus B1" { return x9 }
-            "M9 B0"     -
-            "M9 B1"     { return x9 }
             "Cebu B0"   -
             "Cebu B1"   { return x9 }
-            "Sicily A0" { return x9 }
-            "Tonga A0"  { return x9 }
-            "Turks B0"  { return x9 }
             default  {
-                error [format "failed to get handle_interface_request_intercept_reg for %s" $soc]
+                data_provider_error
             }
         }
     }
 
     proc platform_get_iboot_flags_ret {} {
-        set soc [::astris::console::native::soc full]
+        variable soc
         switch $soc {
-            "Cyprus B0" -
-            "Cyprus B1" { return 0x10000616C }
-            "M9 B0"     -
-            "M9 B1"     { return 0x1000064FC }
             "Cebu B0"   -
             "Cebu B1"   { return 0x10000679C }
-            "Sicily A0" { return 0x100007370 }
-            "Tonga A0"  { return 0x1000074D8 }
-            "Turks B0"  { return 0x100007898 }
             default  {
-                error [format "failed to get platform_get_iboot_flags_ret for %s" $soc]
+                data_provider_error
             }
         }
     }
 
     #
-    # Data providers (SEP)
-    #
-
-    proc seprom_boot_trampoline {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x242200000 }
-            "Cyprus B1" { return 0x242200000 }
-            default  {
-                error [format "failed to get seprom_prepare_boot_trampoline for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_boot_trampoline_mmu_entry {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x242210400 }
-            "Cyprus B1" { return 0x242210400 }
-            default  {
-                error [format "failed to get seprom_boot_trampoline_mmu_entry for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_boot_trampoline_mmu_value {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x242200607 }
-            "Cyprus B1" { return 0x242200607 }
-            default  {
-                error [format "failed to get seprom_boot_trampoline_mmu_value for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_reload_tlb {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x2400056BC }
-            "Cyprus B1" { return 0x2400056C4 }
-            default  {
-                error [format "failed to get seprom_reload_tlb for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_mmu_something {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x2400056E8 }
-            "Cyprus B1" { return 0x2400056F0 }
-            default  {
-                error [format "failed to get seprom_write_ktrr_unknown_el1 for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_write_ktrr_unknown_el1 {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x240005704 }
-            "Cyprus B1" { return 0x24000570C }
-            default  {
-                error [format "failed to get seprom_write_ktrr_unknown_el1 for %s" $soc]
-            }
-        }
-    }
-
-    proc seprom_mailbox_get_message_lr_sp {} {
-        set soc [::astris::console::native::soc full]
-        switch $soc {
-            "M9 B0"     -
-            "M9 B1"     { return 0x24221BF28 }
-            "Cyprus B1" { return 0x24221BF28 }
-            default  {
-                error [format "failed to get seprom_mailbox_get_message_lr_sp for %s" $soc]
-            }
-        }
-    }
-
-    #
-    # Useful routines
+    # Flow routines
     #
 
     proc wait_for_state {state} {
@@ -286,58 +149,78 @@ namespace eval ::custom {
         wait_for_state "Run"
     }
 
-    proc call {addr} {
-        set pc [::astris::console::native::reg pc]
-        set lr [::astris::console::native::reg lr]
-        ::astris::console::native::reg pc $addr
-        ::astris::console::native::reg lr $pc
-        wait_for_bp $pc
-        ::astris::console::native::reg lr $lr
+    #
+    # Logic routines
+    #
+
+    proc mmu_l3_page_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0b11            
+        set e [expr $e | 1 << 2]
+        set e [expr $e | 0b111 << 5]
+        set e [expr $e | 0b11 << 9]
+        set e [expr $e | $addr << 14]
+        
+        return $e
+    }
+
+    proc mmu_l3_page_entry_find {table page} {
+        return [expr $table + $page * 8]
+    }
+
+    proc mmu_l3_table_find {ttbr base} {
+        set table_entry_addr [expr $ttbr + $base / [l2_page_size] * 0x8]
+        set table_entry [::astris::console::native::mem -64 $table_entry_addr]
+        return [expr $table_entry >> 14 << 14 & 0xFFFFFFFFF]
+    }
+
+    proc mmu_rx_page_set {base addr} {
+        set ttbr [::astris::console::native::reg ttbr0_el1]
+        set table [mmu_l3_table_find $ttbr $base]
+        set page_entry [mmu_l3_page_entry_find $table [expr [expr $addr - $base] / [l3_page_size]]]
+        ::astris::console::native::mem -64 $page_entry [mmu_l3_page_make $addr]
+    }
+
+    proc mmu_deal {} {
+        variable payload
+        variable payload_base
+
+        puts "Dealing with MMU..."
+        
+        wait_for_bp [before_tlb_flush]
+
+        puts "Uploading USB handler..."
+        ::astris::console::native::load -memap 4 $payload $payload_base
+
+        mmu_rx_page_set [sram_base] $payload_base
     }
 
     #
     # Actual logic
     #
 
-    proc mmu_deal {payload} {
-        puts "Dealing with MMU..."
-        wait_for_bp [platform_copy_boot_trampoline_end]
-        wait_for_bp [arm_mmu_map_mode]
-        set mmu_entry [trampoline_mmu_entry]
-        if {$mmu_entry} {
-            ::astris::console::native::reg x3 0x7
-            ::astris::console::native::reg x4 0x0
-            ::astris::console::native::mem -64 $mmu_entry 0x0
-        } else {
-            ::astris::console::native::reg x3 0x6
-        }
-
-        puts "Uploading USB handler..."
-        ::astris::console::native::load $payload [trampoline]
-    }
-
-    if { ![info exists env(ANYA_PAYLOAD)] } {
+    if {![info exists env(ANYA_PAYLOAD)]} {
         error "ANYA_PAYLOAD variable not set"
     }
 
     set payload $::env(ANYA_PAYLOAD)
+    set payload_base [trampoline]
 
     ::astris::console::native::cpu [main_core]
 
+    puts "Fromresetting device..."
     ::astris::soc::fromreset
 
-
-    set is_early_mmu_deal [mmu_early_deal]
-    if {$is_early_mmu_deal} {
-        mmu_deal $payload
+    if {![is_mmu_late_deal]} {
+        mmu_deal
     }
 
     puts "Forcing DFU..."
     wait_for_bp [platform_get_force_dfu_ret]
     ::astris::console::native::reg x0 0x1
 
-    if {!$is_early_mmu_deal} {
-        mmu_deal $payload
+    if {[is_mmu_late_deal]} {
+        mmu_deal
     }
 
     puts "Patching iBoot flags..."
@@ -346,39 +229,9 @@ namespace eval ::custom {
 
     puts "Overriding USB handler ptr..."
     wait_for_bp [handle_interface_request_intercept]
-    ::astris::console::native::reg [handle_interface_request_intercept_reg] [trampoline]
-
-    if { [info exists env(ANYA_SEP_PAYLOAD)] } {
-        set sep_payload $::env(ANYA_SEP_PAYLOAD)
-
-        puts "Setting up SEP..."
-
-        ::astris::console::native::cpu SEP
-        ::astris::console::native::halt -q
-
-        puts "Uploading SEP handler..."
-        ::astris::console::native::physical ::astris::console::native::load $sep_payload [seprom_boot_trampoline]
-
-        puts "Dealing with SEP MMU..."
-        ::astris::console::native::mem -64 [seprom_boot_trampoline_mmu_entry] [seprom_boot_trampoline_mmu_value]
-
-        ::astris::console::native::reg x0 0x1
-        ::astris::console::native::reg x1 [seprom_boot_trampoline]
-        ::astris::console::native::reg x2 [seprom_boot_trampoline]
-        call [seprom_mmu_something]
-
-        ::astris::console::native::reg x0 0xff
-        call [seprom_write_ktrr_unknown_el1]
-
-        call [seprom_reload_tlb]
-
-        puts "Replacing SEP LR with our handler..."
-        ::astris::console::native::mem -64 [seprom_mailbox_get_message_lr_sp] [seprom_boot_trampoline]
-
-        ::astris::console::native::go
-
-        ::astris::console::native::cpu [main_core]
-    }
+    ::astris::console::native::reg [handle_interface_request_intercept_reg] $payload_base
 
     wait_for_run
+
+    puts "DONE!"
 }

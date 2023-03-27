@@ -69,7 +69,6 @@ void usage(const char *program_name) {
     printf("where ARG[s] must be one of the following:\n");
     printf("\t-k KBAG\tspecifies KBAG to be decrypted\n");
     printf("\t-b NUM\truns benchmark with NUM random KBAGs\n");
-    printf("\t-s\tuses SEP GID (if possible)\n");
     printf("\n");
     printf("you can also use this one with both of the above:\n");
     printf("\t-e ECID\t(hexa)decimal ECID to look for\n");
@@ -88,15 +87,13 @@ int main(int argc, char const *argv[]) {
     uint8_t  kbag[KBAG_SIZE] = {0};
     uint64_t num = 0;
     uint64_t ecid = 0;
-    bool sep = false;
 
     for (int i = 1; i < argc; i++) {
         bool arg_decrypt = strcmp(argv[i], "-k") == 0;
         bool arg_benchmark = strcmp(argv[i], "-b") == 0;
         bool arg_ecid = strcmp(argv[i], "-e") == 0;
-        bool arg_sep = strcmp(argv[i], "-s") == 0;
 
-        if (!arg_decrypt && !arg_benchmark && !arg_ecid && !arg_sep) {
+        if (!arg_decrypt && !arg_benchmark && !arg_ecid) {
             printf("undefined argument: %s\n", argv[i]);
             usage(program_name);
             return -1;
@@ -105,11 +102,6 @@ int main(int argc, char const *argv[]) {
         if (verb != ANYACTL_VERB_UNDEFINED && (arg_benchmark || arg_decrypt)) {
             printf("effective argument already set, can't have 2\n");
             return -1;    
-        }
-
-        if (arg_sep) {
-            sep = true;
-            continue;
         }
 
         i++;
@@ -177,26 +169,10 @@ int main(int argc, char const *argv[]) {
         return -1;
     }
 
-    if (sep) {
-        bool result = false;
-
-        if (anya_ping_sep(dev, &result) != ANYA_E_SUCCESS) {
-            printf("failed to check SEP availability\n");
-            anya_close(&dev);
-            return -1;
-        }
-
-        if (!result) {
-            printf("SEP is unavailable\n");
-            anya_close(&dev);
-            return -1;
-        }
-    }
-
     switch (verb) {
         case ANYACTL_VERB_DECRYPT: {
             uint8_t key[KBAG_SIZE];
-            if ((error = anya_decrypt_internal(dev, kbag, key, sep)) != ANYA_E_SUCCESS) {
+            if ((error = anya_decrypt(dev, kbag, key, 1)) != ANYA_E_SUCCESS) {
                 printf("failed to decrypt KBAG, reason: %s\n", anya_strerror(error));
                 anya_close(&dev);
                 return -1;
@@ -221,18 +197,14 @@ int main(int argc, char const *argv[]) {
 
             printf("decrypting...\n");
 
-            uint8_t key[KBAG_SIZE];
-
             struct timeval st, et;
             gettimeofday(&st, NULL);
 
-            for (uint64_t i = 0; i < num; i++) {
-                if ((error = anya_decrypt_internal(dev, kbags + (i * KBAG_SIZE), key, sep)) != ANYA_E_SUCCESS) {
-                    printf("failed to decrypt KBAG, reason: %s\n", anya_strerror(error));
-                    anya_close(&dev);
-                    return -1;
-                }   
-            }
+            if ((error = anya_decrypt(dev, kbags, kbags, num)) != ANYA_E_SUCCESS) {
+                printf("failed to decrypt KBAGs, reason: %s\n", anya_strerror(error));
+                anya_close(&dev);
+                return -1;
+            } 
 
             gettimeofday(&et, NULL);
             long elapsed = ((et.tv_sec - st.tv_sec) * 1000000) + (et.tv_usec - st.tv_usec);

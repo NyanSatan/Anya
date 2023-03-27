@@ -7,8 +7,7 @@ enum {
 };
 
 enum {
-    kAESTypeGID  = 0x20000200,
-    kAESTypeUID  = 0x20000201
+    kAESTypeGID  = 0x20000200
 };
 
 static const

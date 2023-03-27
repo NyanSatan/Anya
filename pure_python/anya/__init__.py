@@ -1,5 +1,7 @@
 from .exceptions import *
 
+import struct
+
 import usb.core
 import usb.util
 
@@ -9,7 +11,13 @@ DFU_PRODUCT_ID = 0x1227 # can also be 0x1226/0x1228 in case of different SDOM
 ANYA_IBFL_FLAG   = (1 << 6)
 ANYA_USB_TIMEOUT = 100
 
+PACKET_MAGIC = 0x414E5941   # 'ANYA'
+PACKET_MAX_SIZE = 0x800
+PACKET_FLAG_DECRYPTED = (1 << 0)
+
 KBAG_SIZE = 0x30
+KBAG_MAX_COUNT = int((PACKET_MAX_SIZE - 16) / KBAG_SIZE)
+
 
 DFU_DETACH = 0
 DFU_DNLOAD = 1
@@ -21,9 +29,6 @@ DFU_ABORT = 6
 ANYA_DECRYPT_KBAG = 7
 ANYA_CLEAR_KBAG = 8
 ANYA_REBOOT = 9
-ANYA_PING_SEP = 10
-ANYA_DECRYPT_SEP_KBAG = 11
-
 
 def decode_kbag(kbag: str) -> bytes:
     try:
@@ -76,49 +81,88 @@ class AnyaDevice:
         if not self._device:
             raise AnyaNotFound("no Anya devices found")
 
-        self.clear_kbag()
+        self.clear_kbags()
 
         print("found: %s" % self._device.serial_number)
 
     def disconnect(self):
         usb.util.dispose_resources(self._device)
 
-    def ping_sep(self) -> bool:
-        try:
-            result = self._device.ctrl_transfer(0xA1, ANYA_PING_SEP, 0, 0, 1)
-            assert len(result) == 1
-        except Exception:
-            raise AnyaUSBError("failed to decrypt KBAG")
-
-        return bool(result[0])
-
-    def clear_kbag(self):
+    def clear_kbags(self):
         try:
             self._device.ctrl_transfer(0x21, ANYA_CLEAR_KBAG, 0, 0, None)
         except Exception:
             raise AnyaUSBError("failed to clear KBAG")
 
-    def send_kbag(self, kbag: bytes):
-        if len(kbag) != KBAG_SIZE:
-            raise AnyaValueError("KBAG must be exactly bytes %d in size" % KBAG_SIZE)
-
+    def send_packet(self, packet: bytes):
+        if len(packet) > PACKET_MAX_SIZE:
+            raise AnyaValueError("packet must be no more than %d bytes in size" % PACKET_MAX_SIZE)
+        
         try:
-            assert self._device.ctrl_transfer(0x21, DFU_DNLOAD, 0, 0, kbag) == KBAG_SIZE
+            assert self._device.ctrl_transfer(0x21, DFU_DNLOAD, 0, 0, packet) == len(packet)
         except Exception:
-            raise AnyaUSBError("failed to send KBAG")
+            raise AnyaUSBError("failed to send packet")
 
-    def get_key(self, sep: bool = False) -> bytes:
+    def get_packet(self, expected_len) -> bytes:
         try:
-            key = self._device.ctrl_transfer(0xA1, ANYA_DECRYPT_SEP_KBAG if sep else ANYA_DECRYPT_KBAG, 0, 0, KBAG_SIZE)
-            assert len(key) == KBAG_SIZE
+            result = self._device.ctrl_transfer(0xA1, ANYA_DECRYPT_KBAG, 0, 0, expected_len)
+            assert len(result) == expected_len
         except Exception:
-            raise AnyaUSBError("failed to decrypt KBAG")
+            raise AnyaUSBError("failed to decrypt packet")
 
-        return bytes(key)
+        return bytes(result)
 
-    def decrypt_kbag(self, kbag: bytes, sep: bool = False) -> bytes:
-        self.send_kbag(kbag)
-        return self.get_key(sep=sep)
+    def process_packet(self, packet: bytes, target: list):
+        (magic, count, flags, _) = struct.unpack("<LLLL", packet[:16])
+
+        if magic != PACKET_MAGIC:
+            raise AnyaValueError("invalid magic in out packet")
+
+        if not (flags & PACKET_FLAG_DECRYPTED):
+            raise AnyaValueError("out packet is not decrypted")
+
+        for i in range(count):
+            target.append(packet[16 + i * KBAG_SIZE : 16 + (i + 1) * KBAG_SIZE])
+
+
+    def prepare_packet(self, kbags: list[bytes]) -> bytes:
+        if len(kbags) > KBAG_MAX_COUNT:
+            raise AnyaValueError("too many KBAGs for a single packet, must be no more than %d" % KBAG_MAX_COUNT)
+
+        header = struct.pack("<LLLL", PACKET_MAGIC, len(kbags), 0, 0)
+
+        for kbag in kbags:
+            header += kbag
+        
+        return header
+
+
+    def decrypt_batch(self, kbags: list[bytes], target: list):
+        packet = self.prepare_packet(kbags)
+
+        self.send_packet(packet)
+
+        out_packet = self.get_packet(len(packet))
+
+        self.process_packet(out_packet, target)
+
+
+    def decrypt_kbags(self, kbags: list[bytes]) -> list[bytes]:
+        offset = 0
+        count = len(kbags)
+        result = list()
+
+        while count != 0:
+            current_count = min(count, KBAG_MAX_COUNT)
+            current_batch = kbags[offset:offset + current_count]
+
+            self.decrypt_batch(current_batch, result)
+
+            offset += current_count
+            count -= current_count
+
+        return result
+        
 
     def reboot(self):
         try:

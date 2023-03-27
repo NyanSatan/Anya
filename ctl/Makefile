@@ -1,7 +1,6 @@
 CC ?= clang
 
 BUILD_ROOT = build
-SOURCE_ROOT = src
 
 STATIC_LIBS = static-libs
 
@@ -16,10 +15,8 @@ endif
 
 LDFLAGS += -lirecovery-1.0
 
-SOURCES_ = anyactl.c \
+SOURCES = anyactl.c \
 		   libanya/anya.c
-
-SOURCES = $(addprefix $(SOURCE_ROOT)/, $(SOURCES_))
 
 RESULT = $(BUILD_ROOT)/anyactl
 
@@ -37,5 +34,5 @@ $(RESULT): $(SOURCES)
 .PHONY: clean
 
 clean:
-	@rm -rf $(BUILD_ROOT)/*
+	@rm -rf $(BUILD_ROOT)
 	@echo "%%%% done cleaning"
