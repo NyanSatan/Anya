@@ -7,7 +7,8 @@
 
 #define ANYA_USB_TIMEOUT 100
 
-#define DFU_MAX_PACKET_SIZE 0x800
+#define DFU_MAX_PACKET_SIZE     0x800
+#define ANYA_MAX_PACKET_SIZE    0x8000
 
 enum {
     DFU_DETACH = 0,
@@ -39,7 +40,7 @@ typedef struct __attribute__((packed)) {
     uint32_t reserved;
 } anya_packet_hdr_t;
 
-#define KBAG_MAX_COUNT  ((DFU_MAX_PACKET_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
+#define KBAG_MAX_COUNT  ((ANYA_MAX_PACKET_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
 #define MIN(x, y)   (x < y ? x : y)
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
@@ -52,8 +53,7 @@ anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
     if ((irecv_ret = irecv_open_with_ecid(&client, ecid)) != IRECV_E_SUCCESS) {
         if (irecv_ret == IRECV_E_NO_DEVICE) {
             return ANYA_E_NO_DEVICE;
-        }
-        else {
+        } else {
             return ANYA_E_UNKNOWN_ERROR;
         }
     }
@@ -82,7 +82,7 @@ anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
         goto out_failure;
     }
 
-    io_buffer = malloc(DFU_MAX_PACKET_SIZE);
+    io_buffer = malloc(ANYA_MAX_PACKET_SIZE);
     if (!io_buffer) {
         error = ANYA_E_OUT_OF_MEMORY;
         goto out_failure;
@@ -109,7 +109,7 @@ out_failure:
 }
 
 void anya_print_device(anya_device_t *dev) {
-    printf("CPID:%04X, CPFM:%02X, ECID:%016llX\n", dev->cpid, dev->cpfm, dev->ecid);
+    printf("CPID:%04X CPFM:%02X ECID:%016llX\n", dev->cpid, dev->cpfm, dev->ecid);
 }
 
 anya_error_t anya_close(anya_device_t **dev) {
@@ -120,6 +120,22 @@ anya_error_t anya_close(anya_device_t **dev) {
     *dev = NULL;
 
     return ANYA_E_SUCCESS;
+}
+
+static size_t dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
+    size_t index = 0;
+
+    while (index != size) {
+        size_t amount = MIN(DFU_MAX_PACKET_SIZE, size - index);
+
+        if (irecv_usb_control_transfer(dev->conn, 0x21, DFU_DNLOAD, 0, 0, data + index, amount, ANYA_USB_TIMEOUT) != amount) {
+            return -1;
+        }
+
+        index += amount;
+    }
+    
+    return index;
 }
 
 anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count) {
@@ -141,7 +157,7 @@ anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], s
 
         size_t packet_size = sizeof(anya_packet_hdr_t) + curr_count * KBAG_SIZE;
 
-        if (irecv_usb_control_transfer(dev->conn, 0x21, DFU_DNLOAD, 0, 0, dev->io_buffer, packet_size, ANYA_USB_TIMEOUT) != packet_size) {
+        if (dfu_send_data(dev, dev->io_buffer, packet_size) != packet_size) {
             return ANYA_E_USB_ERROR;
         }
 

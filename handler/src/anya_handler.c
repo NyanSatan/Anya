@@ -1,7 +1,7 @@
 /*
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
  *
- * Remember, no .data! 
+ * Remember, no DATA! 
  * No preinitialized data allowed here!
  *
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
@@ -12,6 +12,7 @@
 #include "common.h"
 
 #define KBAG_SIZE 0x30
+#define PADDING_SIZE 0x10
 
 enum {
     DFU_DETACH = 0,
@@ -35,8 +36,15 @@ typedef struct __attribute__((packed)) {
     uint32_t reserved;
 } anya_packet_hdr_t;
 
-static int ap_decrypt(void *kbag, void *key) {
-    return aes_crypto_cmd(kAESDecrypt, kbag, key, KBAG_SIZE, kAESTypeGID, NULL, NULL);
+#define KBAG_MAX_COUNT  ((TARGET_KBAG_BUFFER_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
+
+uint8_t kbag_buffer[KBAG_MAX_COUNT * (KBAG_SIZE + PADDING_SIZE)];
+
+size_t copyin(void *in, void *out, size_t count);
+size_t copyout(void *in, void *out, size_t count);
+
+static int ap_decrypt(void *in, void *out, size_t size) {
+    return aes_crypto_cmd(kAESDecrypt, in, out, size, kAESTypeGID, NULL, NULL);
 }
 
 static int anya_packet_decrypt() {
@@ -65,13 +73,15 @@ static int anya_packet_decrypt() {
     /* decrypting! */
     uint8_t *kbags = (void *)TARGET_LOADADDR + sizeof(anya_packet_hdr_t);
 
-    for (uint32_t i = 0; i < packet->kbag_count; i++) {
-        uint8_t *current_kbag = kbags + i * KBAG_SIZE;
+    /* copying KBAGs to our buffer */
+    size_t to_decrypt_size = copyin(kbags, kbag_buffer, packet->kbag_count);
 
-        if (ap_decrypt(current_kbag, current_kbag) != 0) {
-            return -1;
-        }
+    if (ap_decrypt(kbag_buffer, kbag_buffer, to_decrypt_size) != 0) {
+        return -1;
     }
+
+    /* copying KBAGs back */
+    copyout(kbag_buffer, kbags, packet->kbag_count);
 
     /* setting decrypted flag for host */
     packet->flags |= AnyaPacketFlagDecrypted;

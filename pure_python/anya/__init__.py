@@ -12,12 +12,13 @@ ANYA_IBFL_FLAG   = (1 << 6)
 ANYA_USB_TIMEOUT = 100
 
 PACKET_MAGIC = 0x414E5941   # 'ANYA'
-PACKET_MAX_SIZE = 0x800
+PACKET_MAX_SIZE = 0x8000
 PACKET_FLAG_DECRYPTED = (1 << 0)
 
 KBAG_SIZE = 0x30
 KBAG_MAX_COUNT = int((PACKET_MAX_SIZE - 16) / KBAG_SIZE)
 
+DFU_MAX_PACKET_SIZE = 0x800
 
 DFU_DETACH = 0
 DFU_DNLOAD = 1
@@ -99,7 +100,11 @@ class AnyaDevice:
             raise AnyaValueError("packet must be no more than %d bytes in size" % PACKET_MAX_SIZE)
         
         try:
-            assert self._device.ctrl_transfer(0x21, DFU_DNLOAD, 0, 0, packet) == len(packet)
+            index = 0
+            while index < len(packet):
+                amount = min(len(packet) - index, DFU_MAX_PACKET_SIZE)
+                assert self._device.ctrl_transfer(0x21, DFU_DNLOAD, 0, 0, packet[index:index + amount]) == amount
+                index += amount
         except Exception:
             raise AnyaUSBError("failed to send packet")
 

@@ -19,7 +19,9 @@ include $(TARGETS_DIR)/$(TARGET)/target.mk
 endif
 endif
 
-TARGET_DATA_START = $(shell printf "0x%x" $($(TARGET_LOADADDR) + $(TARGET_KBAG_BUFFER_SIZE)))
+TARGET_KBAG_BUFFER_SIZE = 0x8000
+
+TARGET_DATA_START = $(shell printf "0x%x" `echo $$(( $(TARGET_LOADADDR) + $(TARGET_KBAG_BUFFER_SIZE) ))`)
 
 
 OPTIONS = -DTARGET_TRAMPOLINE=$(TARGET_TRAMPOLINE) \
@@ -36,12 +38,8 @@ CFLAGS += $(OPTIONS)
 CFLAGS += -fno-builtin
 CFLAGS += -Os
 CFLAGS += -MMD
+CFLAGS += -arch arm64
 
-ifneq ($(TARGET_HAS_PAC),true)
-	CFLAGS += -arch arm64
-else
-	CFLAGS += -arch arm64e
-endif
 
 LDFLAGS = -nostdlib
 LDFLAGS += -static
@@ -51,11 +49,10 @@ LDFLAGS += -Wl,-e,_anya_handle_interface_request
 LDFLAGS += -Wl,-seg1addr,$(TARGET_TRAMPOLINE)
 LDFLAGS += -Wl,-segaddr,__DATA,$(TARGET_DATA_START)
 
-
 PROJECT_NAME = anya_handler
 
 SOURCE_ROOT = src
-SOURCE = $(SOURCE_ROOT)/anya_handler.c
+SOURCE = $(SOURCE_ROOT)/anya_handler.c $(SOURCE_ROOT)/copy.S
 
 BUILD_ROOT = build
 TARGET_BASENAME = $(PROJECT_NAME).$(TARGET_NAME)
@@ -75,7 +72,7 @@ $(TARGET_BIN): $(TARGET_MACHO)
 $(TARGET_MACHO): $(SOURCE)
 	@echo "\tbuilding"
 	@$(DIR_HELPER)
-	@$(ARM_CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	@$(ARM_CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 .PHONY: clean
 

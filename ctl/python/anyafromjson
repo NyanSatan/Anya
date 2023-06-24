@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+
+import sys
+import json
+import argparse
+from time import perf_counter
+
+from anya import *
+from anya.exceptions import *
+
+DESCRIPTION = \
+"""
+a dumb utility that takes KBAGs from an input JSON
+and decrypts them with Anya. The input JSON must be
+a list of dicts where every member must have "kbag"
+field. The output JSON will be same, but with "key"
+Thus, you can have arbitrary metadata in the dicts
+that will be preserved in the output
+"""
+
+def hexint(string: str) -> int:
+    return int(string, 16)
+
+def main():
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("-e", dest="ecid", type=hexint, help="(hexadecimal) ECID to look for")
+    parser.add_argument(dest="in_path", help="input file")
+    parser.add_argument(dest="out_path", help="output file")
+    args = parser.parse_args()
+
+    with open(args.in_path, "r") as f:
+        kbags = json.loads(f.read())
+        
+    if type(kbags) is not list:
+        print("you must provide a list in input JSON")
+        print()
+        parser.print_help()
+        exit(-1)
+
+    total_start = perf_counter()
+
+    dev = AnyaDevice(ecid=args.ecid)
+
+    try:
+        dev.connect()
+    except AnyaError as e:
+        print("failed to connect: %s" % str(e))
+        exit(-1)
+
+    dev.print_device()
+
+    total_count = len(kbags)
+
+    decoded_kbags = list()
+
+    for kbag in kbags:
+        try:
+            decoded_kbags.append(decode_kbag(kbag["kbag"]))
+        except AnyaValueError:
+            print("invalid KBAG (?): %s" % kbag["kbag"])
+            dev.disconnect()
+            exit(-1)
+
+    decryption_start = perf_counter()
+    
+    try:
+        unencoded_keys = dev.decrypt_kbags(decoded_kbags)
+    except AnyaError as e:
+        print("couldn't decrypt: %s" % str(e))
+        dev.disconnect()
+        exit(-1)
+
+    decryption_end = perf_counter()
+
+    dev.disconnect()
+
+    for index, key in enumerate(unencoded_keys):
+        kbags[index]["key"] = encode_key(key)
+
+    with open(args.out_path, "w") as f:
+        f.write(json.dumps(kbags, indent=4))
+
+    total_end = perf_counter()
+
+    print(
+        "succesfully decrypted %d KBAGs in %.6f seconds (%.6f KBAGs/sec)" % (
+            total_count,
+            decryption_end - decryption_start,
+            total_count / (decryption_end - decryption_start)
+            )
+        )
+    
+    print("total time of execution - %.6f seconds" % (total_end - total_start))
+
+if __name__ == '__main__':
+    main()
