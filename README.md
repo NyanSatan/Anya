@@ -10,6 +10,7 @@
 * **Cyprus B0/B1** - Apple A12 (B0 since beta 4)
 * **Cebu B0/B1** - Apple A13
 * **Sicily A0** - Apple A14 (since beta 3)
+* **Sicily B0** - Apple A14 (since beta 5)
 
 ### SEP
 
@@ -51,6 +52,7 @@ anyactl
 payloads/
 payloads/anya_handler.M9-B0_B1.bin
 payloads/anya_handler.Sicily-A0.bin
+payloads/anya_handler.Sicily-B0.bin
 payloads/anya_handler.Cyprus-B0.bin
 payloads/anya_handler.Cyprus-B1.bin
 payloads/anya_handler.Cebu-B1.bin
