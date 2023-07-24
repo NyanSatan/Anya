@@ -48,7 +48,12 @@ class AnyaDevice:
         self.connected = False
 
     def print_device(self):
-        c_api.anya_print_device(self._connection)
+        print("found: CPID:%04X CPFM:%02X ECID:%016X" % (
+                c_api.anya_get_cpid(self._connection),
+                c_api.anya_get_cpfm(self._connection),
+                c_api.anya_get_ecid(self._connection)
+            )
+        )
 
     def decrypt_kbags(self, kbags: list[bytes]) -> list[bytes]:
         all_kbags = b''.join(kbags)

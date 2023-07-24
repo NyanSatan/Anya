@@ -112,6 +112,18 @@ void anya_print_device(anya_device_t *dev) {
     printf("CPID:%04X CPFM:%02X ECID:%016llX\n", dev->cpid, dev->cpfm, dev->ecid);
 }
 
+uint16_t anya_get_cpid(anya_device_t *dev) {
+    return dev->cpid;
+}
+
+uint8_t anya_get_cpfm(anya_device_t *dev) {
+    return dev->cpfm;
+}
+
+uint64_t anya_get_ecid(anya_device_t *dev) {
+    return dev->ecid;
+}
+
 anya_error_t anya_close(anya_device_t **dev) {
     irecv_close((*dev)->conn);
     free((*dev)->io_buffer);

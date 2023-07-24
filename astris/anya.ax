@@ -208,7 +208,6 @@ namespace eval ::anya {
 
     ::astris::console::native::cpu [main_core]
 
-    puts "Fromresetting device..."
     ::astris::soc::fromreset
 
     if {![is_mmu_late_deal]} {

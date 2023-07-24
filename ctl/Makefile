@@ -4,6 +4,8 @@ BUILD_ROOT = build
 
 STATIC_LIBS = static-libs
 
+CFLAGS += -Ofast
+
 ifneq ($(wildcard $(STATIC_LIBS)),)
 CFLAGS += -arch arm64
 CFLAGS += -arch x86_64

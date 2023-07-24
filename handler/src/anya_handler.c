@@ -1,7 +1,7 @@
 /*
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
  *
- * Remember, no DATA! 
+ * Remember, no data! 
  * No preinitialized data allowed here!
  *
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
