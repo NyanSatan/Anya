@@ -3,7 +3,7 @@
 # Someday I'll fix it, I promise
 #
 
-VALID_HANDLER_TARGETS ?= Cebu/B0_B1
+VALID_HANDLER_TARGETS ?= Cebu/B0_B1 Sicily/B0
 PYTHON ?= python3
 
 
@@ -66,6 +66,6 @@ python:
 clean:
 	@make -C $(CTL_DIR) clean
 	@make -C $(HANDLER_DIR) clean
-	@rm -rf $(BUILD_DIR)/*
-	@rm -rf $(PACKAGE_DIR)/*
+	@rm -rf $(BUILD_DIR)
+	@rm -rf $(PACKAGE_DIR)
 	@echo "%%%%%% all cleaned"

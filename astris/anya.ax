@@ -5,7 +5,7 @@
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
 #
-# The custom handler is at tarmpoline base, thus we need
+# The custom handler is at trampoline base, thus we need
 # to make that place executable
 #
 # Please note that only 16K devices are supported at this moment
@@ -34,8 +34,9 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return ECORE0 }
+            "Cebu B0"       -
+            "Cebu B1"       { return ECORE0 }
+            "Sicily B0"     { return ECORE0 }
             default  {
                 data_provider_error
             }
@@ -49,8 +50,9 @@ namespace eval ::anya {
     proc before_tlb_flush {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x10000180C }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x10000180C }
+            "Sicily B0"     { return 0x10000C544 }
             default  {
                 data_provider_error
             }
@@ -60,8 +62,9 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x19C000000 }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x19C000000 }
+            "Sicily B0"     { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -71,8 +74,9 @@ namespace eval ::anya {
     proc trampoline {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x19C018000 }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x19C018000 }
+            "Sicily B0"     { return 0x1FC02C000 }
             default  {
                 data_provider_error
             }
@@ -82,8 +86,9 @@ namespace eval ::anya {
     proc platform_get_force_dfu_ret {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x1000079AC }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x1000079AC }
+            "Sicily B0"     { return 0x1000083B4 }
             default  {
                 data_provider_error
             }
@@ -93,8 +98,9 @@ namespace eval ::anya {
     proc handle_interface_request_intercept {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x10000EF04 }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x10000EF04 }
+            "Sicily B0"     { return 0x10001205C }
             default  {
                 data_provider_error
             }
@@ -104,8 +110,9 @@ namespace eval ::anya {
     proc handle_interface_request_intercept_reg {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return x9 }
+            "Cebu B0"       -
+            "Cebu B1"       { return x9 }
+            "Sicily B0"     { return x9 }
             default  {
                 data_provider_error
             }
@@ -115,8 +122,9 @@ namespace eval ::anya {
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
-            "Cebu B0"   -
-            "Cebu B1"   { return 0x10000679C }
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x10000679C }
+            "Sicily B0"     { return 0x100006EA4 }
             default  {
                 data_provider_error
             }
