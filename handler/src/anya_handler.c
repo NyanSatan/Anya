@@ -123,7 +123,7 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
                 return 0;
 
             case ANYA_REBOOT:
-                platform_reset();
+                platform_reset(false);
         }
 
     } else if ((bmRequestType & USB_REQ_DIRECTION_MASK) == USB_REQ_DEVICE2HOST) {

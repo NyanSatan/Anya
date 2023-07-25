@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 enum {
     kAESEncrypt = 0x10,
@@ -22,4 +23,4 @@ int (*aes_crypto_cmd)(
 ) = (void *)TARGET_AES_CRYPTO_CMD;
 
 static const
-void (*platform_reset)() __attribute__((noreturn)) = (void *)TARGET_PLATFORM_RESET;
+void (*platform_reset)(bool panic) __attribute__((noreturn)) = (void *)TARGET_PLATFORM_RESET;
