@@ -3,7 +3,7 @@
 # Someday I'll fix it, I promise
 #
 
-VALID_HANDLER_TARGETS ?= Cebu/B0_B1 Sicily/B0 Tonga/B1 Ellis/A0 Staten/B1
+VALID_HANDLER_TARGETS ?= Cebu Sicily/B0 Tonga/B1 Ellis/A0 Staten/B1
 PYTHON ?= python3
 
 
