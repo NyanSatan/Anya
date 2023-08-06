@@ -34,6 +34,7 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     -
             "Cyprus B1"     { return PCORE0 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -94,6 +95,7 @@ namespace eval ::anya {
     proc before_tlb_flush {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     -
             "Cyprus B1"     { return 0x100001704 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -108,6 +110,7 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     -
             "Cyprus B1"     { return 0x19C000000 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -125,6 +128,7 @@ namespace eval ::anya {
     proc trampoline {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     { return 0x19C1C8000 }
             "Cyprus B1"     { return 0x19C018000 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -142,6 +146,7 @@ namespace eval ::anya {
     proc platform_get_force_dfu_ret {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     { return 0x1000070A0 }
             "Cyprus B1"     { return 0x1000072CC }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -159,6 +164,7 @@ namespace eval ::anya {
     proc handle_interface_request_intercept {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     { return 0x10000E018 }
             "Cyprus B1"     { return 0x10000E390 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -176,6 +182,7 @@ namespace eval ::anya {
     proc handle_interface_request_intercept_reg {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     { return x9 }
             "Cyprus B1"     { return x9 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -193,6 +200,7 @@ namespace eval ::anya {
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
+            "Cyprus A0"     { return 0x100006044 }
             "Cyprus B1"     { return 0x10000616C }
             "Cebu A0"       -
             "Cebu B0"       -
