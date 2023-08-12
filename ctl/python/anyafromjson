@@ -28,11 +28,21 @@ def main():
     parser.add_argument(dest="out_path", help="output file")
     args = parser.parse_args()
 
-    with open(args.in_path, "r") as f:
-        kbags = json.loads(f.read())
+    try:
+        with open(args.in_path, "r") as f:
+            kbags = json.loads(f.read())
+    except FileNotFoundError:
+        print("input doesn't exist")
+        exit(-1)
+    except IOError:
+        print("input cannot be read")
+        exit(-1)
+    except json.JSONDecodeError:
+        print("input cannot be decoded")
+        exit(-1)
         
     if type(kbags) is not list:
-        print("you must provide a list in input JSON")
+        print("you must provide a list of dicts in input JSON")
         print()
         parser.print_help()
         exit(-1)
@@ -54,11 +64,19 @@ def main():
     decoded_kbags = list()
 
     for kbag in kbags:
+        if type(kbag) is not dict:
+            print("you must provide a list of dicts in input JSON")
+            print()
+            parser.print_help()
+            exit(-1)
+
         try:
             decoded_kbags.append(decode_kbag(kbag["kbag"]))
         except AnyaValueError:
             print("invalid KBAG (?): %s" % kbag["kbag"])
-            dev.disconnect()
+            exit(-1)
+        except KeyError:
+            print("no \"kbag\" field?!")
             exit(-1)
 
     decryption_start = perf_counter()
@@ -67,7 +85,6 @@ def main():
         unencoded_keys = dev.decrypt_kbags(decoded_kbags)
     except AnyaError as e:
         print("couldn't decrypt: %s" % str(e))
-        dev.disconnect()
         exit(-1)
 
     decryption_end = perf_counter()
@@ -77,8 +94,12 @@ def main():
     for index, key in enumerate(unencoded_keys):
         kbags[index]["key"] = encode_key(key)
 
-    with open(args.out_path, "w") as f:
-        f.write(json.dumps(kbags, indent=4))
+    try:
+        with open(args.out_path, "w") as f:
+            f.write(json.dumps(kbags, indent=4))
+    except Exception:
+        print("falied to write output")
+        exit(-1)
 
     total_end = perf_counter()
 

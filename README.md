@@ -226,7 +226,7 @@ noone@noones-MacBook-Air Anya %
 
 ## Python
 ### Requirements
-* Python 3
+* Python 3.10+
 * libanya
 
 In the new Anya we no longer use `pyusb`. Instead, we use `libanya` as a backend, which is basically Anya's C library compiled as a dynamic library (powered by `libirecovery`)
