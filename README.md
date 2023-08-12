@@ -36,7 +36,7 @@ Speaking of targets - not everything is backported from the legacy one to the ne
 * **Cebu A0/B0/B1** - Apple A13
 * **Sicily B0** - Apple A14
 * **Tonga B1** - Apple M1
-* **Ellis A0** - Apple A15
+* **Ellis A0/B0** - Apple A15
 * **Staten B1** - Apple M2
 
 ***SEP** is not yet supported by this branch, but it's in the works*
@@ -70,7 +70,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B1**, **Cebu**, **Sicily/B0**, **Tonga/B1**, **Ellis/A0** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B1**, **Cebu**, **Sicily/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
