@@ -11,6 +11,8 @@
 #include "usb.h"
 #include "common.h"
 
+const char __attribute__((used, aligned(16))) BUILD_STRING[] = TARGET_BUILD_STRING;
+
 #define KBAG_SIZE 0x30
 #define PADDING_SIZE 0x10
 
