@@ -19,7 +19,7 @@ include $(TARGETS_DIR)/$(TARGET)/target.mk
 endif
 endif
 
-TARGET_KBAG_BUFFER_SIZE = 0x8000
+TARGET_KBAG_BUFFER_SIZE = 0x8000	# must be synchronized with ANYA_MAX_PACKET_SIZE in libanya/anya.c
 
 TARGET_DATA_START = $(shell printf "0x%x" `echo $$(( $(TARGET_LOADADDR) + $(TARGET_KBAG_BUFFER_SIZE)))`)
 
@@ -43,7 +43,7 @@ CFLAGS += -MMD
 CFLAGS += -arch arm64
 
 
-LDFLAGS = -nostdlib
+LDFLAGS += -nostdlib
 LDFLAGS += -static
 LDFLAGS += -Wl,-preload
 LDFLAGS += -Wl,-order_file,misc/sym_order.txt
@@ -54,7 +54,7 @@ LDFLAGS += -Wl,-segaddr,__DATA,$(TARGET_DATA_START)
 PROJECT_NAME = anya_handler
 
 SOURCE_ROOT = src
-SOURCE = $(SOURCE_ROOT)/anya_handler.c $(SOURCE_ROOT)/copy.S
+SOURCES = $(SOURCE_ROOT)/anya_handler.c $(SOURCE_ROOT)/copy.S
 
 BUILD_ROOT = build
 TARGET_BASENAME = $(PROJECT_NAME).$(TARGET_NAME)
@@ -71,7 +71,7 @@ $(TARGET_BIN): $(TARGET_MACHO)
 	@$(DIR_HELPER)
 	@$(VMACHO) -f $< $@
 
-$(TARGET_MACHO): $(SOURCE)
+$(TARGET_MACHO): $(SOURCES)
 	@echo "\tbuilding"
 	@$(DIR_HELPER)
 	@$(ARM_CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
