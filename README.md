@@ -39,6 +39,12 @@ Speaking of targets - not everything is backported from the legacy one to the ne
 * **Ellis A0/B0** - Apple A15
 * **Staten B1** - Apple M2
 
+There are also some untested targets (not built by default, but you can enable them):
+
+* **Cyprus B0** - Apple A12
+* **Sicily A0** - Apple A14
+
+
 ***SEP** is not yet supported by this branch, but it's in the works*
 
 ## Building
