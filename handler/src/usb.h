@@ -19,13 +19,13 @@ struct usb_device_request {
     uint16_t wLength;
 } __attribute__((packed));
 
-static const
+static
 int (*handle_interface_request)(
     struct usb_device_request *request,
     uint8_t **out_buffer
 ) = (void *)TARGET_HANDLE_INTERFACE_REQUEST;
 
-static const
+static
 void (*usb_core_do_transfer)(
     int endpoint,
     uint8_t *buffer,

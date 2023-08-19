@@ -1,6 +1,10 @@
+#ifndef AES_H
+#define AES_H
+
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
+
+#define KBAG_SIZE 0x30
 
 enum {
     kAESEncrypt = 0x10,
@@ -11,7 +15,7 @@ enum {
     kAESTypeGID  = 0x20000200
 };
 
-static const
+static
 int (*aes_crypto_cmd)(
     uint32_t cmd,
     void *src,
@@ -22,5 +26,4 @@ int (*aes_crypto_cmd)(
     void *iv
 ) = (void *)TARGET_AES_CRYPTO_CMD;
 
-static const
-void (*platform_reset)(bool panic) __attribute__((noreturn)) = (void *)TARGET_PLATFORM_RESET;
+#endif

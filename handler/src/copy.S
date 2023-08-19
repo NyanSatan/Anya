@@ -27,3 +27,12 @@ _copyout:
     bne _copyout
 
     ret
+
+#if WITH_SEP
+.globl _copy128
+_copy128:
+    ldr q0, [x0]
+    str q0, [x1]
+    ret
+#endif
+

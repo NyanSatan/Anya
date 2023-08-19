@@ -8,14 +8,15 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "usb.h"
-#include "common.h"
+#include "aes.h"
+#include "misc.h"
 
+/* build tag string */
 const char __attribute__((used, aligned(16))) BUILD_STRING[] = TARGET_BUILD_STRING;
 
-#define KBAG_SIZE 0x30
-#define PADDING_SIZE 0x10
-
+/* DFU bRequest selectors */
 enum {
     DFU_DETACH = 0,
     DFU_DNLOAD,
@@ -26,29 +27,66 @@ enum {
     DFU_ABORT,
     ANYA_DECRYPT_KBAG,
     ANYA_CLEAR_KBAG,
-    ANYA_REBOOT
+    ANYA_REBOOT,
+    ANYA_PING_SEP
 };
 
+/* Anya packet header definition */
 typedef struct __attribute__((packed)) {
 #define ANYA_MAGIC  'ANYA'
     uint32_t magic;
     uint32_t kbag_count;
 #define AnyaPacketFlagDecrypted (1 << 0)
+#define AnyaPacketFlagSEP       (1 << 1)
     uint32_t flags;
     uint32_t reserved;
 } anya_packet_hdr_t;
+
+
+/* SEP stuff */
+#if WITH_SEP
+#include "sep.h"
+
+typedef enum {
+    SEP_UNKNOWN = 0,
+    SEP_UNSUPPORTED,
+    SEP_SUPPORTED
+} sep_status_t;
+
+sep_status_t sep_status = SEP_UNKNOWN;
+
+#endif
+
+bool sep_status_dfu = false;
+
+/* KBAG properties */
+#define PADDING_SIZE 0x10
 
 #define KBAG_MAX_COUNT  ((TARGET_KBAG_BUFFER_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
 
 uint8_t kbag_buffer[KBAG_MAX_COUNT * (KBAG_SIZE + PADDING_SIZE)];
 
+/* operations for AP decrypt */
 size_t copyin(void *in, void *out, size_t count);
 size_t copyout(void *in, void *out, size_t count);
 
-static int ap_decrypt(void *in, void *out, size_t size) {
-    return aes_crypto_cmd(kAESDecrypt, in, out, size, kAESTypeGID, NULL, NULL);
+static int ap_decrypt_kbags(void *kbags, void *output, uint32_t count) {
+    /* copying KBAGs to our buffer */
+    size_t to_decrypt_size = copyin(kbags, kbag_buffer, count);
+
+    /* decrypting! */
+    if (aes_crypto_cmd(kAESDecrypt, kbag_buffer, kbag_buffer, to_decrypt_size, kAESTypeGID, NULL, NULL) != 0) {
+        return -1;
+    }
+
+    /* copying KBAGs back */
+    copyout(kbag_buffer, kbags, count);
+
+    return 0;
 }
 
+
+/* decrypt function - parses packet header and calls decrypt functions */
 static int anya_packet_decrypt() {
     /* must contain at least one KBAG */
     if (*total_received < sizeof(anya_packet_hdr_t) + KBAG_SIZE) {
@@ -67,6 +105,23 @@ static int anya_packet_decrypt() {
         return -1;
     }
 
+    /* checking if we are trying to decrypt SEP KBAGs*/
+    if (packet->flags & AnyaPacketFlagSEP) {
+#if WITH_SEP       
+        if (sep_status == SEP_UNSUPPORTED) {
+            return -1;
+        } else if (sep_status == SEP_UNKNOWN) {
+            sep_status = sep_ping() ? SEP_SUPPORTED : SEP_UNSUPPORTED;
+
+            if (sep_status == SEP_UNSUPPORTED) {
+                return -1;
+            }
+        }
+#else
+        return -1;
+#endif
+    }
+
     /* checking if we received enough data for requested KBAG count */
     if (packet->kbag_count * KBAG_SIZE > *total_received - sizeof(anya_packet_hdr_t)) {
         return -1;
@@ -75,15 +130,21 @@ static int anya_packet_decrypt() {
     /* decrypting! */
     uint8_t *kbags = (void *)TARGET_LOADADDR + sizeof(anya_packet_hdr_t);
 
-    /* copying KBAGs to our buffer */
-    size_t to_decrypt_size = copyin(kbags, kbag_buffer, packet->kbag_count);
+    int ret;
 
-    if (ap_decrypt(kbag_buffer, kbag_buffer, to_decrypt_size) != 0) {
-        return -1;
+#if WITH_SEP
+    if (packet->flags & AnyaPacketFlagSEP) {
+        ret = sep_decrypt_kbags(kbags, kbags, packet->kbag_count);
+    }
+    else
+#endif
+    {
+        ret = ap_decrypt_kbags(kbags, kbags, packet->kbag_count);
     }
 
-    /* copying KBAGs back */
-    copyout(kbag_buffer, kbags, packet->kbag_count);
+    if (ret != 0) {
+        return -1;
+    }
 
     /* setting decrypted flag for host */
     packet->flags |= AnyaPacketFlagDecrypted;
@@ -91,10 +152,12 @@ static int anya_packet_decrypt() {
     return 0;
 }
 
+/* resets DFU counter - on both failure, success or user request */
 static void reset_counter() {
     *total_received = 0;
 }
 
+/* the main function - handles USB requests */
 int anya_handle_interface_request(struct usb_device_request *request, uint8_t **out_buffer) {
     uint8_t  bmRequestType = request->bmRequestType;
     uint8_t  bRequest      = request->bRequest;
@@ -116,7 +179,7 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
             case DFU_CLR_STATUS:
             case DFU_ABORT:
                 // disallow DFU_ABORT/DFU_CLR_STATUS,
-                // as they will make it re-enter DFU
+                // as they will make us re-enter DFU
                 return -1;
 
             case ANYA_CLEAR_KBAG:
@@ -144,6 +207,16 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
 
                 reset_counter();
                 return 0;
+            }
+
+            case ANYA_PING_SEP: {
+#if WITH_SEP
+                sep_status_dfu = sep_ping();
+#else
+                sep_status_dfu = false;
+#endif
+                usb_core_do_transfer(EP0_IN, (uint8_t *)&sep_status_dfu, sizeof(sep_status_dfu), NULL);
+
             }
         }
     }

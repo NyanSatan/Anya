@@ -30,7 +30,9 @@ uint16_t anya_get_cpid(anya_device_t *dev);
 uint8_t  anya_get_cpfm(anya_device_t *dev);
 uint64_t anya_get_ecid(anya_device_t *dev);
 
-anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count);
+anya_error_t anya_ping_sep(anya_device_t *dev, bool *res);
+
+anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count, bool sep);
 
 anya_error_t anya_reboot(anya_device_t *dev);
 

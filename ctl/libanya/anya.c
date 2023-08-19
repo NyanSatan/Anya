@@ -5,7 +5,7 @@
 
 #define ANYA_IBOOT_FLAG (1 << 6)
 
-#define ANYA_USB_TIMEOUT 100
+#define ANYA_USB_TIMEOUT 1000
 
 #define DFU_MAX_PACKET_SIZE     0x800
 #define ANYA_MAX_PACKET_SIZE    0x8000
@@ -20,7 +20,8 @@ enum {
     DFU_ABORT,
     ANYA_DECRYPT_KBAG,
     ANYA_CLEAR_KBAG,
-    ANYA_REBOOT
+    ANYA_REBOOT,
+    ANYA_PING_SEP
 };
 
 struct anya_device {
@@ -36,6 +37,7 @@ typedef struct __attribute__((packed)) {
     uint32_t magic;
     uint32_t kbag_count;
 #define AnyaPacketFlagDecrypted (1 << 0)
+#define AnyaPacketFlagSEP       (1 << 1)
     uint32_t flags;
     uint32_t reserved;
 } anya_packet_hdr_t;
@@ -134,6 +136,14 @@ anya_error_t anya_close(anya_device_t **dev) {
     return ANYA_E_SUCCESS;
 }
 
+anya_error_t anya_ping_sep(anya_device_t *dev, bool *res) {
+    if (irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_PING_SEP, 0, 0, (unsigned char *)res, sizeof(*res), ANYA_USB_TIMEOUT) != sizeof(*res)) {
+        return ANYA_E_USB_ERROR;
+    }
+
+    return ANYA_E_SUCCESS;
+}
+
 static size_t dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
     size_t index = 0;
 
@@ -150,7 +160,7 @@ static size_t dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
     return index;
 }
 
-anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count) {
+anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count, bool sep) {
     off_t offset = 0;
 
     while (count != 0) {
@@ -162,7 +172,7 @@ anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], s
 
         packet->magic = ANYA_MAGIC;
         packet->kbag_count = curr_count;
-        packet->flags = 0;
+        packet->flags = sep ? AnyaPacketFlagSEP : 0;
         packet->reserved = 0;
 
         memcpy(packet + 1, curr_kbags, curr_count * KBAG_SIZE);
