@@ -37,6 +37,8 @@ namespace eval ::anya {
             "Cyprus A0"     -
             "Cyprus B0"     -
             "Cyprus B1"     { return PCORE0 }
+            "M9 B0"         -
+            "M9 B1"         { return CPU0 }
             "Aruba A1"      { return PCORE0 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -105,6 +107,8 @@ namespace eval ::anya {
             "Cyprus A0"     -
             "Cyprus B0"     -
             "Cyprus B1"     { return 0x100001704 }
+            "M9 B0"         -
+            "M9 B1"         { return 0x1000016F8 }
             "Aruba A1"      { return 0x10000171C }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -123,6 +127,8 @@ namespace eval ::anya {
             "Cyprus A0"     -
             "Cyprus B0"     -
             "Cyprus B1"     { return 0x19C000000 }
+            "M9 B0"         -
+            "M9 B1"         { return 0x180000000 }
             "Aruba A1"      { return 0x19C000000 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -145,6 +151,8 @@ namespace eval ::anya {
             "Cyprus A0"     { return 0x19C1C8000 }
             "Cyprus B0"     -
             "Cyprus B1"     { return 0x19C018000 }
+            "M9 B0"         -
+            "M9 B1"         { return 0x1801C8000 }
             "Aruba A1"      { return 0x19C018000 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -167,6 +175,8 @@ namespace eval ::anya {
             "Cyprus A0"     { return 0x1000070A0 }
             "Cyprus B0"     { return 0x1000072A4 }
             "Cyprus B1"     { return 0x1000072CC }
+            "M9 B0"         -
+            "M9 B1"         { return 0x100007690 }
             "Aruba A1"      { return 0x10000796C }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -189,6 +199,8 @@ namespace eval ::anya {
             "Cyprus A0"     { return 0x10000E018 }
             "Cyprus B0"     { return 0x10000E350 }
             "Cyprus B1"     { return 0x10000E390 }
+            "M9 B0"         -
+            "M9 B1"         { return 0x10000E334 }
             "Aruba A1"      { return 0x10000ED9C }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -211,6 +223,8 @@ namespace eval ::anya {
             "Cyprus A0"     -
             "Cyprus B0"     -
             "Cyprus B1"     { return x9 }
+            "M9 B0"         -
+            "M9 B1"         { return x9 }
             "Aruba A1"      { return x9 }
             "Cebu A0"       -
             "Cebu B0"       -
@@ -233,6 +247,8 @@ namespace eval ::anya {
             "Cyprus A0"     { return 0x100006044 }
             "Cyprus B0"     -
             "Cyprus B1"     { return 0x10000616C }
+            "M9 B0"         -
+            "M9 B1"         { return 0x1000064FC }
             "Aruba A1"      { return 0x100006784 }
             "Cebu A0"       -
             "Cebu B0"       -
