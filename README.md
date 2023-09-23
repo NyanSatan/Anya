@@ -33,6 +33,7 @@ And even though Intel hosts were faster with the legacy Anya, the new one still 
 Speaking of targets - not everything is backported from the legacy one to the new as of now, but some new targets are now supported. The current full list is here:
 
 * **Cyprus A0/B1** - Apple A12
+* **Aruba A1** - Apple A12X/Z
 * **Cebu A0/B0/B1** - Apple A13
 * **Sicily B0** - Apple A14
 * **Tonga B1** - Apple M1
@@ -76,7 +77,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B1**, **Cebu**, **Sicily/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B1**, **Aruba/A1**, **Cebu**, **Sicily/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
@@ -115,7 +116,7 @@ First of all, you need to put your device into Anya mode (basically SecureROM DF
 ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 ```
 
-***Warning**: this will force reset your device! Better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or this may even potentially damage it!*
+***Warning**: this will force reset your device via `fromreset` Astris command! This will reset a SoC and catch it on the very first cycle. Other peripherals might be not so lucky though, so better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or this may even potentially damage it!*
 
 Upon successful execution you will get a log like this one:
 
