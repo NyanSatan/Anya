@@ -217,6 +217,7 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
 #endif
                 usb_core_do_transfer(EP0_IN, (uint8_t *)&sep_status_dfu, sizeof(sep_status_dfu), NULL);
 
+                return 0;
             }
         }
     }

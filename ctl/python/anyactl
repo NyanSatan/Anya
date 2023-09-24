@@ -6,11 +6,15 @@ from secrets import token_bytes
 
 from anya import *
 
+def hexint(string: str) -> int:
+    return int(string, 16)
+
 def main():
     parser = argparse.ArgumentParser(description='Decrypt some KBAG or run a benchmark')
     parser.add_argument("-k", dest="kbag", help="decrypt a KBAG")
     parser.add_argument("-b", dest="count", type=int, help="run benchmark")
-    parser.add_argument("-e", dest="ecid", type=int, help="ECID to look for")
+    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
+    parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for")
     args = parser.parse_args()
 
     if (not args.kbag and not args.count) or (args.kbag and args.count):
@@ -25,6 +29,17 @@ def main():
         print("failed to connect: %s" % str(e))
         exit(-1)
 
+    if args.sep:
+        try:
+            if not dev.ping_sep():
+                print("SEP is unreachable")
+                dev.disconnect()
+                exit(-1)
+        except AnyaError as e:
+            print("failed to ping SEP: %s" % str(e))
+            dev.disconnect()
+            exit(-1)
+
     dev.print_device()
 
     if args.kbag:
@@ -36,7 +51,7 @@ def main():
             exit(-1)
 
         try:
-            key = dev.decrypt_kbag(decoded)
+            key = dev.decrypt_kbag(decoded, sep=args.sep)
         except AnyaError as e:
             print("failed to decrypt KBAG: %s" % str(e))
             dev.disconnect()
@@ -55,7 +70,7 @@ def main():
         start = perf_counter()
 
         try:
-            dev.decrypt_kbags(kbags)
+            dev.decrypt_kbags(kbags, sep=args.sep)
         except AnyaError as e:
             print("failed to decrypt KBAG: %s" % str(e))
             dev.disconnect()

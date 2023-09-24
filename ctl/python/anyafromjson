@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
 import json
 import argparse
 from time import perf_counter
@@ -23,6 +22,7 @@ def hexint(string: str) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
     parser.add_argument("-e", dest="ecid", type=hexint, help="(hexadecimal) ECID to look for")
     parser.add_argument(dest="in_path", help="input file")
     parser.add_argument(dest="out_path", help="output file")
@@ -57,6 +57,17 @@ def main():
         print("failed to connect: %s" % str(e))
         exit(-1)
 
+    if args.sep:
+        try:
+            if not dev.ping_sep():
+                print("SEP is unreachable")
+                dev.disconnect()
+                exit(-1)
+        except AnyaError as e:
+            print("failed to ping SEP - %s" % str(e))
+            dev.disconnect()
+            exit(-1)
+
     dev.print_device()
 
     total_count = len(kbags)
@@ -82,7 +93,7 @@ def main():
     decryption_start = perf_counter()
     
     try:
-        unencoded_keys = dev.decrypt_kbags(decoded_kbags)
+        unencoded_keys = dev.decrypt_kbags(decoded_kbags, sep=args.sep)
     except AnyaError as e:
         print("couldn't decrypt: %s" % str(e))
         exit(-1)

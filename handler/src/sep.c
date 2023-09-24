@@ -23,13 +23,19 @@
 #define SEP_AES_IV_ADDR		(0x50)
 #define SEP_AES_OUT_ADDR	(0x70)
 
-static
-uint64_t (*platform_get_raw_secure_mode)() = (void *)TARGET_PLATFORM_GET_RAW_SECURE_MODE;
-
 void copy128(void *src, void *dest);
 
+/*
+ * Previously we used platform_get_raw_secure_mode() here,
+ * but unfortunately it returns something different
+ * than just a boolean on newer platforms such as Ellis
+ */
+
+static
+uint64_t (*platform_get_cpfm)() = (void *)TARGET_PLATFORM_GET_CPFM;
+
 bool sep_ping() {
-    return platform_get_raw_secure_mode() == 0;
+    return (platform_get_cpfm() & 1) == 0;
 }
 
 static int sep_read32(uint64_t address, uint32_t *value) {

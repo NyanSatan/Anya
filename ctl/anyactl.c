@@ -180,8 +180,8 @@ int main(int argc, char const *argv[]) {
     if (sep) {
         bool result = false;
 
-        if (anya_ping_sep(dev, &result) != ANYA_E_SUCCESS) {
-            printf("failed to check SEP availability\n");
+        if ((error = anya_ping_sep(dev, &result)) != ANYA_E_SUCCESS) {
+            printf("failed to check SEP availability - %s\n", anya_strerror(error));
             anya_close(&dev);
             return -1;
         }

@@ -388,6 +388,20 @@ namespace eval ::anya {
     wait_for_bp [handle_interface_request_intercept]
     ::astris::console::native::reg [handle_interface_request_intercept_reg] $payload_base
 
+    #
+    # SEP "warm up" is needed for some newer targets such as Ellis,
+    # where AP will panic for some unobvious reasons if one doesn't
+    # do this or reopen Astris after this script is done
+    #
+
+    if {[info exists env(ANYA_SEP_WARMUP)] && $::env(ANYA_SEP_WARMUP)} {
+        puts "Warming up SEP..."
+        ::astris::console::native::cpu "SEP"
+        ::astris::console::native::halt -q
+        ::astris::console::native::go
+        ::astris::console::native::cpu [main_core]
+    }
+
     wait_for_run
 
     puts "DONE!"

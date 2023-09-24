@@ -26,9 +26,13 @@ anya_close = backend.anya_close
 anya_close.restype = c_int
 anya_close.argtypes = [POINTER(c_void_p)]
 
+anya_ping_sep = backend.anya_ping_sep
+anya_ping_sep.restype = c_int
+anya_ping_sep.argtypes = [c_void_p, POINTER(c_bool)]
+
 anya_decrypt = backend.anya_decrypt
 anya_decrypt.restype = c_int
-anya_decrypt.argtypes = [c_void_p, c_void_p, c_void_p, c_size_t]
+anya_decrypt.argtypes = [c_void_p, c_void_p, c_void_p, c_size_t, c_bool]
 
 anya_reboot = backend.anya_reboot
 anya_reboot.restype = c_int

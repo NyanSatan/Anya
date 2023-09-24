@@ -55,10 +55,20 @@ class AnyaDevice:
             )
         )
 
-    def decrypt_kbags(self, kbags: list[bytes]) -> list[bytes]:
+    def ping_sep(self) -> bool:
+        sep_enabled = c_bool(False)
+
+        status = c_api.anya_ping_sep(self._connection, byref(sep_enabled))
+
+        if status != 0:
+            raise AnyaError("failed to ping SEP - %s" % str(c_api.anya_strerror(status)))
+        
+        return sep_enabled.value
+
+    def decrypt_kbags(self, kbags: list[bytes], sep: bool = False) -> list[bytes]:
         all_kbags = b''.join(kbags)
         
-        status = c_api.anya_decrypt(self._connection, all_kbags, all_kbags, len(kbags))
+        status = c_api.anya_decrypt(self._connection, all_kbags, all_kbags, len(kbags), sep)
 
         if status != 0:
             raise AnyaError("failed to decrypt - %s" % str(c_api.anya_strerror(status)))
@@ -70,8 +80,8 @@ class AnyaDevice:
 
         return result
 
-    def decrypt_kbag(self, kbag: bytes) -> bytes:
-        return self.decrypt_kbags([kbag])[0]
+    def decrypt_kbag(self, kbag: bytes, sep: bool = False) -> bytes:
+        return self.decrypt_kbags([kbag], sep)[0]
 
     def reboot(self):
         c_api.anya_reboot(self._connection)
