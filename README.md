@@ -1,4 +1,4 @@
-![](repo/anya_logo_with_girl.png)
+﻿![](repo/anya_logo_with_girl.png)
 
 *This is a deeply experimental branch of deeply experimental software, so be careful while using it and always validate results that it gives you*
 
@@ -32,21 +32,27 @@ And even though Intel hosts were faster with the legacy Anya, the new one still 
 
 Speaking of targets - not everything is backported from the legacy one to the new as of now, but some new targets are now supported. The current full list is here:
 
-* **Cyprus A0/B1** - Apple A12
+### AP
+
+* **Cyprus A0/B0/B1** - Apple A12
+* **M9 B0/B1** - Apple S4/S5
 * **Aruba A1** - Apple A12X/Z
 * **Cebu A0/B0/B1** - Apple A13
-* **Sicily B0** - Apple A14
+* **Sicily B0/B1** - Apple A14
 * **Tonga B1** - Apple M1
 * **Ellis A0/B0** - Apple A15
 * **Staten B1** - Apple M2
 
 There are also some untested targets (not built by default, but you can enable them):
 
-* **Cyprus B0** - Apple A12
 * **Sicily A0** - Apple A14
 
+### SEP
 
-***SEP** is not yet supported by this branch, but it's in the works*
+* **Cyprus A0** - Apple A12
+* **M9 B0/B1** - Apple S4/S5
+* **Sicily B1** - Apple A14
+* **Ellis A0/B0** - Apple A15
 
 ## Building
 ### Requirements
@@ -77,7 +83,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B1**, **Aruba/A1**, **Cebu**, **Sicily/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0** (disabled by default, as it's untested yet), **Sicily/B0**, **Sicily/B1**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
@@ -86,11 +92,16 @@ anya.ax
 anyactl
 libanya.dylib
 payloads/
+payloads/anya_handler.M9-B0_B1.bin
 payloads/anya_handler.Cebu.bin
 payloads/anya_handler.Ellis-A0.bin
+payloads/anya_handler.Cyprus-B0.bin
 payloads/anya_handler.Tonga-B1.bin
 payloads/anya_handler.Cyprus-B1.bin
+payloads/anya_handler.Ellis-B0.bin
 payloads/anya_handler.Cyprus-A0.bin
+payloads/anya_handler.Sicily-B1.bin
+payloads/anya_handler.Aruba-A1.bin
 payloads/anya_handler.Sicily-B0.bin
 payloads/anya_handler.Staten-B1.bin
 python/
@@ -193,15 +204,16 @@ CPID:8020 CPRV:11 CPFM:01 SCEP:01 BDID:0E IBFL:6C ECID:REDACTED SRTG:[iBoot-3865
 
 This bit is not used by iBoot/SecureROM (except for macOS iBoot, apparently), so Anya sets it to indicate a device is in Anya mode
 
-Starting from now you can use `anyactl`, usage is quite straight-forward:
+Starting from now on you can use `anyactl`, usage is quite straight-forward:
 
 ```
-noone@noones-MacBook-Air Anya % build/anyactl 
+noone@noones-MacBook-Air Anya % build/anyactl
 usage: build/anyactl ARG[s]
 
 where ARG[s] must be one of the following:
         -k KBAG specifies KBAG to be decrypted
         -b NUM  runs benchmark with NUM random KBAGs
+        -s      uses SEP GID (if possible)
 
 you can also use this one with both of the above:
         -e ECID (hexa)decimal ECID to look for
@@ -229,6 +241,24 @@ noone@noones-MacBook-Air Anya %
 ```
 
 ***Warning**: since we're using prototype devices here, you obviously need to provide a development KBAG, not production (development one usually comes second in an Image4)!*
+
+### SEP notes
+
+In this branch we no longer execute code directly on **SEPROM**, as it's painful to set up and is straight out impossible on A13+ because of boot monitor. Instead we control SEP straight from AP cores via **CoreSight** - just like Astris is doing! Still only possible on Insecure devices, obviously
+
+All the necessary code is already included in AP USB handler payload on supported platforms, so you no longer need to specify a path to SEP handler. That being said, on some platforms such as **Ellis**, you might need to also pass `ANYA_SEP_WARMUP=1` to the Astris script, otherwise AP might panic while accessing SEP
+
+Now you are all set to decrypt SEP KBAGs, or to use a benchmark - just add `-s` flag to `anyactl`:
+
+```
+noone@noones-MacBook-Air Anya % build/anyactl -s -b 1000
+found: CPID:8101 CPFM:00 ECID:REDACTED
+decrypting...
+decrypted 1000 KBAGs in 0.514751 seconds, average - 1942.686768 KBAGs/sec
+noone@noones-MacBook-Air Anya % 
+```
+
+(Yes, unfortunately SEP mode is far slower than AP)
 
 
 ## Python
@@ -258,6 +288,17 @@ except AnyaError as e:
 
 dev.print_device() # printing device CPID, CPFM and ECID
 
+sep_supported = False
+
+try:
+    if not dev.ping_sep():
+        print("SEP is unreachable")
+    else:
+      sep_supported = True
+except AnyaError as e:
+    print("failed to ping SEP: %s" % str(e))
+    exit(-1)
+
 try:
     decoded = decode_kbag(KBAG)	# decoding a KBAG string to bytes
 except AnyaValueError as e:
@@ -265,12 +306,27 @@ except AnyaValueError as e:
     exit(-1)
 
 try:
-    key = dev.decrypt_kbag(decoded)	# decrypting 
+    key = dev.decrypt_kbag(decoded, sep=IS_SEP_NEEDED)	# decrypting a single KBAG
 except AnyaError as e:
     print("failed to decrypt KBAG: %s" % str(e))
     exit(-1)
 
 print(encode_key(key, to_upper=True)) # encoding key to a string (and printing)
+
+#
+# Decrypting multiple KBAGs
+#
+
+kbags = list()
+
+for i in range(COUNT):
+    kbags.append(bytes(token_bytes(KBAG_SIZE)))
+
+try:
+    dev.decrypt_kbags(kbags, sep=IS_SEP_NEEDED)
+except AnyaError as e:
+    print("failed to decrypt KBAG: %s" % str(e))
+    exit(-1)
 
 dev.disconnect() # disconnecting
 ```
@@ -281,7 +337,7 @@ Placed in `python/` folder. There're 2 of them - **anyactl** (basically the same
 
 ```
 noone@noones-MacBook-Air Anya % LIBANYA=build/libanya.dylib build/python/anyactl 
-usage: anyactl [-h] [-k KBAG] [-b COUNT] [-e ECID]
+usage: anyactl [-h] [-k KBAG] [-b COUNT] [-s] [-e ECID]
 
 Decrypt some KBAG or run a benchmark
 
@@ -289,6 +345,7 @@ options:
   -h, --help  show this help message and exit
   -k KBAG     decrypt a KBAG
   -b COUNT    run benchmark
+  -s          use SEP GID (if possible)
   -e ECID     ECID to look for
 noone@noones-MacBook-Air Anya % 
 ```
@@ -297,7 +354,7 @@ noone@noones-MacBook-Air Anya %
 
 ```
 noone@noones-MacBook-Air Anya % LIBANYA=build/libanya.dylib build/python/anyafromjson -h
-usage: anyafromjson [-h] [-e ECID] in_path out_path
+usage: anyafromjson [-h] [-s] [-e ECID] in_path out_path
 
 a dumb utility that takes KBAGs from an input JSON
 and decrypts them with Anya. The input JSON must be
@@ -312,6 +369,7 @@ positional arguments:
 
 options:
   -h, --help  show this help message and exit
+  -s          use SEP GID (if possible)
   -e ECID     (hexadecimal) ECID to look for
 noone@noones-MacBook-Air Anya %
 ```
@@ -320,7 +378,6 @@ noone@noones-MacBook-Air Anya %
 
 * Improve build system - for the current one is really bad
 * Common offset database - so there won't be a need to duplicate some offsets/values in the Astris script and USB handlers configs
-* Bring back SEP support - gonna be a tough task on A13+, because of Secure Enclave Boot monitor that's present on these platforms
 
 ## Credits
 
@@ -328,9 +385,9 @@ noone@noones-MacBook-Air Anya %
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @P5_2005 - for a lot of tests on the devices that I don't have
 * dellaquila.federica (that's Instagram handle) - for the mascot
+* People behind **pongoOS** - for SEP AES decryption algorithm
 
 ## Legacy credits
 
 * @1nsane_dev - for a lot of tests on Cebu and Sicily
-* People behind **pongoOS** - for SEP AES decryption algorithm
 * @matteyeux - for help with SEP support for Cyprus B1 and AP support for Cebu B0
