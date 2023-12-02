@@ -49,7 +49,7 @@ There are also some untested targets (not built by default, but you can enable t
 
 ### SEP
 
-* **Cyprus A0** - Apple A12
+* **Cyprus A0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
 * **Sicily B1** - Apple A14
 * **Ellis A0/B0** - Apple A15
