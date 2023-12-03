@@ -82,6 +82,8 @@ $(TARGET_BIN): $(TARGET_MACHO)
 	@echo "\textracting binary"
 	@$(DIR_HELPER)
 	@$(VMACHO) -f $< $@
+	@echo "\tpadding binary"
+	@dd status=none if=/dev/zero bs=1 count=$$(((8 - ($$(stat -f %z $@) % 8)) % 8)) >> $@
 
 $(TARGET_MACHO): $(SOURCES)
 	@echo "\tbuilding"

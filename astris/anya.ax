@@ -340,7 +340,7 @@ namespace eval ::anya {
         wait_for_bp [before_tlb_flush]
 
         puts "Uploading USB handler..."
-        ::astris::console::native::load $payload $payload_base
+        ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
 
         mmu_rx_page_set [sram_base] $payload_base
     }
@@ -354,7 +354,7 @@ namespace eval ::anya {
         wait_for_bp [platform_setup_boot_trampoline_exit]
 
         puts "Uploading USB handler..."
-        ::astris::console::native::load $payload $payload_base
+        ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
 
         mmu_rx_page_set [sram_base] $payload_base
 
