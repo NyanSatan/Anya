@@ -114,7 +114,7 @@ python/anyafromjson
 ### Requirements
 
 * Compiled Anya
-* Astris (Azul tools or later)
+* Astris (Sky tools or later)
 
 ### Usage
 
