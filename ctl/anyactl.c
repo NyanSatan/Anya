@@ -191,6 +191,8 @@ int main(int argc, char const *argv[]) {
             anya_close(&dev);
             return -1;
         }
+
+        printf("will use SEP GID\n");
     }
 
     switch (verb) {

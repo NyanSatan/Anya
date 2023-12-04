@@ -250,6 +250,7 @@ Now you are all set to decrypt SEP KBAGs, or to use a benchmark - just add `-s` 
 ```
 noone@noones-MacBook-Air Anya % build/anyactl -s -b 1000
 found: CPID:8101 CPFM:00 ECID:REDACTED
+will use SEP GID
 decrypting...
 decrypted 1000 KBAGs in 0.514751 seconds, average - 1942.686768 KBAGs/sec
 noone@noones-MacBook-Air Anya % 

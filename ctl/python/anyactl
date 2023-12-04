@@ -29,6 +29,8 @@ def main():
         print("failed to connect: %s" % str(e))
         exit(-1)
 
+    dev.print_device()
+
     if args.sep:
         try:
             if not dev.ping_sep():
@@ -40,7 +42,7 @@ def main():
             dev.disconnect()
             exit(-1)
 
-    dev.print_device()
+        print("will use SEP GID")
 
     if args.kbag:
         try:
