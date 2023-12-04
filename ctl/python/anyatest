@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+
+import argparse
+from random import randint, seed
+from secrets import token_bytes
+import functools
+
+from anya import *
+from anya.debug import debug_early_init, Logger
+
+def hexint(string: str) -> int:
+    return int(string, 16)
+
+def main():
+    parser = argparse.ArgumentParser(description="run tests")
+    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
+    parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for")
+    args = parser.parse_args()
+
+    debug_early_init(True)
+
+    logger = Logger("MAIN")
+    logger.success("running tests")
+
+    dev = AnyaDevice(ecid=args.ecid)
+
+    try:
+        dev.connect()
+    except AnyaError as e:
+        logger.error("failed to connect: %s" % str(e))
+        exit(-1)
+
+    logger.info("found: CPID:%04X CPFM:%02X ECID:%016X" % (
+            dev.get_cpid(),
+            dev.get_cpfm(),
+            dev.get_ecid()
+        )
+    )
+
+    if args.sep:
+        try:
+            if not dev.ping_sep():
+                logger.error("SEP is unreachable")
+                dev.disconnect()
+                exit(-1)
+        except AnyaError as e:
+            logger.error("failed to ping SEP: %s" % str(e))
+            dev.disconnect()
+            exit(-1)
+
+        logger.info("will use SEP GID")
+
+    tests = [
+        functools.partial(test_ecid, dev, args.ecid),
+        functools.partial(test_kbags, dev, args.sep)
+    ]
+
+    for test in tests:
+        if not test():
+            logger.error("something FAILED, exiting")
+            dev.disconnect()
+            exit(-1)
+
+    dev.disconnect()
+
+    logger.success("DONE")
+
+MIN_KBAG_AMOUNT = 10000
+MAX_KBAG_AMOUNT = 30000
+NUM_OF_RUNS = 3
+
+def test_kbags(dev: AnyaDevice, sep: bool) -> bool:
+    logger = Logger("KBAGS")
+
+    logger.info("starting test")
+
+    for i in range(NUM_OF_RUNS):
+        logger.info("starting run no. %d" % (i + 1))
+
+        seed()
+        kbag_count = randint(MIN_KBAG_AMOUNT, MAX_KBAG_AMOUNT)
+
+        kbag = token_bytes(KBAG_SIZE)
+
+        kbags = list()
+        for _ in range(kbag_count):
+            kbags.append(kbag)
+
+        logger.debug("decrypting same KBAG %d times" % kbag_count)
+
+        keys = dev.decrypt_kbags(kbags, sep)
+
+        logger.debug("comparing...")
+
+        if len(set(keys)) != 1:
+            logger.error("OOPS, something doesn't match!")
+            return False
+        else:
+            logger.success("all match!")
+
+    return True
+
+def test_ecid(dev: AnyaDevice, target_ecid: int) -> bool:
+    logger = Logger("ECID")
+
+    logger.info("starting test")
+
+    if target_ecid is None:
+        logger.warning("no ECID requested, skipping")
+        return True
+
+    if target_ecid == dev.get_ecid():
+        logger.success("ECIDs match!")
+        return True
+    else:
+        logger.error("ECIDs do not match!")
+        return False
+    
+if __name__ == '__main__':
+    main()

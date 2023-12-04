@@ -10,7 +10,7 @@ def hexint(string: str) -> int:
     return int(string, 16)
 
 def main():
-    parser = argparse.ArgumentParser(description='Decrypt some KBAG or run a benchmark')
+    parser = argparse.ArgumentParser(description="decrypt some KBAG or run a benchmark")
     parser.add_argument("-k", dest="kbag", help="decrypt a KBAG")
     parser.add_argument("-b", dest="count", type=int, help="run benchmark")
     parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")

@@ -37,7 +37,7 @@ class AnyaDevice:
         status = c_api.anya_open(byref(self._connection), self.ecid)
 
         if status != 0:
-            raise AnyaError("failed to connect - %s" % str(c_api.anya_strerror(status)))
+            raise AnyaError(c_api.anya_strerror(status).decode())
         
         self.connected = True
 
@@ -47,11 +47,20 @@ class AnyaDevice:
 
         self.connected = False
 
+    def get_cpid(self) -> int:
+        return c_api.anya_get_cpid(self._connection)
+    
+    def get_cpfm(self) -> int:
+        return c_api.anya_get_cpfm(self._connection)
+    
+    def get_ecid(self) -> int:
+        return c_api.anya_get_ecid(self._connection)
+
     def print_device(self):
         print("found: CPID:%04X CPFM:%02X ECID:%016X" % (
-                c_api.anya_get_cpid(self._connection),
-                c_api.anya_get_cpfm(self._connection),
-                c_api.anya_get_ecid(self._connection)
+                self.get_cpid(),
+                self.get_cpfm(),
+                self.get_ecid()
             )
         )
 
@@ -61,7 +70,7 @@ class AnyaDevice:
         status = c_api.anya_ping_sep(self._connection, byref(sep_enabled))
 
         if status != 0:
-            raise AnyaError("failed to ping SEP - %s" % str(c_api.anya_strerror(status)))
+            raise AnyaError(c_api.anya_strerror(status).decode())
         
         return sep_enabled.value
 
@@ -71,7 +80,7 @@ class AnyaDevice:
         status = c_api.anya_decrypt(self._connection, all_kbags, all_kbags, len(kbags), sep)
 
         if status != 0:
-            raise AnyaError("failed to decrypt - %s" % str(c_api.anya_strerror(status)))
+            raise AnyaError(c_api.anya_strerror(status).decode())
         
         result = list()
 

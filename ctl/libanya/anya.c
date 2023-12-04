@@ -53,7 +53,7 @@ anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
     void *io_buffer = NULL;
 
     if ((irecv_ret = irecv_open_with_ecid(&client, ecid)) != IRECV_E_SUCCESS) {
-        if (irecv_ret == IRECV_E_NO_DEVICE) {
+        if (irecv_ret == IRECV_E_NO_DEVICE || irecv_ret == IRECV_E_UNABLE_TO_CONNECT) {
             return ANYA_E_NO_DEVICE;
         } else {
             return ANYA_E_UNKNOWN_ERROR;

@@ -3,18 +3,18 @@ from .exceptions import AnyaBackendError
 import os
 from ctypes import *
 
-def libanya_load():
+def libanya_load() -> CDLL:
     env = os.environ.get("LIBANYA")
     if env:
         try:
             return CDLL(env)
         except OSError:
-            raise AnyaBackendError("couldn't load backend from LIBANYA env variable")
+            raise AnyaBackendError("couldn't load backend library from LIBANYA env variable")
 
     try:
         return CDLL("libanya.dylib")
     except OSError:
-        raise AnyaBackendError("couldn't load backend library from ./libanya.dylib")
+        raise AnyaBackendError("couldn't load backend library neither from ./libanya.dylib, nor LIBANYA env variable")
 
 backend = libanya_load()
 
