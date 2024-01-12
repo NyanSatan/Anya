@@ -19,8 +19,15 @@
 #define SEP_AES_CLK_REG		(0x4)
 #define SEP_AES_CTL_REG		(0x8)
 #define SEP_AES_STS_REG		(0xC)
+
+#if WITH_SKYE_SEP_AES
+#define SEP_AES_IN_ADDR		(0x100)
+#define SEP_AES_IV_ADDR		(0x110)
+#else
 #define SEP_AES_IN_ADDR		(0x40)
 #define SEP_AES_IV_ADDR		(0x50)
+#endif
+
 #define SEP_AES_OUT_ADDR	(0x70)
 
 void copy128(void *src, void *dest);
