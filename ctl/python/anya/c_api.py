@@ -14,7 +14,7 @@ def libanya_load() -> CDLL:
     try:
         return CDLL("libanya.dylib")
     except OSError:
-        raise AnyaBackendError("couldn't load backend library neither from ./libanya.dylib, nor LIBANYA env variable")
+        raise AnyaBackendError("couldn't load backend library neither from ./libanya.dylib, nor via LIBANYA env variable")
 
 backend = libanya_load()
 

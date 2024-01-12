@@ -13,16 +13,35 @@ def hexint(string: str) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description="run tests")
-    parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
-    parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for")
+    parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for and test match")
+    parser.add_argument("-k", dest="kbags", action="store_true", help="decrypt the same KBAG many times and test match")
+    parser.add_argument("-x", dest="cross", action="store_true", help="decrypt small amounts of KBAGs via AP and SEP sequentially")
     args = parser.parse_args()
+
+    dev = AnyaDevice(ecid=args.ecid)
 
     debug_early_init(True)
 
     logger = Logger("MAIN")
-    logger.success("running tests")
 
-    dev = AnyaDevice(ecid=args.ecid)
+    tests = list()
+
+    if args.ecid:
+        tests.append(functools.partial(test_ecid, dev, args.ecid))
+
+    if args.kbags:
+        tests.append(functools.partial(test_kbags, dev, False))
+        tests.append(functools.partial(test_kbags, dev, True))
+
+    if args.cross:
+        tests.append(functools.partial(test_cross, dev))
+
+    if not tests:
+        logger.error("nothing to test!")
+        exit(-1)
+
+
+    logger.success("running tests")
 
     try:
         dev.connect()
@@ -36,24 +55,6 @@ def main():
             dev.get_ecid()
         )
     )
-
-    if args.sep:
-        try:
-            if not dev.ping_sep():
-                logger.error("SEP is unreachable")
-                dev.disconnect()
-                exit(-1)
-        except AnyaError as e:
-            logger.error("failed to ping SEP: %s" % str(e))
-            dev.disconnect()
-            exit(-1)
-
-        logger.info("will use SEP GID")
-
-    tests = [
-        functools.partial(test_ecid, dev, args.ecid),
-        functools.partial(test_kbags, dev, args.sep)
-    ]
 
     for test in tests:
         if not test():
@@ -74,6 +75,17 @@ def test_kbags(dev: AnyaDevice, sep: bool) -> bool:
 
     logger.info("starting test")
 
+    if sep:
+        try:
+            if not dev.ping_sep():
+                logger.warning("SEP is not available, skipping")
+                return True
+        except AnyaError as e:
+            logger.error("failed to ping SEP: %s" % str(e))
+            return False
+
+        logger.info("will use SEP GID")
+
     for i in range(NUM_OF_RUNS):
         logger.info("starting run no. %d" % (i + 1))
 
@@ -88,7 +100,11 @@ def test_kbags(dev: AnyaDevice, sep: bool) -> bool:
 
         logger.debug("decrypting same KBAG %d times" % kbag_count)
 
-        keys = dev.decrypt_kbags(kbags, sep)
+        try:
+            keys = dev.decrypt_kbags(kbags, sep)
+        except AnyaError as e:
+            logger.error("failed to decrypt: %s" % str(e))
+            return False
 
         logger.debug("comparing...")
 
@@ -115,6 +131,45 @@ def test_ecid(dev: AnyaDevice, target_ecid: int) -> bool:
     else:
         logger.error("ECIDs do not match!")
         return False
+    
+CROSS_NUM_OF_RUNS = 1000
+CROSS_KBAG_MIN_AMOUNT = 100
+CROSS_KBAG_MAX_AMOUNT = 500
+    
+def test_cross(dev: AnyaDevice):
+    logger = Logger("CROSS")
+
+    logger.info("starting test")
+
+    try:
+        if not dev.ping_sep():
+            logger.warning("SEP is not available, failing")
+            return False
+    except AnyaError as e:
+        logger.error("failed to ping SEP: %s" % str(e))
+        return False
+
+    for i in range(CROSS_NUM_OF_RUNS):
+        logger.info("starting run no. %d" % (i + 1))
+
+        seed()
+        kbag_count = randint(CROSS_KBAG_MIN_AMOUNT, CROSS_KBAG_MAX_AMOUNT)
+
+        kbags = list()
+        for _ in range(kbag_count):
+            kbags.append(token_bytes(KBAG_SIZE))
+
+        sep = (i % 2) == 0
+
+        logger.debug("decrypting %d random KBAGs with %s GID" % (kbag_count, "SEP" if sep else "AP"))
+
+        try:
+            dev.decrypt_kbags(kbags, sep)
+        except AnyaError as e:
+            logger.error("failed to decrypt: %s" % str(e))
+            return False
+
+    return True
     
 if __name__ == '__main__':
     main()
