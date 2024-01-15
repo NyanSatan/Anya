@@ -45,6 +45,10 @@ ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 	ifeq ($(TARGET_HAS_SKYE_SEP_AES),true)
 		OPTIONS += -DWITH_SKYE_SEP_AES=1
 	endif
+
+	ifeq ($(TARGET_NEEDS_DPA_HACK),true)
+		OPTIONS += -DWITH_DPA_HACK=1
+	endif
 endif
 
 CFLAGS += $(OPTIONS)

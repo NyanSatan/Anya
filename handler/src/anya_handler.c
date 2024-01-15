@@ -55,9 +55,23 @@ typedef enum {
 
 sep_status_t sep_status = SEP_UNKNOWN;
 
+#if WITH_DPA_HACK
+uint8_t dummy_kbag[KBAG_SIZE];
+bool ap_decrypted = false;
 #endif
 
-bool sep_status_dfu = false;
+#endif
+
+/*
+ * Older platforms (definetely Skye and Cyprus) do not like
+ * unaligned adresses passed to usb_core_do_transfer()
+ *
+ * The proper way to fix it is using out_buffer provided
+ * by SecureROM to handle_interface_request() which is
+ * for sure aligned
+ */
+
+bool __attribute__((aligned(4))) sep_status_dfu = false;
 
 /* KBAG properties */
 #define PADDING_SIZE 0x10
@@ -79,8 +93,12 @@ static int ap_decrypt_kbags(void *kbags, void *output, uint32_t count) {
         return -1;
     }
 
+#if WITH_DPA_HACK
+    ap_decrypted = true;
+#endif
+
     /* copying KBAGs back */
-    copyout(kbag_buffer, kbags, count);
+    copyout(kbag_buffer, output, count);
 
     return 0;
 }
@@ -134,6 +152,15 @@ static int anya_packet_decrypt() {
 
 #if WITH_SEP
     if (packet->flags & AnyaPacketFlagSEP) {
+
+#if WITH_DPA_HACK
+        if (!ap_decrypted) {
+            if (ap_decrypt_kbags(dummy_kbag, dummy_kbag, 1) != 0) {
+                return -1;
+            }
+        }
+#endif
+
         ret = sep_decrypt_kbags(kbags, kbags, packet->kbag_count);
     }
     else
