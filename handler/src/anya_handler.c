@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "firebloom.h"
 #include "usb.h"
 #include "aes.h"
 #include "misc.h"
@@ -89,7 +90,15 @@ static int ap_decrypt_kbags(void *kbags, void *output, uint32_t count) {
     size_t to_decrypt_size = copyin(kbags, kbag_buffer, count);
 
     /* decrypting! */
-    if (aes_crypto_cmd(kAESDecrypt, kbag_buffer, kbag_buffer, to_decrypt_size, kAESTypeGID, NULL, NULL) != 0) {
+    if (aes_crypto_cmd(
+            kAESDecrypt,
+            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, 0x100045DF0),
+            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, 0x100045DF0),
+            to_decrypt_size,
+            kAESTypeGID,
+            FIREBLOOM_NULL_PTR,
+            FIREBLOOM_NULL_PTR
+        ) != 0) {
         return -1;
     }
 
@@ -185,7 +194,9 @@ static void reset_counter() {
 }
 
 /* the main function - handles USB requests */
-int anya_handle_interface_request(struct usb_device_request *request, uint8_t **out_buffer) {
+int anya_handle_interface_request(FIREBLOOM_PTR_DECL(struct usb_device_request *, request), FIREBLOOM_PTR_DECL(uint8_t **, out_buffer)) {
+    struct usb_device_request *request = request_raw;
+
     uint8_t  bmRequestType = request->bmRequestType;
     uint8_t  bRequest      = request->bRequest;
     uint16_t wLength       = request->wLength;
@@ -193,14 +204,14 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
     if ((bmRequestType & USB_REQ_DIRECTION_MASK) == USB_REQ_HOST2DEVICE) {
         switch (bRequest) {
             case DFU_DETACH:
-                return handle_interface_request(request, out_buffer);
+                return handle_interface_request(FIREBLOOM_UNWRAP(request), FIREBLOOM_UNWRAP(out_buffer));
 
             case DFU_DNLOAD: {
                 if (*total_received + wLength > TARGET_KBAG_BUFFER_SIZE) {
                     return -1;
                 }
 
-                return handle_interface_request(request, out_buffer);
+                return handle_interface_request(FIREBLOOM_UNWRAP(request), FIREBLOOM_UNWRAP(out_buffer));
             }
 
             case DFU_CLR_STATUS:
@@ -223,14 +234,14 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
             case DFU_UPLOAD:
             case DFU_GETSTATUS:
             case DFU_GETSTATE:
-                return handle_interface_request(request, out_buffer);
+                return handle_interface_request(FIREBLOOM_UNWRAP(request), FIREBLOOM_UNWRAP(out_buffer));
 
             case ANYA_DECRYPT_KBAG: {
                 if (anya_packet_decrypt() != 0) {
                     return -1;
                 }
 
-                usb_core_do_transfer(EP0_IN, (uint8_t *)TARGET_LOADADDR, *total_received, NULL);
+                usb_core_do_transfer(EP0_IN, FIREBLOOM_PTR(TARGET_LOADADDR, TARGET_LOADADDR, TARGET_LOADADDR + TARGET_KBAG_BUFFER_SIZE, 0x100047828), *total_received, FIREBLOOM_NULL_PTR);
 
                 reset_counter();
                 return 0;
@@ -242,7 +253,7 @@ int anya_handle_interface_request(struct usb_device_request *request, uint8_t **
 #else
                 sep_status_dfu = false;
 #endif
-                usb_core_do_transfer(EP0_IN, (uint8_t *)&sep_status_dfu, sizeof(sep_status_dfu), NULL);
+                usb_core_do_transfer(EP0_IN, FIREBLOOM_PTR(&sep_status_dfu, &sep_status_dfu, (&sep_status_dfu) + 1, 0x100047828), sizeof(sep_status_dfu), FIREBLOOM_NULL_PTR);
 
                 return 0;
             }

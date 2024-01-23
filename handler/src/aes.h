@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "firebloom.h"
 
 #define KBAG_SIZE 0x30
 
@@ -18,12 +19,12 @@ enum {
 static
 int (*aes_crypto_cmd)(
     uint32_t cmd,
-    void *src,
-    void *dst,
+    FIREBLOOM_PTR_DECL(void *, src),
+    FIREBLOOM_PTR_DECL(void *, dst),
     size_t len,
     uint32_t opts,
-    const void *key,
-    void *iv
+    FIREBLOOM_PTR_DECL(void *, key),
+    FIREBLOOM_PTR_DECL(void *, iv)
 ) = (void *)TARGET_AES_CRYPTO_CMD;
 
 #endif

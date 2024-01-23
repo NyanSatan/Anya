@@ -51,6 +51,10 @@ ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 	endif
 endif
 
+ifeq ($(TARGET_HAS_FIREBLOOM),true)
+	OPTIONS += -DWITH_FIREBLOOM=1
+endif
+
 CFLAGS += $(OPTIONS)
 CFLAGS += -fno-builtin
 CFLAGS += -Os

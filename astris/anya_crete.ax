@@ -1,0 +1,376 @@
+#
+# Anya's Astris script (Crete edition)
+# 
+# Brings up device to Anya mode - basically SecureROM DFU,
+# but with custom handle_interface_request() that decrypts
+# KBAGs sent over USB
+#
+# The custom handler is at trampoline base, thus we need
+# to make that place executable
+#
+# Please note that only 16K devices are supported at this moment
+#
+
+# namespace eval ::anya {
+#     #
+#     # Data providers 
+#     #
+
+#     set soc [::astris::console::native::soc full]
+
+#     proc data_provider_error {} {
+#         variable soc
+#         error [format "failed to get \"%s\" for %s" [info level -1] $soc]
+#     }
+
+#     proc l2_page_size {} {
+#         return 0x2000000
+#     }
+
+#     proc l3_page_size {} {
+#         return 0x4000
+#     }
+
+#     proc main_core {} {
+#         variable soc
+#         switch $soc {
+#             "Crete A0"     { return PCORE0 }
+#             default  {
+#                 data_provider_error
+#             }
+#         }
+#     }
+
+#     proc sram_base {} {
+#         variable soc
+#         switch $soc {
+#             "Crete A0"     { return 0x1FC000000 }
+#             default  {
+#                 data_provider_error
+#             }
+#         }
+#     }
+
+#     proc trampoline {} {
+#         variable soc
+#         switch $soc {
+#             "Crete A0"      { return 0x1FC040000 }
+#             default  {
+#                 data_provider_error
+#             }
+#         }
+#     }
+
+#     proc platform_setup_boot_trampoline_exit {} {
+#         variable soc
+#         switch $soc {
+#             "Crete A0"      { return 0x100000680 }
+#             default  {
+#                 data_provider_error
+#             }
+#         }
+#     }
+
+#     proc arch_tlb_flush {} {
+#         variable soc
+#         switch $soc {
+#             "Crete A0"      { return 0x100013260 }
+#             default  {
+#                 data_provider_error
+#             }
+#         }
+#     }
+
+#     #
+#     # Flow routines
+#     #
+
+#     proc wait_for_state {state} {
+#         while {true} {
+#             if {[::astris::console::native::support::check_state [list $state]]} {
+#                 return
+#             } else {
+#                 after 50
+#             }
+#         }
+#     }
+
+#     proc wait_for_bp {addr} {
+#         set bp [::astris::console::native::bp set $addr]
+#         ::astris::console::native::go
+#         wait_for_state "HardwareBreak"
+#         ::astris::console::native::bp clear $bp
+#     }
+
+#     proc wait_for_run {} {
+#         ::astris::console::native::go 
+#         wait_for_state "Run"
+#     }
+
+#     #
+#     # Logic routines
+#     #
+
+#     proc mmu_l3_page_make {addr} {
+#         set addr [expr $addr >> 14]
+#         set e 0b11            
+#         set e [expr $e | 1 << 2]
+#         set e [expr $e | 0b111 << 5]
+#         set e [expr $e | 0b11 << 9]
+#         set e [expr $e | $addr << 14]
+        
+#         return $e
+#     }
+
+#     proc mmu_l3_page_entry_find {table page} {
+#         return [expr $table + $page * 8]
+#     }
+
+#     proc mmu_l3_table_find {ttbr base} {
+#         set table_entry_addr [expr $ttbr + $base / [l2_page_size] * 0x8]
+#         set table_entry [::astris::console::native::mem -64 $table_entry_addr]
+
+#         puts [format "0x%016x 0x%016x" $table_entry_addr $table_entry]
+#         return [expr $table_entry >> 14 << 14 & 0xFFFFFFFFF]
+#     }
+
+#     proc mmu_rx_page_set {base addr} {
+#         #set ttbr [::astris::console::native::reg ttbr0_el1]
+#         #set table [mmu_l3_table_find $ttbr $base]
+#         #set page_entry [mmu_l3_page_entry_find $table [expr [expr $addr - $base] / [l3_page_size]]]
+#         ::astris::console::native::mem -64 0x1FC00DFF8 [mmu_l3_page_make $addr]
+#     }
+
+#     #
+#     # Actual logic
+#     #
+
+#     if {![info exists env(ANYA_PAYLOAD)]} {
+#         error "ANYA_PAYLOAD variable not set"
+#     }
+
+#     set payload $::env(ANYA_PAYLOAD)
+#     set payload_base [trampoline]
+
+#     ::astris::console::native::cpu [main_core]
+
+#     ::astris::soc::fromreset
+
+#     puts "Clearing TBM..."
+#     ::astris::console::native::clear_lockacc [main_core]
+
+#     puts "Dealing with MMU..."
+#     wait_for_bp 0x100000680
+
+#     puts "Uploading USB handler..."
+#     ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
+#     #::astris::console::native::mem -32 0x23D2DC010 0x1
+
+#     mmu_rx_page_set [sram_base] $payload_base
+
+#     ::astris::console::native::reg lr [platform_setup_boot_trampoline_exit]
+#     ::astris::console::native::reg pc [arch_tlb_flush]
+
+#     wait_for_bp [platform_setup_boot_trampoline_exit]
+
+#     ::astris::console::native::reg pc 0x100ffc000
+
+# }
+
+namespace eval ::anya {
+
+    #
+    # Useful routines
+    #
+
+    proc wait_for_state {state} {
+        while {true} {
+            if {[::astris::console::native::support::check_state [list $state]]} {
+                return
+            } else {
+                after 100
+            }
+        }
+    }
+
+    proc wait_for_bp {addr} {
+        set bp [::astris::console::native::bp set $addr]
+        ::astris::console::native::go
+        wait_for_state "HardwareBreak"
+        ::astris::console::native::bp clear $bp
+    }
+
+    proc wait_for_run {} {
+        ::astris::console::native::go 
+        wait_for_state "Run"
+    }
+
+    proc call {addr} {
+        set pc [::astris::console::native::reg pc]
+        ::astris::console::native::reg pc $addr
+        ::astris::console::native::reg lr $pc
+        wait_for_bp $pc
+    }
+
+    #
+    # MMU routines
+    #
+
+    proc mmu_l3_page_exec_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0b11            
+        set e [expr $e | 1 << 2]
+        set e [expr $e | 0b111 << 5]
+        set e [expr $e | 0b11 << 9]
+        set e [expr $e | $addr << 14]
+        
+        return $e
+    }
+
+    proc mmu_l3_page_data_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000667
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    proc mmu_l3_page_data_pte_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000627
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    proc mmu_l2_page_io_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000469
+        set e [expr $e | $addr << 14]
+        
+        return $e
+    }
+
+    proc mmu_l3_table_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0b11            
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    if {![info exists env(ANYA_PAYLOAD)]} {
+        error "ANYA_PAYLOAD variable not set"
+    }
+
+    set payload $::env(ANYA_PAYLOAD)
+    set payload_base 0x1FC3BC000
+
+    ::astris::soc::fromreset
+    
+    puts "Clearing TBM lock..."
+    ::astris::console::native::cpu pcore0
+    ::astris::console::native::clear_lockacc pcore0
+
+    puts "Waiting for TBM to be gone..."
+    ::astris::console::native::go
+    wait_for_state "Halt"
+
+    puts "Uploading ROM..."
+    ::astris::console::native::load -memap 4 -width 8 /Users/noone/Desktop/create_a0_rom 0x1FC340000
+
+    puts "Uploading USB handler..."
+    ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
+
+    puts "Patching ROM..."
+    # no more platform_mmu_setup()
+    ::astris::console::native::mem -32 -memap 4 0x1FC36CD30 0xD503201F
+    # load area size
+    ::astris::console::native::mem -32 -memap 4 [expr 0x1FC34A8C8 + 0]  0x10000060
+    ::astris::console::native::mem -32 -memap 4 [expr 0x1FC34A8C8 + 4]  0xB9400000
+    ::astris::console::native::mem -32 -memap 4 [expr 0x1FC34A8C8 + 8]  0xD65F03C0
+    ::astris::console::native::mem -32 -memap 4 [expr 0x1FC34A8C8 + 12] 0x2DC000
+
+    puts "Clearing TTBR0 area..."
+    ::astris::console::native::load -memap 4 -width 8 /Users/noone/Desktop/zeroes 0x1FC000000
+
+    # this was too slow
+    # for {set i 0} {$i < [expr 0x20000 / 8]} {incr i} {
+    #     ::astris::console::native::mem -64 -memap 4 [expr 0x1FC000000 + $i * 8] 0x0
+    # }
+
+    puts "Creating MMU tables..."
+    # L1 to L2???
+    ::astris::console::native::mem -64 -memap 4 0x1FC000000 0x80000001FC004003
+    # ROM
+    ::astris::console::native::mem -64 -memap 4 0x1FC004400 0x80000001FC00C003
+    # SRAM
+    ::astris::console::native::mem -64 -memap 4 0x1FC0047F0 0x80000001FC008003
+
+    # ROM
+    for {set i 0} {$i < [expr 0x80000 / 0x4000]} {incr i} {
+        set pa [expr 0x1FC340000 + $i * 0x4000]
+        set entry [expr 0x1FC00C000 + $i * 8]
+
+        puts [format "writing ROM entry 0x%016x" $entry]
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_exec_make $pa]
+        
+    }
+
+    # SRAM
+    for {set i 0} {$i < [expr 0x3C0000 / 0x4000]} {incr i} {
+        set pa [expr 0x1FC000000 + $i * 0x4000]
+        set entry [expr 0x1FC008000 + $i * 8]
+
+        puts [format "writing SRAM entry 0x%016x" $entry]
+        if {$i < 8} {
+            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_pte_make $pa]
+        } elseif {$i >= 18 && $i < 21} {
+            ::astris::console::native::mem -64 -memap 4 $entry 0x0
+        } else {
+            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_make $pa]
+        }
+    }
+
+    # IO
+    for {set i 0} {$i < 0x3E} {incr i} {
+        set pa [expr 0x200000000 + $i * 0x2000000]
+        set entry [expr 0x1FC004800 + $i * 8]
+
+        puts [format "writing IO entry 0x%016x" $entry]
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l2_page_io_make $pa]
+        
+    }
+
+    ::astris::console::native::reg mair_el1  0x04400FF04
+    ::astris::console::native::reg ttbr0_el1 0x1FC000000
+    ::astris::console::native::reg tcr_el1   0x36596a516
+
+
+    puts "Jumping to ROM..."
+    ::astris::console::native::reg pc 0x100000000
+
+
+    puts "Enabling MMU..."
+    ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
+
+    wait_for_bp 0x10002CD34
+    ::astris::console::native::mem -64 -memap 4 0x1fc0340c8 0x1fc010000
+
+    puts "Hooking boot_selected\(\)..."
+    wait_for_bp 0x1000007D0
+    ::astris::console::native::reg x0 6
+
+    puts "Patching iBoot flags..."
+    wait_for_bp 0x10000A08C
+    ::astris::console::native::reg x0 [expr [::astris::console::native::reg x0] | [expr 1 << 6]]
+
+    puts "Overriding USB handler ptr..."
+    wait_for_bp 0x1000224B4
+    ::astris::console::native::reg x16 0x10007c000
+
+    ::astris::console::native::go
+    wait_for_state "Run"
+
+    puts "DONE!"
+}
