@@ -1,4 +1,6 @@
-﻿![](repo/anya_logo_with_girl.png)
+﻿# It is the legacy branch of Anya, better give a try to the new one which is currently in `main`, unless you you need Tonga A0 or Turks B0 support
+
+![](repo/anya_logo_with_girl.png)
 
 ***It's a beta, so be extremely careful when using this software and always validate results it gives you***
 
