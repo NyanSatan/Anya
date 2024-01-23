@@ -1,6 +1,6 @@
 ﻿![](repo/anya_logo_with_girl.png)
 
-*This is a deeply experimental branch of deeply experimental software, so be careful while using it and always validate results that it gives you*
+*This is a deeply experimental version of deeply experimental software, so be careful while using it and always validate results that it gives you*
 
 **Anya** is a KBAG decryption kit for JTAGable prototypes
 
