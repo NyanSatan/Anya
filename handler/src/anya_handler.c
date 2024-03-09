@@ -92,8 +92,8 @@ static int ap_decrypt_kbags(void *kbags, void *output, uint32_t count) {
     /* decrypting! */
     if (aes_crypto_cmd(
             kAESDecrypt,
-            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, 0x100045DF0),
-            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, 0x100045DF0),
+            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, TARGET_FIREBLOOM_KBAG_TYPE),
+            FIREBLOOM_PTR(kbag_buffer, kbag_buffer, kbag_buffer + to_decrypt_size, TARGET_FIREBLOOM_KBAG_TYPE),
             to_decrypt_size,
             kAESTypeGID,
             FIREBLOOM_NULL_PTR,
@@ -241,7 +241,18 @@ int anya_handle_interface_request(FIREBLOOM_PTR_DECL(struct usb_device_request *
                     return -1;
                 }
 
-                usb_core_do_transfer(EP0_IN, FIREBLOOM_PTR(TARGET_LOADADDR, TARGET_LOADADDR, TARGET_LOADADDR + TARGET_KBAG_BUFFER_SIZE, 0x100047828), *total_received, FIREBLOOM_NULL_PTR);
+                usb_core_do_transfer(
+                    EP0_IN,
+                    FIREBLOOM_PTR_CASTED(
+                        void *,
+                        TARGET_LOADADDR,
+                        TARGET_LOADADDR,
+                        TARGET_LOADADDR + TARGET_KBAG_BUFFER_SIZE,
+                        TARGET_FIREBLOOM_BYTE_TYPE
+                    ),
+                    *total_received,
+                    FIREBLOOM_NULL_PTR
+                );
 
                 reset_counter();
                 return 0;
@@ -253,7 +264,18 @@ int anya_handle_interface_request(FIREBLOOM_PTR_DECL(struct usb_device_request *
 #else
                 sep_status_dfu = false;
 #endif
-                usb_core_do_transfer(EP0_IN, FIREBLOOM_PTR(&sep_status_dfu, &sep_status_dfu, (&sep_status_dfu) + 1, 0x100047828), sizeof(sep_status_dfu), FIREBLOOM_NULL_PTR);
+                usb_core_do_transfer(
+                    EP0_IN,
+                    FIREBLOOM_PTR_CASTED(
+                        uint8_t *,
+                        &sep_status_dfu,
+                        &sep_status_dfu,
+                        (&sep_status_dfu) + 1,
+                        TARGET_FIREBLOOM_BYTE_TYPE
+                    ),
+                    sizeof(sep_status_dfu),
+                    FIREBLOOM_NULL_PTR
+                );
 
                 return 0;
             }
