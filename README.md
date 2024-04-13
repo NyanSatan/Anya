@@ -1,12 +1,12 @@
 ﻿![](repo/anya_logo_with_girl.png)
 
-*This is a deeply experimental branch of deeply experimental software, so be careful while using it and always validate results that it gives you*
+*This is a deeply experimental version of deeply experimental software, so be careful while using it and always validate results that it gives you*
 
 **Anya** is a KBAG decryption kit for JTAGable prototypes
 
-## About this branch
+## About the new version
 
-This branch (`future`) is designed to be far easier to compile and far faster to decrypt KBAGs than the legacy one (which is currently `main`)
+This version (originally was developed in branch `future`) is designed to be far easier to compile and far faster to decrypt KBAGs than the legacy one (which used to be `main` and now is `legacy`)
 
 You no longer need LLVM toolchain to build it, it is replaced with a modern **Xcode** and a little utility from Siguza - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c)
 
@@ -49,10 +49,14 @@ Speaking of targets - not everything is backported from the legacy one to the ne
 * **Skye A0** - Apple A11
 * **Cyprus A0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
-* **Cebu A0** - Apple A13
-* **Sicily A0/B0/B1** - Apple A14
-* **Tonga B1** - Apple M1
+* **Sicily A0/B1** - Apple A14
 * **Ellis A0/B0** - Apple A15
+
+Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
+
+* **Cebu** - Apple A13
+* **Sicily B0** - Apple A14
+* **Tonga B1** - Apple M1
 * **Staten B1** - Apple M2
 
 ## Building
@@ -245,9 +249,11 @@ noone@noones-MacBook-Air Anya %
 
 ***Warning**: since we're using prototype devices here, you obviously need to provide a development KBAG, not production (development one usually comes second in an Image4)!*
 
+***Important note for those who uses precompiled releases**: I obviously do not have Apple developer account to properly sign the tools and libraries, so in case you cannot run them due to quarantine restrictions, you can fix it by running `xattr -cr` against the root of the uncompressed archive*
+
 ### SEP notes
 
-In this branch we no longer execute code directly on **SEPROM**, as it's painful to set up and is straight out impossible on A13+ because of boot monitor. Instead we control SEP straight from AP cores via **CoreSight** - just like Astris is doing! Still only possible on Insecure devices, obviously
+In this version we no longer execute code directly on **SEPROM**, as it's painful to set up and is straight out impossible on A13+ because of boot monitor. Instead we control SEP straight from AP cores via **CoreSight** - just like Astris is doing! Still only possible on Insecure devices, obviously
 
 All the necessary code is already included in AP USB handler payload on supported platforms, so you no longer need to specify a path to SEP handler. That being said, on some platforms such as **Ellis**, you might need to also pass `ANYA_SEP_WARMUP=1` to the Astris script, otherwise AP might panic while accessing SEP
 
