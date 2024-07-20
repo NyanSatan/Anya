@@ -14,6 +14,7 @@ PACKAGE_FILE = $(PACKAGE_DIR)/Anya.zip
 
 ASTRIS_DIR = astris
 ASTRIS_TARGET = $(ASTRIS_DIR)/anya.ax
+ASTRIS_CRETE_TARGET = $(ASTRIS_DIR)/anya_crete.ax
 
 CTL_DIR = ctl
 CTL_BUILD_TARGET = $(CTL_DIR)/build/anyactl
@@ -43,8 +44,9 @@ package: astris ctl handler python
 
 astris:
 	@$(DIR_HELPER)
-	@echo "%%%%%% copying the Astris script"
+	@echo "%%%%%% copying the Astris scripts"
 	@cp -a $(ASTRIS_TARGET) $(BUILD_DIR)
+	@cp -a $(ASTRIS_CRETE_TARGET) $(BUILD_DIR)
 
 ctl:
 	@echo "%%%%%% building the control utility and library"
