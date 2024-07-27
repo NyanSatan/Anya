@@ -41,7 +41,7 @@ Speaking of targets - not everything is backported from the legacy one to the ne
 * **Cebu A0/B0/B1** - Apple A13
 * **Sicily A0/B0/B1** - Apple A14
 * **Tonga B1** - Apple M1
-* **Ellis A0/B0** - Apple A15
+* **Ellis A0/B0/B1** - Apple A15
 * **Staten B1** - Apple M2
 
 ### SEP
@@ -50,7 +50,7 @@ Speaking of targets - not everything is backported from the legacy one to the ne
 * **Cyprus A0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
 * **Sicily A0/B1** - Apple A14
-* **Ellis A0/B0** - Apple A15
+* **Ellis A0/B0/B1** - Apple A15
 
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
@@ -88,7 +88,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1** and **Staten/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
@@ -104,7 +104,7 @@ payloads/anya_handler.Ellis-A0.bin
 payloads/anya_handler.Cyprus-B0.bin
 payloads/anya_handler.Tonga-B1.bin
 payloads/anya_handler.Cyprus-B1.bin
-payloads/anya_handler.Ellis-B0.bin
+payloads/anya_handler.Ellis-B0_B1.bin
 payloads/anya_handler.Cyprus-A0.bin
 payloads/anya_handler.Sicily-B1.bin
 payloads/anya_handler.Aruba-A1.bin

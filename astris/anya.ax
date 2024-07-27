@@ -49,7 +49,8 @@ namespace eval ::anya {
             "Sicily B1"     { return ECORE0 }
             "Tonga B1"      { return ECORE0 }
             "Ellis A0"      -
-            "Ellis B0"      { return ECORE0 }
+            "Ellis B0"      -
+            "Ellis B1"      { return ECORE0 }
             "Staten B1"     { return ECORE0 }
             default  {
                 data_provider_error
@@ -64,6 +65,7 @@ namespace eval ::anya {
             "Tonga B1"  -
             "Ellis A0"  -
             "Ellis B0"  -
+            "Ellis B1"  -
             "Staten B1" { return 1 }
             default     { return 0 }
         }
@@ -78,7 +80,8 @@ namespace eval ::anya {
         switch $soc {
             "Tonga B1"      { return 0x100007B44 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x1000078C4 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x1000078C4 }
             "Staten B1"     { return 0x100008674 }
             default  {
                 data_provider_error
@@ -91,7 +94,8 @@ namespace eval ::anya {
         switch $soc {
             "Tonga B1"      { return 0x1000004D0 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x100000554 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x100000554 }
             "Staten B1"     { return 0x100000554 }
             default  {
                 data_provider_error
@@ -143,7 +147,8 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x1FC000000 }
             "Tonga B1"      { return 0x1FC000000 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x1FC000000 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x1FC000000 }
             "Staten B1"     { return 0x1FC000000 }
             default  {
                 data_provider_error
@@ -169,7 +174,8 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x1FC02C000 }
             "Tonga B1"      { return 0x1FC02C000 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x1FC02C000 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x1FC02C000 }
             "Staten B1"     { return 0x1FC02C000 }
             default  {
                 data_provider_error
@@ -195,7 +201,8 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x100008464 }
             "Tonga B1"      { return 0x100008B88 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x10000883C }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x10000883C }
             "Staten B1"     { return 0x1000095EC }
             default  {
                 data_provider_error
@@ -221,7 +228,8 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x1000124A0 }
             "Tonga B1"      { return 0x100012FEC }
             "Ellis A0"      { return 0x100013EC8 }
-            "Ellis B0"      { return 0x1000140E4 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x1000140E4 }
             "Staten B1"     { return 0x100015170 }
             default  {
                 data_provider_error
@@ -247,7 +255,8 @@ namespace eval ::anya {
             "Sicily B1"     { return x9 }
             "Tonga B1"      { return x9 }
             "Ellis A0"      -
-            "Ellis B0"      { return x16 }
+            "Ellis B0"      -
+            "Ellis B1"      { return x16 }
             "Staten B1"     { return x16 }
             default  {
                 data_provider_error
@@ -273,7 +282,8 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x100006F18 }
             "Tonga B1"      { return 0x100007578 }
             "Ellis A0"      -
-            "Ellis B0"      { return 0x100007344 }
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x100007344 }
             "Staten B1"     { return 0x100008144 }
             default  {
                 data_provider_error
