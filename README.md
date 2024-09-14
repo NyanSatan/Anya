@@ -2,9 +2,49 @@
 
 *This is a deeply experimental version of deeply experimental software, so be careful while using it and always validate results that it gives you*
 
-**Anya** is a KBAG decryption kit for JTAGable prototypes
+**Anya** is a KBAG decryption kit for JTAGgable iDevice prototypes - lets you decrypt **iBoot** & **SEP** firmwares that Apple keeps encrypting (for whatever reasons)
 
-## About the new version
+**iBoot** is no longer encrypted since iOS 18 beta 4, **SEPOS** still remains encrypted as of mid-September 2024  
+
+## SoC support
+
+### AP
+
+* **Skye A0** - Apple A11
+* **Cyprus A0/B0/B1** - Apple A12
+* **M9 B0/B1** - Apple S4/S5
+* **Aruba A1** - Apple A12X/Z
+* **Cebu A0/B0/B1** - Apple A13
+* **Sicily A0/B0/B1** - Apple A14
+* **Turks A0** - Apple S6/S7/S8
+* **Tonga B1** - Apple M1
+* **Ellis A0/B0/B1** - Apple A15
+* **Staten B1** - Apple M2
+
+### SEP
+
+* **Skye A0** - Apple A11
+* **Cyprus A0/B1** - Apple A12
+* **M9 B0/B1** - Apple S4/S5
+* **Sicily A0/B1** - Apple A14
+* **Turks A0** - Apple S6/S7/S8
+* **Ellis A0/B0/B1** - Apple A15
+
+Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
+
+* **Cebu** - Apple A13
+* **Sicily B0** - Apple A14
+* **Tonga B1** - Apple M1
+* **Staten B1** - Apple M2
+
+
+
+## Changelog
+<details>
+
+### Beta 7
+
+Major rework
 
 This version (originally was developed in branch `future`) is designed to be far easier to compile and far faster to decrypt KBAGs than the legacy one (which used to be `main` and now is `legacy`)
 
@@ -30,34 +70,38 @@ decrypted 10000 KBAGs in 0.496268 seconds, average - 20150.402344 KBAGs/sec
 
 And even though Intel hosts were faster with the legacy Anya, the new one still beats it even there. Speed-up may vary from 3x and up to 20x depending on the host+target combination
 
-Speaking of targets - not everything is backported from the legacy one to the new as of now, but some new targets are now supported. The current full list is here:
 
-### AP
+### Beta 6
 
-* **Skye A0** - Apple A11
-* **Cyprus A0/B0/B1** - Apple A12
-* **M9 B0/B1** - Apple S4/S5
-* **Aruba A1** - Apple A12X/Z
-* **Cebu A0/B0/B1** - Apple A13
-* **Sicily A0/B0/B1** - Apple A14
-* **Tonga B1** - Apple M1
-* **Ellis A0/B0/B1** - Apple A15
-* **Staten B1** - Apple M2
+* Added support for the following SoCs:
+    * **Cebu B0**
+    * **Tonga A0**
+    * **Turks B0**
 
-### SEP
+### Beta 5
 
-* **Skye A0** - Apple A11
-* **Cyprus A0/B1** - Apple A12
-* **M9 B0/B1** - Apple S4/S5
-* **Sicily A0/B1** - Apple A14
-* **Ellis A0/B0/B1** - Apple A15
+* Initial release with SEP support for **Cyprus B1** and **M9 B0/B1**
 
-Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
+### Beta 4
 
-* **Cebu** - Apple A13
-* **Sicily B0** - Apple A14
-* **Tonga B1** - Apple M1
-* **Staten B1** - Apple M2
+* Support for **Cyprus B0**
+
+### Beta 3
+
+* Support for **Sicily A0**
+
+### Beta 2
+
+* Python API & tools initial release
+
+### Beta 1
+
+* Initial release. The following SoCs are supported:
+    * **Cyprus B1**
+    * **M9 B0/B1**
+    * **Cebu B1**
+
+</details>
 
 ## Building
 ### Requirements
@@ -88,7 +132,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1** and **Staten/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
@@ -111,6 +155,7 @@ payloads/anya_handler.Aruba-A1.bin
 payloads/anya_handler.Sicily-B0.bin
 payloads/anya_handler.Staten-B1.bin
 payloads/anya_handler.Sicily-A0.bin
+payloads/anya_handler.Turks-A0.bin
 python/
 python/anyactl
 python/anya/
