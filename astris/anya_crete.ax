@@ -573,7 +573,7 @@ namespace eval ::anya {
         ::astris::console::native::cpu [main_core]
     }
 
-    wait_for_state "Run"
-
+    wait_for_run
+    
     puts "DONE!"
 }
