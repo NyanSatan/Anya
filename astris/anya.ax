@@ -47,7 +47,8 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return ECORE0 }
-            "Turks A0"      { return CPU0 }
+            "Turks A0"      -
+            "Turks B0"      { return CPU0 }
             "Tonga B1"      { return ECORE0 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -134,6 +135,7 @@ namespace eval ::anya {
             "Sicily B0"     { return 0x10000C544 }
             "Sicily B1"     { return 0x10000C884 }
             "Turks A0"      { return 0x10000D114 }
+            "Turks B0"      { return 0x10000CDA4 }
             default  {
                 data_provider_error
             }
@@ -156,7 +158,8 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return 0x1FC000000 }
-            "Turks A0"      { return 0x180000000 }
+            "Turks A0"      -
+            "Turks B0"      { return 0x180000000 }
             "Tonga B1"      { return 0x1FC000000 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -184,7 +187,8 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return 0x1FC02C000 }
-            "Turks A0"      { return 0x1803A0000 }
+            "Turks A0"      -
+            "Turks B0"      { return 0x1803A0000 }
             "Tonga B1"      { return 0x1FC02C000 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -213,6 +217,7 @@ namespace eval ::anya {
             "Sicily B0"     { return 0x1000083B4 }
             "Sicily B1"     { return 0x100008464 }
             "Turks A0"      { return 0x100009338 }
+            "Turks B0"      { return 0x100008E64 }
             "Tonga B1"      { return 0x100008B88 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -242,6 +247,7 @@ namespace eval ::anya {
             "Sicily B1"     { return 0x1000124A0 }
             "Tonga B1"      { return 0x100012FEC }
             "Turks A0"      { return 0x10001240C }
+            "Turks B0"      { return 0x1000121A0 }
             "Ellis A0"      { return 0x100013EC8 }
             "Ellis B0"      -
             "Ellis B1"      { return 0x1000140E4 }
@@ -268,7 +274,8 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     { return x9 }
             "Sicily B1"     { return x9 }
-            "Turks A0"      { return x9 }
+            "Turks A0"      -
+            "Turks B0"      { return x9 }
             "Tonga B1"      { return x9 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -284,6 +291,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Turks A0" { return 0x100001864 }
+            "Turks B0" { return 0x100001884 }
             default    { return 0 }
         }
     }
@@ -291,7 +299,8 @@ namespace eval ::anya {
     proc override_boot_selector_reg {} {
         variable soc
         switch $soc {
-            "Turks A0" { return x20 }
+            "Turks A0" -
+            "Turks B0" { return x20 }
             default    {
                 data_provider_error
             }
@@ -301,7 +310,8 @@ namespace eval ::anya {
     proc override_boot_selector_value {} {
         variable soc
         switch $soc {
-            "Turks A0" { return 10 }
+            "Turks A0" -
+            "Turks B0" { return 10 }
             default    {
                 data_provider_error
             }
@@ -325,6 +335,7 @@ namespace eval ::anya {
             "Sicily B0"     { return 0x100006EA4 }
             "Sicily B1"     { return 0x100006F18 }
             "Turks A0"      { return 0x100007DAC }
+            "Turks B0"      { return 0x100007898 }
             "Tonga B1"      { return 0x100007578 }
             "Ellis A0"      -
             "Ellis B0"      -
