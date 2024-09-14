@@ -47,6 +47,7 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return ECORE0 }
+            "Turks A0"      { return CPU0 }
             "Tonga B1"      { return ECORE0 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -55,6 +56,15 @@ namespace eval ::anya {
             default  {
                 data_provider_error
             }
+        }
+    }
+
+    proc needs_reconnect_after_fromreset {} {
+        variable soc
+
+        switch $soc {
+            "Turks A0" { return 1 }
+            default    { return 0 }
         }
     }
 
@@ -123,6 +133,7 @@ namespace eval ::anya {
             "Sicily A0"     { return 0x10000CBD4 }
             "Sicily B0"     { return 0x10000C544 }
             "Sicily B1"     { return 0x10000C884 }
+            "Turks A0"      { return 0x10000D114 }
             default  {
                 data_provider_error
             }
@@ -145,6 +156,7 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return 0x1FC000000 }
+            "Turks A0"      { return 0x180000000 }
             "Tonga B1"      { return 0x1FC000000 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -172,6 +184,7 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     -
             "Sicily B1"     { return 0x1FC02C000 }
+            "Turks A0"      { return 0x1803A0000 }
             "Tonga B1"      { return 0x1FC02C000 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -199,6 +212,7 @@ namespace eval ::anya {
             "Sicily A0"     { return 0x100008898 }
             "Sicily B0"     { return 0x1000083B4 }
             "Sicily B1"     { return 0x100008464 }
+            "Turks A0"      { return 0x100009338 }
             "Tonga B1"      { return 0x100008B88 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -227,6 +241,7 @@ namespace eval ::anya {
             "Sicily B0"     { return 0x10001205C }
             "Sicily B1"     { return 0x1000124A0 }
             "Tonga B1"      { return 0x100012FEC }
+            "Turks A0"      { return 0x10001240C }
             "Ellis A0"      { return 0x100013EC8 }
             "Ellis B0"      -
             "Ellis B1"      { return 0x1000140E4 }
@@ -253,12 +268,41 @@ namespace eval ::anya {
             "Sicily A0"     -
             "Sicily B0"     { return x9 }
             "Sicily B1"     { return x9 }
+            "Turks A0"      { return x9 }
             "Tonga B1"      { return x9 }
             "Ellis A0"      -
             "Ellis B0"      -
             "Ellis B1"      { return x16 }
             "Staten B1"     { return x16 }
             default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc override_boot_selector_addr {} {
+        variable soc
+        switch $soc {
+            "Turks A0" { return 0x100001864 }
+            default    { return 0 }
+        }
+    }
+
+    proc override_boot_selector_reg {} {
+        variable soc
+        switch $soc {
+            "Turks A0" { return x20 }
+            default    {
+                data_provider_error
+            }
+        }
+    }
+
+    proc override_boot_selector_value {} {
+        variable soc
+        switch $soc {
+            "Turks A0" { return 10 }
+            default    {
                 data_provider_error
             }
         }
@@ -280,6 +324,7 @@ namespace eval ::anya {
             "Sicily A0"     { return 0x100007370 }
             "Sicily B0"     { return 0x100006EA4 }
             "Sicily B1"     { return 0x100006F18 }
+            "Turks A0"      { return 0x100007DAC }
             "Tonga B1"      { return 0x100007578 }
             "Ellis A0"      -
             "Ellis B0"      -
@@ -390,9 +435,19 @@ namespace eval ::anya {
     set payload $::env(ANYA_PAYLOAD)
     set payload_base [trampoline]
 
-    ::astris::console::native::cpu [main_core]
-
     ::astris::soc::fromreset
+
+    #
+    # Some cursed targets like Turks A0
+    # would reconnect for a bit after fromreset
+    #
+
+    if {[needs_reconnect_after_fromreset]} {
+        after 100
+        ::astris::console::native::explore    
+    }
+
+    ::astris::console::native::cpu [main_core]
 
     if {![is_mmu_late_deal]} {
         mmu_deal_early
@@ -404,6 +459,18 @@ namespace eval ::anya {
 
     if {[is_mmu_late_deal]} {
         mmu_deal_late
+    }
+
+    #
+    # Some cursed targets like Turks A0
+    # enforce RSM DFU by default, so we want
+    # to override it back to good ole USB DFU
+    #
+
+    if {[override_boot_selector_addr]} {
+        puts "Overriding boot selector..."
+        wait_for_bp [override_boot_selector_addr]
+        ::astris::console::native::reg [override_boot_selector_reg] [override_boot_selector_value]
     }
 
     puts "Patching iBoot flags..."
