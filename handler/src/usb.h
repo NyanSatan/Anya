@@ -21,16 +21,16 @@ struct usb_device_request {
 
 static
 int (*handle_interface_request)(
-    struct usb_device_request *request,
-    uint8_t **out_buffer
+    FIREBLOOM_PTR_DECL(struct usb_device_request *, request),
+    FIREBLOOM_PTR_DECL(uint8_t **, out_buffer)
 ) = (void *)TARGET_HANDLE_INTERFACE_REQUEST;
 
 static
 void (*usb_core_do_transfer)(
     int endpoint,
-    uint8_t *buffer,
+    FIREBLOOM_PTR_DECL(uint8_t *, buffer),
     int length,
-    void (*callback)(void *)
+    FIREBLOOM_PTR_DECL(void *, callback)
 ) = (void *)TARGET_USB_CORE_DO_TRANSFER;
 
 static

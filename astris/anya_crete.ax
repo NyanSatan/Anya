@@ -1,0 +1,579 @@
+#
+# Anya's Astris script (Crete edition)
+# 
+# Brings up device to Anya mode - basically SecureROM DFU,
+# but with custom handle_interface_request() that decrypts
+# KBAGs sent over USB
+#
+# The Crete edition is very different from the original one,
+# the general idea is the following:
+#
+# 0) As usual fromreset 
+# 1) Unlock TBM
+# 2) Dump the ROM
+# 3) Hook start of an iBoot
+# 4) Reupload the ROM to the end of SRAM
+# 5) Create page tables in the way ROM is at its' usual VA
+# 6) Patch the ROM to skip MMU configuration
+#    and to always return smaller load area size
+# 7) Upload the payload somewhere after the ROM
+# 8) Configure and enable MMU, fix iBoot metadata
+# 9) Hook boot_selected() in order to enable normal USB DFU
+# 10) Hook iBoot flags and handle_interface_request() as usual
+#
+
+namespace eval ::anya {
+
+    #
+    # Constants
+    #
+
+    proc l2_page_size {} {
+        return 0x2000000
+    }
+
+    proc l3_page_size {} {
+        return 0x4000
+    }
+
+    proc rom_len {} {
+        return 0x80000
+    }
+
+    proc ttbr0_len {} {
+        return 0x20000
+    }
+
+    #
+    # Data providers 
+    #
+
+    set soc [::astris::console::native::soc full]
+
+    proc data_provider_error {} {
+        variable soc
+        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
+    }
+
+    proc main_core {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return PCORE0 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc rom_base {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x100000000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc sram_base {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x1FC000000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+    
+    proc sram_len {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x3C0000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc io_base {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x200000000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc io_page_count {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x3E }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc rom_base_new_pa {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x1FC340000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_mmu_setup_call_relative {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     { return 0x2CD30 }
+            "Crete B1"     { return 0x2F244 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_loadarea_get_size_relative {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     { return 0xA8C8 }
+            "Crete B1"     { return 0xA720 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc loadarea_new_size {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x2DC000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc unmapped_page_range_start {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 18 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc unmapped_page_range_end {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 21 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc new_mair_el1 {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x04400FF04 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc new_tcr_el1 {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x36596A516 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc mmu_metadata_hook {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     { return 0x10002CD34 }
+            "Crete B1"     { return 0x10002F248 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc mmu_metadata_addr {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x1FC0340C8 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc mmu_metadata_new_value {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x1FC010000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc boot_selected_hook {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x1000007D0 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc boot_selected_new_value {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return 0x6 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_iboot_flags_ret {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     { return 0x10000A08C }
+            "Crete B1"     { return 0x100009EE4 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_hook {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     { return 0x1000224B4 }
+            "Crete B1"     { return 0x100023D84 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_hook_reg {} {
+        variable soc
+        switch $soc {
+            "Crete A0"     -
+            "Crete B1"     { return x16 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+
+    #
+    # Random string generator function
+    # https://wiki.tcl-lang.org/page/Generating+random+strings
+    #
+
+    proc randomRangeString {length {chars "0123456789ABCDEF"}} {
+        set range [expr {[string length $chars]-1}]
+
+        set txt ""
+        for {set i 0} {$i < $length} {incr i} {
+            set pos [expr {int(rand()*$range)}]
+            append txt [string range $chars $pos $pos]
+        }
+        return $txt
+    }
+
+    #
+    # Flow routines
+    #
+
+    proc wait_for_state {state} {
+        while {true} {
+            if {[::astris::console::native::support::check_state [list $state]]} {
+                return
+            } else {
+                after 50
+            }
+        }
+    }
+
+    proc wait_for_bp {addr} {
+        set bp [::astris::console::native::bp set $addr]
+        ::astris::console::native::go
+        wait_for_state "HardwareBreak"
+        ::astris::console::native::bp clear $bp
+    }
+
+    proc wait_for_run {} {
+        ::astris::console::native::go 
+        wait_for_state "Run"
+    }
+
+    proc call {addr} {
+        set pc [::astris::console::native::reg pc]
+        ::astris::console::native::reg pc $addr
+        ::astris::console::native::reg lr $pc
+        wait_for_bp $pc
+    }
+
+    #
+    # MMU routines
+    #
+
+    proc mmu_l2_l3_table_find {ttbr base} {
+        return [expr $ttbr + $base / [l2_page_size] * 0x8]
+    }
+
+    proc mmu_l3_page_exec_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0b11            
+        set e [expr $e | 1 << 2]
+        set e [expr $e | 0b111 << 5]
+        set e [expr $e | 0b11 << 9]
+        set e [expr $e | $addr << 14]
+        
+        return $e
+    }
+
+    proc mmu_l3_page_data_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000667
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    proc mmu_l3_page_data_ttbr_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000627
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    proc mmu_l2_page_io_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0x60000000000469
+        set e [expr $e | $addr << 14]
+        
+        return $e
+    }
+
+    proc mmu_l1_l2_table_make {addr} {
+        set addr [expr $addr >> 14]
+        set e 0b11
+        set e [expr $e | 0x1 << 63]
+        set e [expr $e | $addr << 14]
+
+        return $e
+    }
+
+    #
+    # Actual logic
+    #
+
+    if {![info exists env(ANYA_PAYLOAD)]} {
+        error "ANYA_PAYLOAD variable not set"
+    }
+
+    set random [randomRangeString 16]
+
+    set payload $::env(ANYA_PAYLOAD)
+    set payload_base [expr [rom_base_new_pa] + [rom_len] - [l3_page_size]]
+
+    ::astris::soc::fromreset
+    ::astris::console::native::cpu [main_core]
+
+    # For Dawn/Sunburst tools we gotta use this command,
+    # because clear_lockacc doesn't catch iBoot start anymore
+    #
+    # For Sydney we just use good ole clear_lockacc
+    puts "Clearing TBM lock..."
+    catch {
+        ::astris::console::native::tbm iboot
+    } err
+    
+    if {$err ne ""} {
+        ::astris::console::native::clear_lockacc [main_core]
+    }
+
+    set rom_path [format "/tmp/rom-%s" $random]
+
+    catch {
+        puts "Dumping ROM..."
+        ::astris::console::native::save -memap 4 -width 8 $rom_path [rom_base] [rom_len]
+
+        puts "Waiting for TBM to be gone..."
+        ::astris::console::native::go
+        wait_for_state "Halt"
+
+        puts "Uploading ROM..."
+        ::astris::console::native::load -memap 4 -width 8 $rom_path [rom_base_new_pa]
+
+    } err
+
+    file delete $rom_path
+    
+    if {$err ne ""} {
+        error "Something bad happened while dumping or reuploading ROM, code: " $err
+    }
+
+    puts "Uploading USB handler..."
+    ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
+
+    puts "Patching ROM..."
+    # no more platform_mmu_setup() - bl -> nop
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_mmu_setup_call_relative]] 0xD503201F
+    # load area size
+    # adr x0, 0xc
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 0]  0x10000060
+    # ldr w0, [x0]
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 4]  0xB9400000
+    # ret
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 8]  0xD65F03C0
+    # dcw new_size
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 12] [loadarea_new_size]
+
+    set zeroes_path [format "/tmp/zeroes-%s" $random]
+    set zeroes_chan [open $zeroes_path w]
+    puts -nonewline $zeroes_chan [string repeat "\0" [ttbr0_len]]
+    close $zeroes_chan
+
+    catch {
+        puts "Clearing TTBR0 area..."
+        ::astris::console::native::load -memap 4 -width 8 $zeroes_path [sram_base]
+    } err
+
+    file delete $zeroes_path
+
+    if {$err ne ""} {
+        error "Something bad happened while clearing TTBR0 area, code: " $err
+    }
+    
+    # this was too slow
+    # for {set i 0} {$i < [expr 0x20000 / 8]} {incr i} {
+    #     ::astris::console::native::mem -64 -memap 4 [expr 0x1FC000000 + $i * 8] 0x0
+    # }
+
+    puts "Creating MMU tables..."
+    # L1 to L2???
+    set l2_pages [expr [sram_base] + [l3_page_size] * 1]
+    ::astris::console::native::mem -64 -memap 4 [sram_base] [mmu_l1_l2_table_make $l2_pages]
+    # ROM
+    set rom_pages_l3 [expr [sram_base] + [l3_page_size] * 3]
+    ::astris::console::native::mem -64 -memap 4 [mmu_l2_l3_table_find $l2_pages [rom_base]] [mmu_l1_l2_table_make $rom_pages_l3]
+    # SRAM
+    set sram_pages_l3 [expr [sram_base] + [l3_page_size] * 2]
+    ::astris::console::native::mem -64 -memap 4 [mmu_l2_l3_table_find $l2_pages [sram_base]] [mmu_l1_l2_table_make $sram_pages_l3]
+
+    # ROM
+    set rom_page_count [expr [rom_len] / [l3_page_size]]
+    for {set i 0} {$i < $rom_page_count} {incr i} {
+        set pa [expr [rom_base_new_pa] + $i * [l3_page_size]]
+        set entry [expr $rom_pages_l3 + $i * 8]
+
+        puts [format "writing ROM entry 0x%016x" $entry]
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_exec_make $pa]
+    }
+
+    # SRAM
+    set sram_page_count [expr [sram_len] / [l3_page_size]]
+    set ttbr0_page_count [expr [ttbr0_len] / [l3_page_size]]
+    for {set i 0} {$i < $sram_page_count} {incr i} {
+        set pa [expr [sram_base] + $i * [l3_page_size]]
+        set entry [expr $sram_pages_l3 + $i * 8]
+
+        puts [format "writing SRAM entry 0x%016x" $entry]
+        if {$i < $ttbr0_page_count} {
+            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_ttbr_make $pa]
+        } elseif {$i >= [unmapped_page_range_start] && $i < [unmapped_page_range_end]} {
+            ::astris::console::native::mem -64 -memap 4 $entry 0x0
+        } else {
+            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_make $pa]
+        }
+    }
+
+    # IO
+    set io_pages_l2 [mmu_l2_l3_table_find $l2_pages [io_base]]
+    for {set i 0} {$i < [io_page_count]} {incr i} {
+        set pa [expr [io_base] + $i * [l2_page_size]]
+        set entry [expr $io_pages_l2 + $i * 8]
+
+        puts [format "writing IO entry 0x%016x" $entry]
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l2_page_io_make $pa]
+    }
+
+    puts "Jumping to ROM..."
+    ::astris::console::native::reg pc [rom_base]
+
+    puts "Enabling MMU..."
+    ::astris::console::native::reg mair_el1  [new_mair_el1]
+    ::astris::console::native::reg ttbr0_el1 [sram_base]
+    ::astris::console::native::reg tcr_el1   [new_tcr_el1]
+    ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
+
+    puts "Fixing up MMU metadata..."
+    wait_for_bp [mmu_metadata_hook]
+    ::astris::console::native::mem -64 -memap 4 [mmu_metadata_addr] [mmu_metadata_new_value] 
+
+    puts "Hooking boot_selected\(\)..."
+    wait_for_bp [boot_selected_hook]
+    ::astris::console::native::reg x0 [boot_selected_new_value]
+
+    puts "Patching iBoot flags..."
+    wait_for_bp [platform_get_iboot_flags_ret]
+    ::astris::console::native::reg x0 [expr [::astris::console::native::reg x0] | [expr 1 << 6]]
+
+    puts "Overriding USB handler ptr..."
+    wait_for_bp [handle_interface_request_hook]
+    ::astris::console::native::reg [handle_interface_request_hook_reg] [expr [rom_base] + [rom_len] - [l3_page_size]]
+
+    #
+    # SEP "warm up" is needed for Crete B1,
+    # where AP will panic for some unobvious reasons if one doesn't
+    # do this or reopen Astris after this script is done
+    #
+
+    if {[info exists env(ANYA_SEP_WARMUP)] && $::env(ANYA_SEP_WARMUP)} {
+        puts "Warming up SEP..."
+        ::astris::console::native::cpu "SEP"
+        ::astris::console::native::halt -q
+        ::astris::console::native::go
+        ::astris::console::native::cpu [main_core]
+    }
+
+    wait_for_state "Run"
+
+    puts "DONE!"
+}
