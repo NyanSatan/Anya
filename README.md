@@ -16,10 +16,11 @@
 * **Aruba A1** - Apple A12X/Z
 * **Cebu A0/B0/B1** - Apple A13
 * **Sicily A0/B0/B1** - Apple A14
-* **Turks A0** - Apple S6/S7/S8
+* **Turks A0/B0** - Apple S6/S7/S8
 * **Tonga B1** - Apple M1
 * **Ellis A0/B0/B1** - Apple A15
 * **Staten B1** - Apple M2
+* **Crete A0/B1** - Apple A16
 
 ### SEP
 
@@ -27,8 +28,9 @@
 * **Cyprus A0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
 * **Sicily A0/B1** - Apple A14
-* **Turks A0** - Apple S6/S7/S8
+* **Turks A0/B0** - Apple S6/S7/S8
 * **Ellis A0/B0/B1** - Apple A15
+* **Crete A0/B1** - Apple A16
 
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
@@ -41,6 +43,15 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 ## Changelog
 <details>
+
+### Beta 8
+
+* Added **Crete A0/B1** support
+    * Pay attention to use `anya_crete.ax` script for these platforms
+
+* Added **Turks A0/B0** support
+
+* Added **Ellis B1** support
 
 ### Beta 7
 
@@ -132,7 +143,7 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9 B0/B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1** and **Staten/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9/B0_B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Turks/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1**, **Staten/B1**, **Crete/A0** and **Crete/B1**
 
 In the end you'll get a structure like this in the `build/` folder:
 
@@ -147,12 +158,15 @@ payloads/anya_handler.Cebu.bin
 payloads/anya_handler.Ellis-A0.bin
 payloads/anya_handler.Cyprus-B0.bin
 payloads/anya_handler.Tonga-B1.bin
+payloads/anya_handler.Crete-B1.bin
 payloads/anya_handler.Cyprus-B1.bin
 payloads/anya_handler.Ellis-B0_B1.bin
 payloads/anya_handler.Cyprus-A0.bin
 payloads/anya_handler.Sicily-B1.bin
 payloads/anya_handler.Aruba-A1.bin
+payloads/anya_handler.Crete-A0.bin
 payloads/anya_handler.Sicily-B0.bin
+payloads/anya_handler.Turks-B0.bin
 payloads/anya_handler.Staten-B1.bin
 payloads/anya_handler.Sicily-A0.bin
 payloads/anya_handler.Turks-A0.bin
@@ -178,6 +192,8 @@ First of all, you need to put your device into Anya mode (basically SecureROM DF
 ```
 ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 ```
+
+For **Crete** targets (A16) use `anya_crete.ax`
 
 ***Warning**: this will force reset your device via `fromreset` Astris command! This will reset a SoC and catch it on the very first cycle. Other peripherals might be not so lucky though, so better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or this may even potentially damage it!*
 
@@ -300,7 +316,7 @@ noone@noones-MacBook-Air Anya %
 
 In this version we no longer execute code directly on **SEPROM**, as it's painful to set up and is straight out impossible on A13+ because of boot monitor. Instead we control SEP straight from AP cores via **CoreSight** - just like Astris is doing! Still only possible on Insecure devices, obviously
 
-All the necessary code is already included in AP USB handler payload on supported platforms, so you no longer need to specify a path to SEP handler. That being said, on some platforms such as **Ellis**, you might need to also pass `ANYA_SEP_WARMUP=1` to the Astris script, otherwise AP might panic while accessing SEP
+All the necessary code is already included in AP USB handler payload on supported platforms, so you no longer need to specify a path to SEP handler. That being said, on some platforms such as **Ellis** and **Crete B1**, you might need to also pass `ANYA_SEP_WARMUP=1` to the Astris script, otherwise AP might panic while accessing SEP
 
 Now you are all set to decrypt SEP KBAGs, or to use a benchmark - just add `-s` flag to `anyactl`:
 
