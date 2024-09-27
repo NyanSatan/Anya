@@ -17,7 +17,7 @@
 # 6) Patch the ROM to skip MMU configuration
 #    and to always return smaller load area size
 # 7) Upload the payload somewhere after the ROM
-# 8) Configure and enable MMU, fix iBoot metadata
+# 8) Configure and enable MMU, fix MMU's driver metadata
 # 9) Hook boot_selected() in order to enable normal USB DFU
 # 10) Hook iBoot flags and handle_interface_request() as usual
 #
