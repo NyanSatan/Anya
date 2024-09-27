@@ -29,16 +29,15 @@
 * **M9 B0/B1** - Apple S4/S5
 * **Sicily A0/B1** - Apple A14
 * **Turks A0/B0** - Apple S6/S7/S8
+* **Tonga B1** - Apple M1
 * **Ellis A0/B0/B1** - Apple A15
+* **Staten B1** - Apple M2
 * **Crete A0/B1** - Apple A16
 
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
 * **Cebu** - Apple A13
 * **Sicily B0** - Apple A14
-* **Tonga B1** - Apple M1
-* **Staten B1** - Apple M2
-
 
 
 ## Changelog
@@ -52,6 +51,8 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 * Added **Turks A0/B0** support
 
 * Added **Ellis B1** support
+
+* Enabled SEP support for **Tonga B1** & **Staten B1**
 
 ### Beta 7
 
