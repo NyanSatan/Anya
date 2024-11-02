@@ -400,6 +400,147 @@ namespace eval ::anya {
     }
 
     #
+    # Sky tools fallback operations
+    #
+
+    # stupid way to do such thing,
+    # but I didn't find a better one, so...
+    proc is_sky_tools {} {
+        return [expr [string first "Sky" [::astris::primitive::version]] != -1]
+    }
+
+    proc poll_disable {} {
+        ::astris::console::poll off [main_core]
+    }
+
+    proc poll_enable {} {
+        ::astris::console::poll [main_core]
+    }
+
+    proc dbgwrap_resume {} {
+        set dbgwrap_reg [expr [::astris::primitive::cpuinfo [main_core] address] + 0x30000]
+        ::astris::console::native::mem \
+            -64 \
+            -memap 4 \
+            $dbgwrap_reg \
+            0x40000000
+    }
+
+    # totally not stolen from SydneyB Astris with comments removed
+    # and function name words swapped
+    proc tbm_poll {R_AP_TBM_ONLY_CTL_STS R_TMM_STATUS_INIT} {
+        variable memap_system $::astris::soc::memap_system
+
+        set TMM_STATUS_DONE 0x2f
+        set count 0
+        set max_count 20
+        set val 0
+
+        set res [catch {::astris::soc::memapr -ap $memap_system $R_AP_TBM_ONLY_CTL_STS} tbm_en]
+        if {$res != 0} {
+            puts "Read R_AP_TBM_ONLY_CTL_STS failed with $res"
+        } else {
+            if {$tbm_en != 2} {
+                while {($val != $TMM_STATUS_DONE) && $count < $max_count} {
+                    set res [catch {::astris::soc::memapr -ap $memap_system $R_TMM_STATUS_INIT} val]
+                    if {$res != 0} {
+                        puts "Read R_TMM_STATUS_INIT failed with: $res"
+                        break
+                    }
+                    incr count 1
+                    after 100
+                }
+                if {$count == $max_count} {
+                    error "Timed out waiting for TBM init"
+                }
+            }
+        }
+    }
+
+    proc clear_kis_warmreset {} {
+        variable memap_debug          $::astris::soc::memap_debug
+        variable R_DCM_GATEWAY_STATUS $::astris::soc::R_DCM_GATEWAY_STATUS
+
+        set res [catch {::astris::soc::memapr -ap $memap_debug $R_DCM_GATEWAY_STATUS} gateway_status]
+        if {$res != 0} {
+            puts "Failed to read DCM gateway, continuing anyway..."
+            return
+        }
+
+        catch {::astris::soc::memapw -ap $memap_debug $R_DCM_GATEWAY_STATUS $gateway_status}
+
+        set res [catch {::astris::soc::memapr -ap $memap_debug $R_DCM_GATEWAY_STATUS} gateway_status]
+        if {$res != 0} {
+            puts "Failed to read DCM gateway after clearing warm reset, continuing anyway..."
+            return
+        }
+    }
+
+    proc fromreset_sky {} {
+        # no, I don't really know damn Tcl
+        variable R_DBG_RESET_WARM       $::astris::soc::R_DBG_RESET_WARM
+        variable R_DBG_HOLD_CORE_RESETS $::astris::soc::R_DBG_HOLD_CORE_RESETS
+        variable R_DCM_GATEWAY_STATUS   $::astris::soc::R_DCM_GATEWAY_STATUS
+
+        variable memap_debug  $::astris::soc::memap_debug
+        variable memap_system $::astris::soc::memap_system
+
+        puts "Fromresetting device..."
+
+        # disabling all polling
+        set nopoll $::astris::console::cpu_monitor_nopoll
+        set ::astris::console::cpu_monitor_nopoll all
+
+        # soft_reset_hold_warm stage
+        ::astris::soc::memapw -ap $memap_debug $R_DBG_HOLD_CORE_RESETS 1
+        ::astris::soc::memapw -ap $memap_debug $R_DBG_RESET_WARM 1
+
+        after 100
+
+        # soft_reset_release_catch stage
+        set main_core_edecr [expr [::astris::primitive::cpuinfo [main_core] address] + 0x24]
+
+        ::astris::soc::memapw -ap $memap_system $main_core_edecr 2
+        ::astris::soc::memapw -ap $memap_debug $R_DBG_HOLD_CORE_RESETS 0
+
+        # waiting for TBM, otherwise it will reset
+        set R_AP_TBM_ONLY_CTL_STS 0x23d2ec020
+        set R_TMM_STATUS_INIT     0x23d2bf008
+        tbm_poll $R_AP_TBM_ONLY_CTL_STS $R_TMM_STATUS_INIT
+
+        # it doesn't seem to go through, but let's leave it anyway
+        ::astris::soc::memapw -ap $memap_system $main_core_edecr 0
+
+        clear_kis_warmreset
+
+        # restoring polling
+        set ::astris::console::cpu_monitor_nopoll $nopoll
+    }
+
+    proc clear_lockacc_sky {} {
+        variable memap_system $::astris::soc::memap_system
+
+        # clearing the bit that's not even set, but it's still needed for some reason
+        set everest_tbm_reg 0x211E449F8
+        ::astris::console::native::mem \
+            -64 \
+            -memap $memap_system \
+            $everest_tbm_reg \
+            [expr \
+                [::astris::console::native::mem \
+                    -64 \
+                    -memap $memap_system \
+                    $everest_tbm_reg \
+                ] \
+                & ~0x8000000000000000 \
+            ]
+
+        # putting reset catch back
+        set main_core_edecr [expr [::astris::primitive::cpuinfo [main_core] address] + 0x24]
+        ::astris::soc::memapw -ap $memap_system $main_core_edecr 2
+    }
+
+    #
     # Actual logic
     #
 
@@ -407,25 +548,40 @@ namespace eval ::anya {
         error "ANYA_PAYLOAD variable not set"
     }
 
+    set are_we_in_the_sky [is_sky_tools]
+
     set random [randomRangeString 16]
 
     set payload $::env(ANYA_PAYLOAD)
     set payload_base [expr [rom_base_new_pa] + [rom_len] - [l3_page_size]]
 
-    ::astris::soc::fromreset
+    if {$are_we_in_the_sky} {
+        puts "Sky tools detected, falling back to our own implementations of fromreset & TBM lock clearing"
+        fromreset_sky
+    } else {
+        ::astris::soc::fromreset
+    }
+    
     ::astris::console::native::cpu [main_core]
 
     # For Dawn/Sunburst tools we gotta use this command,
     # because clear_lockacc doesn't catch iBoot start anymore
     #
     # For Sydney we just use good ole clear_lockacc
+    #
+    # Damn Sky doesn't have clear_lockacc exported to Tcl,
+    # so we use our own implementation
     puts "Clearing TBM lock..."
     catch {
         ::astris::console::native::tbm iboot
     } err
     
     if {$err ne ""} {
-        ::astris::console::native::clear_lockacc [main_core]
+        if {$are_we_in_the_sky} {
+            clear_lockacc_sky
+        } else {
+            ::astris::console::native::clear_lockacc [main_core]
+        }
     }
 
     set rom_path [format "/tmp/rom-%s" $random]
@@ -435,7 +591,19 @@ namespace eval ::anya {
         ::astris::console::native::save -memap 4 -width 8 $rom_path [rom_base] [rom_len]
 
         puts "Waiting for TBM to be gone..."
-        ::astris::console::native::go
+        if {$are_we_in_the_sky} {
+            # all this gymnastics is required because otherwise
+            # it just goes powered off and reboots to DFU
+            poll_disable
+            dbgwrap_resume
+            after 750
+            ::astris::console::native::explore
+            poll_enable
+            ::astris::console::native::cpu [main_core]
+        } else {
+            ::astris::console::native::go
+        }
+
         wait_for_state "Halt"
 
         puts "Uploading ROM..."

@@ -334,6 +334,12 @@ noone@noones-MacBook-Air Anya %
 
 ***Important note**: Astris needs to be not running if you wanna use SEP GID, as it will interfere*
 
+### Crete (A16) notes
+
+For Apple A16 targets use `anya_crete.ax` script instead of usual `anya.ax`. `ANYA_SEP_WARMUP=1` variable might be required in some cases. Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot 
+
+Sky tools have very limited support for Crete, however `anya_crete.ax` provides fallback functions to make execution of the script possible
+
 
 ## Python
 ### Requirements
