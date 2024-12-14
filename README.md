@@ -43,6 +43,10 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 ## Changelog
 <details>
 
+### Beta 9
+
+* Added fallback operations in `anya_crete.ax` for missing/broken ones in Sky tools' Astris
+
 ### Beta 8
 
 * Added **Crete A0/B1** support
