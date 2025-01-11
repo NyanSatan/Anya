@@ -34,6 +34,7 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return CPU0 }
             "Skye A0"       -
             "Cyprus A0"     -
             "Cyprus B0"     -
@@ -66,6 +67,15 @@ namespace eval ::anya {
         switch $soc {
             "Turks A0" { return 1 }
             default    { return 0 }
+        }
+    }
+
+    proc needs_reconnect_after_bp {} {
+        variable soc
+
+        switch $soc {
+            "Gibraltar B0"  { return 1 }
+            default         { return 0 }
         }
     }
 
@@ -121,6 +131,7 @@ namespace eval ::anya {
     proc before_tlb_flush {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x1000016F4 }
             "Skye A0"       { return 0x1000016F4 }
             "Cyprus A0"     -
             "Cyprus B0"     -
@@ -145,6 +156,7 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x180000000 }
             "Skye A0"       { return 0x180000000 }
             "Cyprus A0"     -
             "Cyprus B0"     -
@@ -174,6 +186,7 @@ namespace eval ::anya {
     proc trampoline {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x180018000 }
             "Skye A0"       { return 0x180018000 }
             "Cyprus A0"     { return 0x19C1C8000 }
             "Cyprus B0"     -
@@ -203,6 +216,7 @@ namespace eval ::anya {
     proc platform_get_force_dfu_ret {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x100006098 }
             "Skye A0"       { return 0x100007BA4 }
             "Cyprus A0"     { return 0x1000070A0 }
             "Cyprus B0"     { return 0x1000072A4 }
@@ -232,6 +246,7 @@ namespace eval ::anya {
     proc handle_interface_request_intercept {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x10000BFA8 }
             "Skye A0"       { return 0x10000BBD0 }
             "Cyprus A0"     { return 0x10000E018 }
             "Cyprus B0"     { return 0x10000E350 }
@@ -261,6 +276,7 @@ namespace eval ::anya {
     proc handle_interface_request_intercept_reg {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return x8 }
             "Skye A0"       { return x8 }
             "Cyprus A0"     -
             "Cyprus B0"     -
@@ -321,6 +337,7 @@ namespace eval ::anya {
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
+            "Gibraltar B0"  { return 0x100005654 }
             "Skye A0"       { return 0x100007010 }
             "Cyprus A0"     { return 0x100006044 }
             "Cyprus B0"     -
@@ -363,7 +380,24 @@ namespace eval ::anya {
 
     proc wait_for_bp {addr} {
         set bp [::astris::console::native::bp set $addr]
-        ::astris::console::native::go
+
+        # Gibraltar B0 loses connection
+        # when we let CPU go after setting breakpoint
+
+        if {[needs_reconnect_after_bp]} {
+            puts "\[wait_for_bp\] Applying Gibraltar workaround"
+
+            catch {
+                ::astris::console::native::go
+            }
+
+            ::astris::console::native::explore    
+            ::astris::console::native::cpu [main_core]
+            
+        } else {
+            ::astris::console::native::go
+        }
+
         wait_for_state "HardwareBreak"
         ::astris::console::native::bp clear $bp
     }

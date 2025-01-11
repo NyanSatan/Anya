@@ -49,6 +49,10 @@ ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 	ifeq ($(TARGET_NEEDS_DPA_HACK),true)
 		OPTIONS += -DWITH_DPA_HACK=1
 	endif
+
+	ifeq ($(TARGET_HAS_SEP32),true)
+		OPTIONS += -DWITH_SEP32=1
+	endif
 endif
 
 ifeq ($(TARGET_HAS_FIREBLOOM),true)
@@ -79,7 +83,11 @@ SOURCE_ROOT = src
 SOURCES = $(SOURCE_ROOT)/anya_handler.c $(SOURCE_ROOT)/copy.S
 
 ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
-	SOURCES += $(SOURCE_ROOT)/time.c $(SOURCE_ROOT)/dbgwrap.c $(SOURCE_ROOT)/coresight.c $(SOURCE_ROOT)/sep.c
+	SOURCES += $(SOURCE_ROOT)/time.c $(SOURCE_ROOT)/coresight.c $(SOURCE_ROOT)/sep.c
+
+	ifneq ($(TARGET_HAS_SEP32),true)
+		SOURCES += $(SOURCE_ROOT)/dbgwrap.c
+	endif
 endif
 
 BUILD_ROOT = build
