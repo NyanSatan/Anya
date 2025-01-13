@@ -18,7 +18,12 @@
 #endif
 
 #define SEP_AES_BLK			0x10
-#define SEP_AES_KEY 		0x20A
+
+#if WITH_ALCATRAZ_SEP_AES
+    #define SEP_AES_KEY 0x20D
+#else
+    #define SEP_AES_KEY 0x20A
+#endif
 
 #define SEP_AES_CLK_REG		(0x4)
 #define SEP_AES_CTL_REG		(0x8)

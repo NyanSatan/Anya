@@ -1,0 +1,199 @@
+#
+# Anya's Astris script (4K edition)
+# 
+# Brings up device to Anya mode - basically SecureROM DFU,
+# but with custom handle_interface_request() that decrypts
+# KBAGs sent over USB
+#
+# This is for older platforms such as Alcatraz,
+# where we don't even have WXN, so it's even easier
+#
+
+namespace eval ::anya {
+    #
+    # Data providers 
+    #
+
+    set soc [::astris::console::native::soc full]
+    set rev [::astris::console::native::soc rev]
+
+    proc data_provider_error {} {
+        variable soc
+        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
+    }
+
+    proc main_core {} {
+        return CPU0
+    }
+
+    proc before_tlb_flush {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"   { return 0x100009F34 }
+            "Alcatraz B0"   -
+            "Alcatraz B1"   { return 0x10000A074 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc trampoline {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"  { return 0x1800E0000 }
+            "Alcatraz B0"   -
+            "Alcatraz B1"  { return 0x1800E0000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_force_dfu_ret {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"  { return 0x100006498 }
+            "Alcatraz B0"   -
+            "Alcatraz B1"  { return 0x100006650 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"  { return 0x10000CC14 }
+            "Alcatraz B0"   -
+            "Alcatraz B1"  { return 0x10000CF7C }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept_reg {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"  { return x1 }
+            "Alcatraz B0"   -
+            "Alcatraz B1"  { return x1 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_iboot_flags_ret {} {
+        variable soc
+        switch $soc {
+            "Alcatraz A0"  { return 0x10000D9FC }
+            "Alcatraz B0"   -
+            "Alcatraz B1"  { return 0x10000DDB4 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    #
+    # Flow routines
+    #
+
+    proc wait_for_state {state} {
+        while {true} {
+            if {[::astris::console::native::support::check_state [list $state]]} {
+                return
+            } else {
+                after 50
+            }
+        }
+    }
+
+    proc wait_for_bp {addr} {
+        set bp [::astris::console::native::bp set $addr]
+        ::astris::console::native::go
+        wait_for_state "HardwareBreak"
+        ::astris::console::native::bp clear $bp
+    }
+
+    proc wait_for_run {} {
+        ::astris::console::native::go 
+        wait_for_state "Run"
+    }
+
+    #
+    # Alcatraz A0/B0 fromreset reimplementation
+    #
+
+    proc early_alcatraz_fromreset {} {
+        variable DBGWRAP                0xCF001000
+        variable DBG_HOLD_CORE_RESETS   [expr $DBGWRAP + 0x08]
+        variable DBG_RESET_WARM         [expr $DBGWRAP + 0x04]
+
+        set cpu0_base [::astris::primitive::cpuinfo CPU0 address]
+
+        # disabling polling
+        set nopoll $::astris::console::cpu_monitor_nopoll
+        set ::astris::console::cpu_monitor_nopoll all
+
+        # soft_reset_hold_warm stage
+        ::astris::utils::memapw -ap 1 $DBG_HOLD_CORE_RESETS 1
+        ::astris::utils::memapw -ap 1 $DBG_RESET_WARM 1
+        after 100
+
+        # soft_reset_rev_warm stage
+        ::astris::soc::fuse_load_workaround
+
+        # soft_reset_release_catch stage
+        ::astris::utils::memapw -ap 1 [expr $cpu0_base + 0x24] 2
+        ::astris::utils::memapw -ap 1 $DBG_HOLD_CORE_RESETS 0
+        ::astris::utils::memapw -ap 1 [expr $cpu0_base + 0x24] 0
+
+        # soft_reset_rev_final stage
+        ::astris::explore
+    }
+
+    #
+    # Actual logic
+    #
+
+    if {![info exists env(ANYA_PAYLOAD)]} {
+        error "ANYA_PAYLOAD variable not set"
+    }
+
+    set payload $::env(ANYA_PAYLOAD)
+    set payload_base [trampoline]
+
+    if {$rev ne "B1"} {
+        puts "Applying Alcatraz A0/B0 fromreset fix-ups..."
+        early_alcatraz_fromreset
+    } else {
+        ::astris::soc::fromreset
+    }
+
+    ::astris::console::native::cpu [main_core]
+
+    wait_for_bp [before_tlb_flush]
+
+    puts "Uploading USB handler..."
+    ::astris::console::native::load -memap 4 $payload $payload_base
+
+    puts "Forcing DFU..."
+    wait_for_bp [platform_get_force_dfu_ret]
+    ::astris::console::native::reg x0 0x1
+
+    puts "Patching iBoot flags..."
+    wait_for_bp [platform_get_iboot_flags_ret]
+    ::astris::console::native::reg x0 [expr [::astris::console::native::reg x0] | [expr 1 << 6]]
+
+    puts "Overriding USB handler ptr..."
+    wait_for_bp [handle_interface_request_intercept]
+    ::astris::console::native::reg [handle_interface_request_intercept_reg] $payload_base
+
+    wait_for_run
+
+    puts "DONE!"
+}

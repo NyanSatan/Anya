@@ -3,7 +3,7 @@
 # Someday I'll fix it, I promise
 #
 
-VALID_HANDLER_TARGETS ?= Gibraltar/B0 Skye/A0 Cyprus/A0 Cyprus/B0 Cyprus/B1 M9/B0_B1 Aruba/A1 Cebu Sicily/A0 Sicily/B0 Sicily/B1 Turks/A0 Turks/B0 Tonga/B1 Ellis/A0 Ellis/B0_B1 Staten/B1 Crete/A0 Crete/B1
+VALID_HANDLER_TARGETS ?= Alcatraz/A0 Gibraltar/B0 Skye/A0 Cyprus/A0 Cyprus/B0 Cyprus/B1 M9/B0_B1 Aruba/A1 Cebu Sicily/A0 Sicily/B0 Sicily/B1 Turks/A0 Turks/B0 Tonga/B1 Ellis/A0 Ellis/B0_B1 Staten/B1 Crete/A0 Crete/B1
 PYTHON ?= python3
 
 
@@ -14,6 +14,7 @@ PACKAGE_FILE = $(PACKAGE_DIR)/Anya.zip
 
 ASTRIS_DIR = astris
 ASTRIS_TARGET = $(ASTRIS_DIR)/anya.ax
+ASTRIS_4K_TARGET = $(ASTRIS_DIR)/anya_4k.ax
 ASTRIS_CRETE_TARGET = $(ASTRIS_DIR)/anya_crete.ax
 
 CTL_DIR = ctl
@@ -47,6 +48,7 @@ astris:
 	@echo "%%%%%% copying the Astris scripts"
 	@cp -a $(ASTRIS_TARGET) $(BUILD_DIR)
 	@cp -a $(ASTRIS_CRETE_TARGET) $(BUILD_DIR)
+	@cp -a $(ASTRIS_4K_TARGET) $(BUILD_DIR)
 
 ctl:
 	@echo "%%%%%% building the control utility and library"

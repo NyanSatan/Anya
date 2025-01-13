@@ -46,6 +46,10 @@ ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 		OPTIONS += -DWITH_SKYE_SEP_AES=1
 	endif
 
+	ifeq ($(TARGET_HAS_ALCATRAZ_SEP_AES),true)
+		OPTIONS += -DWITH_ALCATRAZ_SEP_AES=1
+	endif
+
 	ifeq ($(TARGET_NEEDS_DPA_HACK),true)
 		OPTIONS += -DWITH_DPA_HACK=1
 	endif
