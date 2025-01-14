@@ -72,7 +72,7 @@ bool ap_decrypted = false;
  * for sure aligned
  */
 
-bool __attribute__((aligned(4))) sep_status_dfu = false;
+bool __attribute__((aligned(64))) sep_status_dfu = false;
 
 /* KBAG properties */
 #define PADDING_SIZE 0x10

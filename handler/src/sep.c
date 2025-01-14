@@ -126,4 +126,3 @@ int sep_decrypt_kbags(void *kbags, void *output, uint32_t count) {
 
     return 0;
 }
-
