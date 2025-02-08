@@ -3,7 +3,7 @@
 # Someday I'll fix it, I promise
 #
 
-VALID_HANDLER_TARGETS ?= Alcatraz/A0 Gibraltar/B0 Skye/A0 Cyprus/A0 Cyprus/B0 Cyprus/B1 M9/B0_B1 Aruba/A1 Cebu Sicily/A0 Sicily/B0 Sicily/B1 Turks/A0 Turks/B0 Tonga/B1 Ellis/A0 Ellis/B0_B1 Staten/B1 Crete/A0 Crete/B1
+VALID_HANDLER_TARGETS ?= Alcatraz/A0 Alcatraz/B0 Gibraltar/B0 Skye/A0 Cyprus/A0 Cyprus/B0 Cyprus/B1 M9/B0_B1 Aruba/A1 Cebu Sicily/A0 Sicily/B0 Sicily/B1 Turks/A0 Turks/B0 Tonga/B1 Ellis/A0 Ellis/B0_B1 Staten/B1 Crete/A0 Crete/B1
 PYTHON ?= python3
 
 
