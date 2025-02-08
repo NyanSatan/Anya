@@ -24,10 +24,6 @@
 
 void coresight_start(uintptr_t cpu_base) {
     *(volatile uint32_t *)(cpu_base + CORESIGHT_REG_DBGLAR) = CORESIGHT_LOCK_ACCESS_KEY;
-
-#if WITH_SEP32
-    *(volatile uint32_t *)(cpu_base + CORESIGHT_REG_EDSCR) |= CORESIGHT_EDSCR_ITREN;
-#endif
 }
 
 int coresight_feed_insn(uintptr_t cpu_base, uint32_t insn, uint64_t timeout) {
@@ -119,23 +115,25 @@ int coresight_write(uintptr_t cpu_base, uint64_t value, uint64_t timeout) {
 
 #if WITH_SEP32
 
-bool coresight_is_halted(uintptr_t coresight_base) {
-    volatile uint32_t *coresight_reg = (void *)(coresight_base + CORESIGHT_REG_EDSCR);
+bool coresight_is_halted(uintptr_t cpu_base) {
+    volatile uint32_t *coresight_reg = (void *)(cpu_base + CORESIGHT_REG_EDSCR);
     return *coresight_reg & CORESIGHT_EDSCR_HALTED;
 }
 
-int coresight_halt(uintptr_t coresight_base, uint64_t timeout) {
-    volatile uint32_t *coresight_reg = (void *)(coresight_base + CORESIGHT_REG_DBGDRCR);
+int coresight_halt(uintptr_t cpu_base, uint64_t timeout) {
+    volatile uint32_t *coresight_reg = (void *)(cpu_base + CORESIGHT_REG_DBGDRCR);
 
     *coresight_reg |= CORESIGHT_DBGDRCR_HALT;
 
     uint64_t start = system_time();
 
-    while (!coresight_is_halted(coresight_base)) {
+    while (!coresight_is_halted(cpu_base)) {
         if (time_has_elapsed(start, timeout)) {
             return -1;  // timeout
         }
     }
+
+    *(volatile uint32_t *)(cpu_base + CORESIGHT_REG_EDSCR) |= CORESIGHT_EDSCR_ITREN;
 
     return 0;
 }

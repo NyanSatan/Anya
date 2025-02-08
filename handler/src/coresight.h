@@ -12,8 +12,8 @@ int coresight_write(uintptr_t cpu_base, uint64_t value, uint64_t timeout);
 
 #if WITH_SEP32
 
-bool coresight_is_halted(uintptr_t coresight_base);
-int  coresight_halt(uintptr_t coresight_base, uint64_t timeout);
+bool coresight_is_halted(uintptr_t cpu_base);
+int  coresight_halt(uintptr_t cpu_base, uint64_t timeout);
 
 #endif
 

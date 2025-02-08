@@ -193,6 +193,13 @@ namespace eval ::anya {
     wait_for_bp [handle_interface_request_intercept]
     ::astris::console::native::reg [handle_interface_request_intercept_reg] $payload_base
 
+    # Apparently really needed on Alcatraz
+    puts "Warming up SEP..."
+    ::astris::console::native::cpu "SEP"
+    ::astris::console::native::halt -q
+    ::astris::console::native::go
+    ::astris::console::native::cpu [main_core]
+
     wait_for_run
 
     puts "DONE!"
