@@ -1,5 +1,6 @@
 build
 package
+.vscode
 .DS_Store
 __pycache__
 /misc
