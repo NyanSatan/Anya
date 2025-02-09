@@ -60,6 +60,8 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
     * Also B0, but it's untested
     * Use `anya_coll.ax` script for this platform
 
+* Switched to `lilirecovery` from original `libirecovery`
+
 ### Beta 9
 
 * Added fallback operations in `anya_crete.ax` for missing/broken ones in Sky tools' Astris
@@ -141,8 +143,9 @@ And even though Intel hosts were faster with the legacy Anya, the new one still 
 
 * Modern Xcode
 * Python 3
-* libirecovery
-* vmacho
+* lilirecovery
+    * Included as a Git submodule
+* [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c)
 
 ### Building
 

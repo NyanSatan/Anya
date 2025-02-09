@@ -1,0 +1,3 @@
+[submodule "ctl/lilirecovery"]
+	path = ctl/lilirecovery
+	url = git@github.com:NyanSatan/lilirecovery.git

@@ -2,28 +2,25 @@ CC ?= clang
 
 BUILD_ROOT = build
 
-STATIC_LIBS = static-libs
-
-CFLAGS += -Ofast
-
-ifneq ($(wildcard $(STATIC_LIBS)),)
+CFLAGS += -O3
 CFLAGS += -arch arm64
 CFLAGS += -arch x86_64
 CFLAGS += -mmacosx-version-min=10.8
-LDFLAGS += -L$(STATIC_LIBS) 
-LDFLAGS += -limobiledevice-glue-1.0
+
 LDFLAGS += -framework IOKit 
 LDFLAGS += -framework CoreFoundation
-endif
 
-LDFLAGS += -lirecovery-1.0
-
-SOURCES = anyactl.c \
-		   libanya/anya.c
+SOURCES = \
+	anyactl.c \
+	libanya/anya.c \
+	lilirecovery/lilirecovery.c
 
 RESULT = $(BUILD_ROOT)/anyactl
 
-DYLIB_SOURCES = libanya/anya.c
+DYLIB_SOURCES = \
+	libanya/anya.c \
+	lilirecovery/lilirecovery.c
+
 DYLIB_RESULT = $(BUILD_ROOT)/libanya.dylib
 
 DIR_HELPER = mkdir -p $(@D)
