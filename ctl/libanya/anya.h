@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <libirecovery.h>
+#include <lilirecovery.h>
 
 #define CPFM_SECURE_STATUS      (1 << 0)
 #define CPFM_PRODUCTION_STATUS  (1 << 1)
@@ -38,6 +38,6 @@ anya_error_t anya_reboot(anya_device_t *dev);
 
 void anya_print_device(anya_device_t *dev);
 
-const char* anya_strerror(anya_error_t error);
+const char *anya_strerror(anya_error_t error);
 
 #endif

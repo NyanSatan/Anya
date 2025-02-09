@@ -26,7 +26,7 @@ def main():
     try:
         dev.connect()
     except AnyaError as e:
-        print("failed to connect: %s" % str(e))
+        print("failed to connect - %s" % str(e))
         exit(-1)
 
     dev.print_device()
@@ -38,7 +38,7 @@ def main():
                 dev.disconnect()
                 exit(-1)
         except AnyaError as e:
-            print("failed to ping SEP: %s" % str(e))
+            print("failed to ping SEP - %s" % str(e))
             dev.disconnect()
             exit(-1)
 
@@ -48,14 +48,14 @@ def main():
         try:
             decoded = decode_kbag(args.kbag)
         except AnyaValueError as e:
-            print("failed to parse KBAG: %s" % str(e))
+            print("failed to parse KBAG - %s" % str(e))
             dev.disconnect()
             exit(-1)
 
         try:
             key = dev.decrypt_kbag(decoded, sep=args.sep)
         except AnyaError as e:
-            print("failed to decrypt KBAG: %s" % str(e))
+            print("failed to decrypt KBAG - %s" % str(e))
             dev.disconnect()
             exit(-1)
 
@@ -74,7 +74,7 @@ def main():
         try:
             dev.decrypt_kbags(kbags, sep=args.sep)
         except AnyaError as e:
-            print("failed to decrypt KBAG: %s" % str(e))
+            print("failed to decrypt KBAG - %s" % str(e))
             dev.disconnect()
             exit(-1)
 
@@ -83,7 +83,7 @@ def main():
         delta = end - start
         average = args.count / delta
 
-        print("decrypted %d KBAGs in %.6f seconds, average - %.6f KBAGs/sec" % (args.count, delta, average))
+        print("decrypted %d KBAGs in %.3f seconds, average - %.3f KBAGs/sec" % (args.count, delta, average))
 
     dev.disconnect()
 

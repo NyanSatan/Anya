@@ -62,6 +62,8 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 * Switched to `lilirecovery` from original `libirecovery`
 
+* Little improvements here and there in control utilities
+
 ### Beta 9
 
 * Added fallback operations in `anya_crete.ax` for missing/broken ones in Sky tools' Astris

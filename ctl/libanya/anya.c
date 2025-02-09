@@ -213,7 +213,7 @@ anya_error_t anya_reboot(anya_device_t *dev) {
     return ANYA_E_SUCCESS;
 }
 
-const char* anya_strerror(anya_error_t error) {
+const char *anya_strerror(anya_error_t error) {
     switch (error) {
         case ANYA_E_SUCCESS:
             return "success";
