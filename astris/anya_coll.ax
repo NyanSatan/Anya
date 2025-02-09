@@ -1,11 +1,12 @@
 #
-# Anya's Astris script (Crete edition)
+# Anya's Astris script (Coll edition)
 # 
 # Brings up device to Anya mode - basically SecureROM DFU,
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
 #
-# The Crete edition is very different from the original one,
+# The Coll edition is very different from the original one
+# and brings ideas from the Crete edition even further, 
 # the general idea is the following:
 #
 # 0) As usual fromreset 
@@ -13,17 +14,10 @@
 # 2) Dump the ROM
 # 3) Hook start of an iBoot
 # 4) Reupload the ROM to the end of SRAM
-# 5) Create page tables in the way ROM is at its' usual VA
-# 6) Patch the ROM to skip MMU configuration
-#    and to always return smaller load area size
-# 7) Upload the payload somewhere after the ROM
-# 8) Configure and enable MMU, fix iBoot metadata
-# 9) Hook boot_selected() in order to enable normal USB DFU
-# 10) Hook iBoot flags and handle_interface_request() as usual
+# ...
 #
 
 namespace eval ::anya {
-
     #
     # Constants
     #
@@ -58,8 +52,7 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return PCORE0 }
+            "Coll A0"     { return PCORE0 }
             default  {
                 data_provider_error
             }
@@ -69,8 +62,7 @@ namespace eval ::anya {
     proc rom_base {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x100000000 }
+            "Coll A0"     { return 0x100000000 }
             default  {
                 data_provider_error
             }
@@ -80,8 +72,7 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x1FC000000 }
+            "Coll A0"     { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -91,8 +82,7 @@ namespace eval ::anya {
     proc sram_len {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x3C0000 }
+            "Coll A0"     { return 0xF00000 }
             default  {
                 data_provider_error
             }
@@ -102,8 +92,7 @@ namespace eval ::anya {
     proc io_base {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x200000000 }
+            "Coll A0"     { return 0x200000000 }
             default  {
                 data_provider_error
             }
@@ -113,8 +102,7 @@ namespace eval ::anya {
     proc io_page_count {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x3E }
+            "Coll A0"     { return 0x100 }
             default  {
                 data_provider_error
             }
@@ -124,19 +112,17 @@ namespace eval ::anya {
     proc rom_base_new_pa {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x1FC340000 }
+            "Coll A0"     { return 0x1FCE80000 }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc platform_mmu_setup_call_relative {} {
+    proc loadaddr {} {
         variable soc
         switch $soc {
-            "Crete A0"     { return 0x2CD30 }
-            "Crete B1"     { return 0x2F244 }
+            "Coll A0"     { return 0x1FC07C000 }
             default  {
                 data_provider_error
             }
@@ -146,8 +132,7 @@ namespace eval ::anya {
     proc platform_loadarea_get_size_relative {} {
         variable soc
         switch $soc {
-            "Crete A0"     { return 0xA8C8 }
-            "Crete B1"     { return 0xA720 }
+            "Coll A0"     { return 0x86E8 }
             default  {
                 data_provider_error
             }
@@ -157,30 +142,7 @@ namespace eval ::anya {
     proc loadarea_new_size {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x2DC000 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    proc unmapped_page_range_start {} {
-        variable soc
-        switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 18 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    proc unmapped_page_range_end {} {
-        variable soc
-        switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 21 }
+            "Coll A0"    { return 0xE04000 }
             default  {
                 data_provider_error
             }
@@ -190,8 +152,17 @@ namespace eval ::anya {
     proc new_mair_el1 {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x04400FF04 }
+            "Coll A0"     { return 0x4400FF04 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc temp_tcr_el1 {} {
+        variable soc
+        switch $soc {
+            "Coll A0"     { return 0x1000436556A016 }
             default  {
                 data_provider_error
             }
@@ -201,41 +172,27 @@ namespace eval ::anya {
     proc new_tcr_el1 {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x36596A516 }
+            "Coll A0"     { return 0x10004365D6A516 }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc mmu_metadata_hook {} {
+    proc arm_set_ttbr0 {} {
         variable soc
         switch $soc {
-            "Crete A0"     { return 0x10002CD34 }
-            "Crete B1"     { return 0x10002F248 }
+            "Coll A0"     { return 0x100007860 }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc mmu_metadata_addr {} {
+    proc arm_flush_tlb {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x1FC0340C8 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    proc mmu_metadata_new_value {} {
-        variable soc
-        switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x1FC010000 }
+            "Coll A0"     { return 0x1000078B0 }
             default  {
                 data_provider_error
             }
@@ -245,8 +202,7 @@ namespace eval ::anya {
     proc boot_selected_hook {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x1000007D0 }
+            "Coll A0"     { return 0x10000079C }
             default  {
                 data_provider_error
             }
@@ -256,8 +212,7 @@ namespace eval ::anya {
     proc boot_selected_new_value {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return 0x6 }
+            "Coll A0"     { return 7 }
             default  {
                 data_provider_error
             }
@@ -267,8 +222,7 @@ namespace eval ::anya {
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
-            "Crete A0"     { return 0x10000A08C }
-            "Crete B1"     { return 0x100009EE4 }
+            "Coll A0"     { return 0x100007DD0 }
             default  {
                 data_provider_error
             }
@@ -278,8 +232,7 @@ namespace eval ::anya {
     proc handle_interface_request_hook {} {
         variable soc
         switch $soc {
-            "Crete A0"     { return 0x1000224B4 }
-            "Crete B1"     { return 0x100023D84 }
+            "Coll A0"     { return 0x100020010 }
             default  {
                 data_provider_error
             }
@@ -289,8 +242,7 @@ namespace eval ::anya {
     proc handle_interface_request_hook_reg {} {
         variable soc
         switch $soc {
-            "Crete A0"     -
-            "Crete B1"     { return x16 }
+            "Coll A0"     { return x16 }
             default  {
                 data_provider_error
             }
@@ -323,7 +275,7 @@ namespace eval ::anya {
             if {[::astris::console::native::support::check_state [list $state]]} {
                 return
             } else {
-                after 50
+                after 100
             }
         }
     }
@@ -338,13 +290,6 @@ namespace eval ::anya {
     proc wait_for_run {} {
         ::astris::console::native::go 
         wait_for_state "Run"
-    }
-
-    proc call {addr} {
-        set pc [::astris::console::native::reg pc]
-        ::astris::console::native::reg pc $addr
-        ::astris::console::native::reg lr $pc
-        wait_for_bp $pc
     }
 
     #
@@ -415,6 +360,7 @@ namespace eval ::anya {
     ::astris::soc::fromreset
     ::astris::console::native::cpu [main_core]
 
+
     # For Dawn/Sunburst tools we gotta use this command,
     # because clear_lockacc doesn't catch iBoot start anymore
     #
@@ -452,9 +398,25 @@ namespace eval ::anya {
     puts "Uploading USB handler..."
     ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
 
+    set ttbr0_base [loadaddr]
+    set zeroes_path [format "/tmp/zeroes-%s" $random]
+    set zeroes_chan [open $zeroes_path w]
+    puts -nonewline $zeroes_chan [string repeat "\0" [ttbr0_len]]
+    close $zeroes_chan
+
+    catch {
+        puts "Clearing TTBR0 area..."
+        ::astris::console::native::load -memap 4 -width 8 $zeroes_path $ttbr0_base
+    } err
+
+    file delete $zeroes_path
+
+    if {$err ne ""} {
+        error "Something bad happened while clearing TTBR0 area, code: " $err
+    }
+
     puts "Patching ROM..."
-    # no more platform_mmu_setup() - bl -> nop
-    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_mmu_setup_call_relative]] 0xD503201F
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + 0x2B5AC] 0xD503201F
     # load area size
     # adr x0, 0xc
     ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 0]  0x10000060
@@ -465,36 +427,15 @@ namespace eval ::anya {
     # dcw new_size
     ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 12] [loadarea_new_size]
 
-    set zeroes_path [format "/tmp/zeroes-%s" $random]
-    set zeroes_chan [open $zeroes_path w]
-    puts -nonewline $zeroes_chan [string repeat "\0" [ttbr0_len]]
-    close $zeroes_chan
-
-    catch {
-        puts "Clearing TTBR0 area..."
-        ::astris::console::native::load -memap 4 -width 8 $zeroes_path [sram_base]
-    } err
-
-    file delete $zeroes_path
-
-    if {$err ne ""} {
-        error "Something bad happened while clearing TTBR0 area, code: " $err
-    }
-    
-    # this was too slow
-    # for {set i 0} {$i < [expr 0x20000 / 8]} {incr i} {
-    #     ::astris::console::native::mem -64 -memap 4 [expr 0x1FC000000 + $i * 8] 0x0
-    # }
-
     puts "Creating MMU tables..."
     # L1 to L2???
-    set l2_pages [expr [sram_base] + [l3_page_size] * 1]
-    ::astris::console::native::mem -64 -memap 4 [sram_base] [mmu_l1_l2_table_make $l2_pages]
+    set l2_pages [expr $ttbr0_base + [l3_page_size] * 1]
+    ::astris::console::native::mem -64 -memap 4 $ttbr0_base [mmu_l1_l2_table_make $l2_pages]
     # ROM
-    set rom_pages_l3 [expr [sram_base] + [l3_page_size] * 3]
+    set rom_pages_l3 [expr $ttbr0_base  + [l3_page_size] * 3]
     ::astris::console::native::mem -64 -memap 4 [mmu_l2_l3_table_find $l2_pages [rom_base]] [mmu_l1_l2_table_make $rom_pages_l3]
     # SRAM
-    set sram_pages_l3 [expr [sram_base] + [l3_page_size] * 2]
+    set sram_pages_l3 [expr $ttbr0_base + [l3_page_size] * 2]
     ::astris::console::native::mem -64 -memap 4 [mmu_l2_l3_table_find $l2_pages [sram_base]] [mmu_l1_l2_table_make $sram_pages_l3]
 
     # ROM
@@ -509,19 +450,12 @@ namespace eval ::anya {
 
     # SRAM
     set sram_page_count [expr [sram_len] / [l3_page_size]]
-    set ttbr0_page_count [expr [ttbr0_len] / [l3_page_size]]
     for {set i 0} {$i < $sram_page_count} {incr i} {
         set pa [expr [sram_base] + $i * [l3_page_size]]
         set entry [expr $sram_pages_l3 + $i * 8]
 
         puts [format "writing SRAM entry 0x%016x" $entry]
-        if {$i < $ttbr0_page_count} {
-            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_ttbr_make $pa]
-        } elseif {$i >= [unmapped_page_range_start] && $i < [unmapped_page_range_end]} {
-            ::astris::console::native::mem -64 -memap 4 $entry 0x0
-        } else {
-            ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_make $pa]
-        }
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_data_make $pa]
     }
 
     # IO
@@ -534,22 +468,38 @@ namespace eval ::anya {
         ::astris::console::native::mem -64 -memap 4 $entry [mmu_l2_page_io_make $pa]
     }
 
+    puts "Enabling MMU..."
+    ::astris::console::native::reg mair_el1  [new_mair_el1]
+    ::astris::console::native::reg ttbr0_el1 $ttbr0_base
+    ::astris::console::native::reg tcr_el1   [temp_tcr_el1]
+    ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
+
+    puts "Disabling ATC0_USB_AON..."
+    ::astris::console::native::mem -32 -memap 4 0x2D07001A8 0x0
+
     puts "Jumping to ROM..."
     ::astris::console::native::reg pc [rom_base]
 
-    puts "Enabling MMU..."
-    ::astris::console::native::reg mair_el1  [new_mair_el1]
-    ::astris::console::native::reg ttbr0_el1 [sram_base]
-    ::astris::console::native::reg tcr_el1   [new_tcr_el1]
-    ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
+    puts "Fixing MMU yet again..."
+    wait_for_bp [arm_set_ttbr0]
 
-    puts "Fixing up MMU metadata..."
-    wait_for_bp [mmu_metadata_hook]
-    ::astris::console::native::mem -64 -memap 4 [mmu_metadata_addr] [mmu_metadata_new_value] 
+    set rom_pages_l3_real [expr [sram_base] + [l3_page_size] * 2]
+    for {set i 0} {$i < $rom_page_count} {incr i} {
+        set pa [expr [rom_base_new_pa] + $i * [l3_page_size]]
+        set entry [expr $rom_pages_l3_real + $i * 8]
+
+        puts [format "writing ROM entry 0x%016x" $entry]
+        ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_exec_make $pa]
+    }
+
+    ::astris::console::native::reg tcr_el1 [new_tcr_el1]
+
+    ::astris::console::native::step -q -n 2
+    ::astris::console::native::reg pc [arm_flush_tlb]
 
     puts "Hooking boot_selected\(\)..."
     wait_for_bp [boot_selected_hook]
-    ::astris::console::native::reg x0 [boot_selected_new_value]
+    ::astris::console::native::reg x27 [boot_selected_new_value]
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
@@ -560,9 +510,7 @@ namespace eval ::anya {
     ::astris::console::native::reg [handle_interface_request_hook_reg] [expr [rom_base] + [rom_len] - [l3_page_size]]
 
     #
-    # SEP "warm up" is needed for Crete B1,
-    # where AP will panic for some unobvious reasons if one doesn't
-    # do this or reopen Astris after this script is done
+    # No clue if really needed on A17
     #
 
     if {[info exists env(ANYA_SEP_WARMUP)] && $::env(ANYA_SEP_WARMUP)} {
@@ -572,8 +520,7 @@ namespace eval ::anya {
         ::astris::console::native::go
         ::astris::console::native::cpu [main_core]
     }
-
+    
     wait_for_run
-
     puts "DONE!"
 }
