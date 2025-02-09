@@ -72,7 +72,6 @@ CFLAGS += -MMD
 CFLAGS += -arch arm64
 CFLAGS += -fno-stack-protector
 
-
 LDFLAGS += -nostdlib
 LDFLAGS += -static
 LDFLAGS += -Wl,-preload

@@ -23,6 +23,7 @@
 * **Ellis A0/B0/B1** - Apple A15
 * **Staten B1** - Apple M2
 * **Crete A0/B1** - Apple A16
+* **Coll A0** - Apple A17
 
 ### SEP
 
@@ -37,6 +38,7 @@
 * **Ellis A0/B0/B1** - Apple A15
 * **Staten B1** - Apple M2
 * **Crete A0/B1** - Apple A16
+* **Coll A0** - Apple A17
 
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
@@ -53,6 +55,10 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 * Added **Alcatraz A0/B0** support
     * Use `anya_4k.ax` script for these platforms. You might also need older Astris
+
+* Added **Coll A0** support 
+    * Also B0, but it's untested
+    * Use `anya_coll.ax` script for this platform
 
 ### Beta 9
 
@@ -159,13 +165,14 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Alcatraz A0**, **Alcatraz B0**, **Gibraltar B0**, **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9/B0_B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Turks/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1**, **Staten/B1**, **Crete/A0** and **Crete/B1**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Alcatraz A0**, **Alcatraz B0**, **Gibraltar B0**, **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9/B0_B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Turks/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1**, **Staten/B1**, **Crete/A0**, **Crete/B1** and **Coll/A0**
 
 In the end you'll get a structure like this in the `build/` folder:
 
 ```
 anya.ax
 anya_4k.ax
+anya_coll.ax
 anya_crete.ax
 anyactl
 libanya.dylib
@@ -180,6 +187,7 @@ payloads/anya_handler.Tonga-B1.bin
 payloads/anya_handler.Crete-B1.bin
 payloads/anya_handler.Cyprus-B1.bin
 payloads/anya_handler.Ellis-B0_B1.bin
+payloads/anya_handler.Coll-A0.bin
 payloads/anya_handler.Cyprus-A0.bin
 payloads/anya_handler.Gibraltar-B0.bin
 payloads/anya_handler.Sicily-B1.bin
@@ -216,7 +224,12 @@ First of all, you need to put your device into Anya mode (basically SecureROM DF
 ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 ```
 
-For **Crete** targets (A16) use `anya_crete.ax`, for **Alcatraz** (A7) - `anya_4k.ax`
+For certain platforms, you might need to use a different script:
+
+* **Coll** (A17) - `anya_coll.ax`
+    * This needs Sydney+ Astris
+* **Crete** (A16) - `anya_crete.ax`
+* **Alcatraz** (A7) - `anya_4k.ax`
 
 ***Warning**: this will force reset your device via `fromreset` Astris command! This will reset a SoC and catch it on the very first cycle. Other peripherals might be not so lucky though, so better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or this may even potentially damage it!*
 
@@ -356,11 +369,13 @@ noone@noones-MacBook-Air Anya %
 
 ***Important note**: Astris needs to be not running if you wanna use SEP GID, as it will interfere*
 
-### Crete (A16) notes
+### Crete (A16) & Coll (A17) notes
 
-For Apple A16 targets use `anya_crete.ax` script instead of usual `anya.ax`. `ANYA_SEP_WARMUP=1` variable might be required in some cases. Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot 
+For Apple A16 & A17 targets use `anya_crete.ax` & `anya_coll.ax` scripts respectively instead of usual `anya.ax`. `ANYA_SEP_WARMUP=1` variable might be required in some cases. Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot
 
 Sky tools have very limited support for Crete, however `anya_crete.ax` provides fallback functions to make execution of the script possible
+
+Coll (likely) needs Sydney+ in any case
 
 
 ## Python
@@ -478,6 +493,7 @@ noone@noones-MacBook-Air Anya %
 
 ## TODOs
 
+* Support DFU-only TBM targets
 * Improve build system - for the current one is really bad
 * Common offset database - so there won't be a need to duplicate some offsets/values in the Astris script and USB handlers configs
 
