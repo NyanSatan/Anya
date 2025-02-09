@@ -13,8 +13,17 @@
 # 1) Unlock TBM
 # 2) Dump the ROM
 # 3) Hook start of an iBoot
-# 4) Reupload the ROM to the end of SRAM
-# ...
+# 4) Reupload the ROM to the end of SRAM,
+#       along with the payload
+# 5) Shutdown ATC0_USB_AON in PMGR,
+#       otherwise everything will hang on accesses to corresponding MMIOs
+# 6) Set up temporary MMU tables and enable MMU,
+#       so that new ROM PAs will match normal VAs
+# 7) Unlike the Crete edition,
+#       actually let the ROM generate its' own tables
+# 8) Fix ROM PTEs once again
+# 9) Hook boot_selected() in order to enable normal USB DFU
+# 10) Hook iBoot flags and handle_interface_request() as usual
 #
 
 namespace eval ::anya {
@@ -52,7 +61,8 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return PCORE0 }
+            "Coll A0"     -
+            "Coll B0"     { return PCORE0 }
             default  {
                 data_provider_error
             }
@@ -62,7 +72,8 @@ namespace eval ::anya {
     proc rom_base {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x100000000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x100000000 }
             default  {
                 data_provider_error
             }
@@ -72,7 +83,8 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x1FC000000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -82,7 +94,8 @@ namespace eval ::anya {
     proc sram_len {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0xF00000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0xF00000 }
             default  {
                 data_provider_error
             }
@@ -92,7 +105,8 @@ namespace eval ::anya {
     proc io_base {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x200000000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x200000000 }
             default  {
                 data_provider_error
             }
@@ -102,7 +116,8 @@ namespace eval ::anya {
     proc io_page_count {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x100 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x100 }
             default  {
                 data_provider_error
             }
@@ -112,7 +127,8 @@ namespace eval ::anya {
     proc rom_base_new_pa {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x1FCE80000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x1FCE80000 }
             default  {
                 data_provider_error
             }
@@ -122,7 +138,8 @@ namespace eval ::anya {
     proc loadaddr {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x1FC07C000 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x1FC07C000 }
             default  {
                 data_provider_error
             }
@@ -133,6 +150,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x86E8 }
+            "Coll B0"     { return 0x8718 }
             default  {
                 data_provider_error
             }
@@ -142,7 +160,8 @@ namespace eval ::anya {
     proc loadarea_new_size {} {
         variable soc
         switch $soc {
-            "Coll A0"    { return 0xE04000 }
+            "Coll A0"    -
+            "Coll B0"    { return 0xE04000 }
             default  {
                 data_provider_error
             }
@@ -152,7 +171,8 @@ namespace eval ::anya {
     proc new_mair_el1 {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x4400FF04 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x4400FF04 }
             default  {
                 data_provider_error
             }
@@ -162,7 +182,8 @@ namespace eval ::anya {
     proc temp_tcr_el1 {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x1000436556A016 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x1000436556A016 }
             default  {
                 data_provider_error
             }
@@ -172,7 +193,8 @@ namespace eval ::anya {
     proc new_tcr_el1 {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 0x10004365D6A516 }
+            "Coll A0"     -
+            "Coll B0"     { return 0x10004365D6A516 }
             default  {
                 data_provider_error
             }
@@ -183,6 +205,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x100007860 }
+            "Coll B0"     { return 0x100007890 }
             default  {
                 data_provider_error
             }
@@ -193,6 +216,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x1000078B0 }
+            "Coll B0"     { return 0x1000078E0 }
             default  {
                 data_provider_error
             }
@@ -203,6 +227,18 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x10000079C }
+            "Coll B0"     { return 0x10000079C }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc boot_selected_reg {} {
+        variable soc
+        switch $soc {
+            "Coll A0"     -
+            "Coll B0"     { return x27 }
             default  {
                 data_provider_error
             }
@@ -212,7 +248,8 @@ namespace eval ::anya {
     proc boot_selected_new_value {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return 7 }
+            "Coll A0"     -
+            "Coll B0"     { return 7 }
             default  {
                 data_provider_error
             }
@@ -223,6 +260,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x100007DD0 }
+            "Coll B0"     { return 0x100007E00 }
             default  {
                 data_provider_error
             }
@@ -233,6 +271,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x100020010 }
+            "Coll B0"     { return 0x100020010 }
             default  {
                 data_provider_error
             }
@@ -242,7 +281,8 @@ namespace eval ::anya {
     proc handle_interface_request_hook_reg {} {
         variable soc
         switch $soc {
-            "Coll A0"     { return x16 }
+            "Coll A0"     -
+            "Coll B0"     { return x16 }
             default  {
                 data_provider_error
             }
@@ -360,7 +400,6 @@ namespace eval ::anya {
     ::astris::soc::fromreset
     ::astris::console::native::cpu [main_core]
 
-
     # For Dawn/Sunburst tools we gotta use this command,
     # because clear_lockacc doesn't catch iBoot start anymore
     #
@@ -474,6 +513,8 @@ namespace eval ::anya {
     ::astris::console::native::reg tcr_el1   [temp_tcr_el1]
     ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
 
+    # Shutdown this bastard via PMGR, otherwise it will be stuck in reset,
+    # and all accesses to it will hang CPU
     puts "Disabling ATC0_USB_AON..."
     ::astris::console::native::mem -32 -memap 4 0x2D07001A8 0x0
 
@@ -499,7 +540,7 @@ namespace eval ::anya {
 
     puts "Hooking boot_selected\(\)..."
     wait_for_bp [boot_selected_hook]
-    ::astris::console::native::reg x27 [boot_selected_new_value]
+    ::astris::console::native::reg [boot_selected_reg] [boot_selected_new_value]
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
