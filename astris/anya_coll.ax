@@ -179,17 +179,6 @@ namespace eval ::anya {
         }
     }
 
-    proc temp_tcr_el1 {} {
-        variable soc
-        switch $soc {
-            "Coll A0"     -
-            "Coll B0"     { return 0x1000436556A016 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
     proc new_tcr_el1 {} {
         variable soc
         switch $soc {
@@ -250,6 +239,39 @@ namespace eval ::anya {
         switch $soc {
             "Coll A0"     -
             "Coll B0"     { return 7 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc after_dart_enable_usb {} {
+        variable soc
+        switch $soc {
+            "Coll A0"     { return 0x100001E94 }
+            "Coll B0"     { return 0x100001E94 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc dart_enable_usb_bl_relative {} {
+        variable soc
+        switch $soc {
+            "Coll A0"     { return 0x1E80 }
+            "Coll B0"     { return 0x1E80 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc dart_disable_usb_bl_relative {} {
+        variable soc
+        switch $soc {
+            "Coll A0"     { return 0x1F24 }
+            "Coll B0"     { return 0x1F24 }
             default  {
                 data_provider_error
             }
@@ -425,7 +447,6 @@ namespace eval ::anya {
 
         puts "Uploading ROM..."
         ::astris::console::native::load -memap 4 -width 8 $rom_path [rom_base_new_pa]
-
     } err
 
     file delete $rom_path
@@ -437,7 +458,7 @@ namespace eval ::anya {
     puts "Uploading USB handler..."
     ::astris::console::native::load -memap 4 -width 8 $payload $payload_base
 
-    set ttbr0_base [loadaddr]
+    set ttbr0_base  [loadaddr]
     set zeroes_path [format "/tmp/zeroes-%s" $random]
     set zeroes_chan [open $zeroes_path w]
     puts -nonewline $zeroes_chan [string repeat "\0" [ttbr0_len]]
@@ -455,7 +476,6 @@ namespace eval ::anya {
     }
 
     puts "Patching ROM..."
-    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + 0x2B5AC] 0xD503201F
     # load area size
     # adr x0, 0xc
     ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [platform_loadarea_get_size_relative] + 0]  0x10000060
@@ -510,7 +530,7 @@ namespace eval ::anya {
     puts "Enabling MMU..."
     ::astris::console::native::reg mair_el1  [new_mair_el1]
     ::astris::console::native::reg ttbr0_el1 $ttbr0_base
-    ::astris::console::native::reg tcr_el1   [temp_tcr_el1]
+    ::astris::console::native::reg tcr_el1   [new_tcr_el1]
     ::astris::console::native::reg sctlr_el1 [expr [::astris::console::native::reg sctlr_el1] | 0x1]
 
     # Shutdown this bastard via PMGR, otherwise it will be stuck in reset,
@@ -533,14 +553,21 @@ namespace eval ::anya {
         ::astris::console::native::mem -64 -memap 4 $entry [mmu_l3_page_exec_make $pa]
     }
 
-    ::astris::console::native::reg tcr_el1 [new_tcr_el1]
-
     ::astris::console::native::step -q -n 2
     ::astris::console::native::reg pc [arm_flush_tlb]
 
     puts "Hooking boot_selected\(\)..."
     wait_for_bp [boot_selected_hook]
     ::astris::console::native::reg [boot_selected_reg] [boot_selected_new_value]
+
+    # This is to fix memory leak somewhere deep inside of DART code
+    puts "Hooking aes_hw_crypto_pre_op\(\)..."
+    wait_for_bp [after_dart_enable_usb]
+
+    for {set i 0} {$i < 5} {incr i} {
+        ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_enable_usb_bl_relative] + $i * 4] 0xD503201F
+    }
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_disable_usb_bl_relative]] 0xD503201F
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
@@ -550,10 +577,7 @@ namespace eval ::anya {
     wait_for_bp [handle_interface_request_hook]
     ::astris::console::native::reg [handle_interface_request_hook_reg] [expr [rom_base] + [rom_len] - [l3_page_size]]
 
-    #
     # No clue if really needed on A17
-    #
-
     if {[info exists env(ANYA_SEP_WARMUP)] && $::env(ANYA_SEP_WARMUP)} {
         puts "Warming up SEP..."
         ::astris::console::native::cpu "SEP"
@@ -561,7 +585,7 @@ namespace eval ::anya {
         ::astris::console::native::go
         ::astris::console::native::cpu [main_core]
     }
-    
+
     wait_for_run
     puts "DONE!"
 }
