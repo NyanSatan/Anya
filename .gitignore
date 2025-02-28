@@ -1,8 +1,9 @@
 build
-package
+/package
 .vscode
 .DS_Store
 __pycache__
 /misc
 /ctl/static-libs
 /pure_python
+/anya_tag_db.json

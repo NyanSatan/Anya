@@ -1,31 +1,35 @@
 CC ?= clang
 
-BUILD_ROOT = build
+TAG ?= "Anya-???"
 
-CFLAGS += -O3
+BUILD_ROOT := build
+
+CFLAGS := -O3
 CFLAGS += -arch arm64
 CFLAGS += -arch x86_64
-CFLAGS += -mmacosx-version-min=10.8
+CFLAGS += -mmacosx-version-min=10.7
 CFLAGS += -Ililirecovery
+CFLAGS += -DBUILD_TAG="\"$(TAG)\""
 
-LDFLAGS += -framework IOKit 
+LDFLAGS := -framework IOKit 
 LDFLAGS += -framework CoreFoundation
 
-SOURCES = \
+SOURCES := \
 	anyactl.c \
 	libanya/anya.c \
 	lilirecovery/lilirecovery.c
 
-RESULT = $(BUILD_ROOT)/anyactl
+RESULT := $(BUILD_ROOT)/anyactl
 
-DYLIB_SOURCES = \
+DYLIB_SOURCES := \
 	libanya/anya.c \
 	lilirecovery/lilirecovery.c
 
-DYLIB_RESULT = $(BUILD_ROOT)/libanya.dylib
+DYLIB_RESULT := $(BUILD_ROOT)/libanya.dylib
 
 DIR_HELPER = mkdir -p $(@D)
 
+.PHONY: all clean
 
 all: $(RESULT) $(DYLIB_RESULT)
 	@echo "%%%% done building"
@@ -39,8 +43,6 @@ $(DYLIB_RESULT): $(DYLIB_SOURCES)
 	@echo "\tbuilding libanya"
 	@$(DIR_HELPER)
 	@$(CC) $(CFLAGS) -dynamiclib $(LDFLAGS) $(DYLIB_SOURCES) -o $@
-
-.PHONY: clean
 
 clean:
 	@rm -rf $(BUILD_ROOT)

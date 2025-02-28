@@ -1,77 +1,101 @@
 #
-# Dumpster fire of a makefile
-# Someday I'll fix it, I promise
+# Anya main makefile
 #
 
-VALID_HANDLER_TARGETS ?= Alcatraz/A0 Alcatraz/B0 Gibraltar/B0 Skye/A0 Cyprus/A0 Cyprus/B0 Cyprus/B1 M9/B0_B1 Aruba/A1 Cebu Sicily/A0 Sicily/B0 Sicily/B1 Turks/A0 Turks/B0 Tonga/B1 Ellis/A0 Ellis/B0_B1 Staten/B1 Crete/A0 Crete/B1 Coll/A0
+VALID_HANDLER_TARGETS ?= \
+	Alcatraz/A0 Alcatraz/B0 \
+	Gibraltar/B0 \
+	Skye/A0 \
+	Cyprus/A0 Cyprus/B0 Cyprus/B1 \
+	M9/B0_B1 \
+	Aruba/A1 \
+	Cebu \
+	Sicily/A0 Sicily/B0 Sicily/B1 \
+	Turks/A0 Turks/B0 \
+	Tonga/B1 \
+	Ellis/A0 Ellis/B0_B1 \
+	Staten/B1 \
+	Crete/A0 Crete/B1 \
+	Coll/A0
+
 PYTHON ?= python3
 
+BUILD_TAG_DB := anya_tag_db.json
 
-BUILD_DIR = build
+TAG := $(shell $(PYTHON) polinatag.py generate . $(BUILD_TAG_DB))
 
-PACKAGE_DIR = package
-PACKAGE_FILE = $(PACKAGE_DIR)/Anya.zip
+BUILD_DIR := build
 
-ASTRIS_DIR = astris
-ASTRIS_TARGET = $(ASTRIS_DIR)/anya.ax
-ASTRIS_4K_TARGET = $(ASTRIS_DIR)/anya_4k.ax
-ASTRIS_CRETE_TARGET = $(ASTRIS_DIR)/anya_crete.ax
-ASTRIS_COLL_TARGET = $(ASTRIS_DIR)/anya_coll.ax
+PACKAGE_DIR := package
 
-CTL_DIR = ctl
-CTL_BUILD_TARGET = $(CTL_DIR)/build/anyactl
-CTL_BUILD_TARGET_DYLIB = $(CTL_DIR)/build/libanya.dylib
+ifeq (,$(findstring private_build,$(TAG)))
+	PACKAGE_FILE := $(PACKAGE_DIR)/$(TAG).tar.xz
+else
+	PACKAGE_FILE := $(PACKAGE_DIR)/Anya-private-$(shell TZ=UTC date "+%Y-%m-%d_%H-%M-%S").tar.xz
+endif
 
-HANDLER_BUILDER = tools/build_targets.py
-HANDLER_DIR = handler
-HANDLER_BUILD_DIR = $(HANDLER_DIR)/build
-HANDLER_FINAL_BUILD_DIR = $(BUILD_DIR)/payloads
+ASTRIS_DIR := astris
+ASTRIS_TARGETS := \
+	$(ASTRIS_DIR)/anya.ax \
+	$(ASTRIS_DIR)/anya_4k.ax \
+	$(ASTRIS_DIR)/anya_crete.ax \
+	$(ASTRIS_DIR)/anya_coll.ax
 
-PYTHON_DIR = ctl/python
+CTL_DIR := ctl
+CTL_BUILD_TARGETS := \
+	$(CTL_DIR)/build/anyactl \
+	$(CTL_DIR)/build/libanya.dylib
 
-DIR_HELPER = mkdir -p $(BUILD_DIR) $(HANDLER_FINAL_BUILD_DIR)
+HANDLER_DIR := handler
+HANDLER_BUILD_DIR := $(HANDLER_DIR)/build
+HANDLER_FINAL_BUILD_DIR := $(BUILD_DIR)/payloads
+
+PYTHON_DIR := ctl/python
+
+$(shell echo "TAG=\"$(TAG)\"" > $(PYTHON_DIR)/anya/__tag.py)
+
+$(shell mkdir -p $(BUILD_DIR) $(HANDLER_FINAL_BUILD_DIR))
+
 PACKAGE_DIR_HELPER = mkdir -p $(PACKAGE_DIR)
 
-.PHONY: all astris ctl handler python package clean
+HANDLER_TARGETS := $(addprefix handler_,$(VALID_HANDLER_TARGETS))
 
-all: astris ctl handler python
+.PHONY: all astris ctl python package clean distclean $(HANDLER_TARGETS) $(VALID_HANDLER_TARGETS)
+
+all: $(HANDLER_TARGETS) astris ctl python
+	@$(shell $(PYTHON) polinatag.py commit $(BUILD_TAG_DB))
 	@echo "%%%%%% all done"
 
-package: astris ctl handler python
+package: all
 	@echo "%%%%%% packaging"
 	@$(PACKAGE_DIR_HELPER)
-	@rm -rf $(PACKAGE_FILE)
-	@zip -x "*.DS_Store*" -x "*__pycache__*" -r9 $(PACKAGE_FILE) $(BUILD_DIR)/*
+	@tar --disable-copyfile --exclude .DS_Store --exclude __pycache__ -cJvf $(PACKAGE_FILE) -C $(BUILD_DIR) .
 	@echo "%%%%%% packaging done"
 
 astris:
-	@$(DIR_HELPER)
 	@echo "%%%%%% copying the Astris scripts"
-	@cp -a $(ASTRIS_TARGET) $(BUILD_DIR)
-	@cp -a $(ASTRIS_CRETE_TARGET) $(BUILD_DIR)
-	@cp -a $(ASTRIS_4K_TARGET) $(BUILD_DIR)
-	@cp -a $(ASTRIS_COLL_TARGET) $(BUILD_DIR)
+	@cp -a $(ASTRIS_TARGETS) $(BUILD_DIR)
 
 ctl:
 	@echo "%%%%%% building the control utility and library"
-	@make -C $(CTL_DIR)
-	@$(DIR_HELPER)
+	@$(MAKE) -C $(CTL_DIR) TAG="$(TAG)"
 	@echo "%%%%%% copying the control utility and library"
-	@cp -a $(CTL_BUILD_TARGET) $(BUILD_DIR)
-	@cp -a $(CTL_BUILD_TARGET_DYLIB) $(BUILD_DIR)
+	@cp -a $(CTL_BUILD_TARGETS) $(BUILD_DIR)
 
-handler:
-	@$(DIR_HELPER)
-	@echo "%%%%%% building the handlers payloads for: $(VALID_HANDLER_TARGETS)"
-	@$(PYTHON) $(HANDLER_BUILDER) $(HANDLER_DIR) $(HANDLER_FINAL_BUILD_DIR) $(VALID_HANDLER_TARGETS)
+$(HANDLER_TARGETS): handler_%: %
+	@echo "%%%%%% building USB DFU payload for $<"
+	@$(MAKE) -C $(HANDLER_DIR) TARGET=$< TAG="$(TAG)"
+	@cp -a $(HANDLER_BUILD_DIR)/*$(subst $<,/,-)*.bin $(HANDLER_FINAL_BUILD_DIR)
 
 python:
 	@echo "%%%%%% copying the Python control utility"
 	@cp -a $(PYTHON_DIR) $(BUILD_DIR)
 
 clean:
-	@make -C $(CTL_DIR) clean
-	@make -C $(HANDLER_DIR) clean
+	@$(MAKE) -C $(CTL_DIR) clean
+	@$(MAKE) -C $(HANDLER_DIR) clean
 	@rm -rf $(BUILD_DIR)
-	@rm -rf $(PACKAGE_DIR)
 	@echo "%%%%%% all cleaned"
+
+distclean: clean
+	@rm -rf $(PACKAGE_DIR)

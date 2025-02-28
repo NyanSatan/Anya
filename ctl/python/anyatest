@@ -6,6 +6,7 @@ from secrets import token_bytes
 import functools
 
 from anya import *
+from anya.tag import print_tag
 from anya.debug import debug_early_init, Logger
 
 def hexint(string: str) -> int:
@@ -17,6 +18,8 @@ def main():
     parser.add_argument("-k", dest="kbags", action="store_true", help="decrypt the same KBAG many times and test match")
     parser.add_argument("-x", dest="cross", action="store_true", help="decrypt small amounts of KBAGs via AP and SEP sequentially")
     args = parser.parse_args()
+
+    print_tag()
 
     dev = AnyaDevice(ecid=args.ecid)
 

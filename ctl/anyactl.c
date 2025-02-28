@@ -89,6 +89,10 @@ int main(int argc, char *const *argv) {
     bool benchmark = false;
     bool sep = false;
 
+    printf("%s\n", BUILD_TAG);
+    printf("made by john (@nyan_satan)\n");
+    printf("\n");
+
     int opt = 0;
     while ((opt = getopt(argc, argv, OPTS)) != -1) {
         switch (opt) {

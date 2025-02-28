@@ -5,6 +5,7 @@ from time import perf_counter
 from secrets import token_bytes
 
 from anya import *
+from anya.tag import print_tag
 
 def hexint(string: str) -> int:
     return int(string, 16)
@@ -20,6 +21,8 @@ def main():
     if (not args.kbag and not args.count) or (args.kbag and args.count):
         parser.print_help()
         exit(-1)
+
+    print_tag()
 
     dev = AnyaDevice(ecid=args.ecid)
 

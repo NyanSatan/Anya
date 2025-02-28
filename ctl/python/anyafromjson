@@ -6,6 +6,7 @@ from time import perf_counter
 
 from anya import *
 from anya.exceptions import *
+from anya.tag import print_tag
 
 DESCRIPTION = \
 """
@@ -27,6 +28,8 @@ def main():
     parser.add_argument(dest="in_path", help="input file")
     parser.add_argument(dest="out_path", help="output file")
     args = parser.parse_args()
+
+    print_tag()
 
     try:
         with open(args.in_path, "r") as f:
