@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "anya.h"
+#include "log.h"
 
 #define ANYA_IBOOT_FLAG (1 << 6)
 
@@ -43,7 +44,7 @@ typedef struct __attribute__((packed)) {
 } anya_packet_hdr_t;
 
 #define KBAG_MAX_COUNT  ((ANYA_MAX_PACKET_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
-#define MIN(x, y)   (x < y ? x : y)
+#define MIN(x, y)       (x < y ? x : y)
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
     irecv_error_t irecv_ret;
@@ -111,7 +112,12 @@ out_failure:
 }
 
 void anya_print_device(anya_device_t *dev) {
-    printf("CPID:%04X CPFM:%02X ECID:%016llX\n", dev->cpid, dev->cpfm, dev->ecid);
+    printf(
+        SEQ_BOLD "CPID:" SEQ_RESET "%04X " SEQ_BOLD "CPFM:" SEQ_RESET "%02X " SEQ_BOLD "ECID:" SEQ_RESET "%016llX\n",
+        dev->cpid,
+        dev->cpfm,
+        dev->ecid
+    );
 }
 
 uint16_t anya_get_cpid(anya_device_t *dev) {

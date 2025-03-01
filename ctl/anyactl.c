@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include "libanya/anya.h"
+#include "libanya/log.h"
 
 /*
  * These 2 are stolen from @xerub
@@ -15,6 +16,7 @@ static long str2hex(unsigned long long max, unsigned char *buf, const char *str)
     int seq = -1;
     while (max > 0) {
         int nibble = *str++;
+
         if (nibble >= '0' && nibble <= '9') {
             nibble -= '0';
         } else {
@@ -25,6 +27,7 @@ static long str2hex(unsigned long long max, unsigned char *buf, const char *str)
                 break;
             }
         }
+
         if (seq >= 0) {
             *buf++ = (seq << 4) | nibble;
             max--;
@@ -33,16 +36,19 @@ static long str2hex(unsigned long long max, unsigned char *buf, const char *str)
             seq = nibble;
         }
     }
+
     return buf - ptr;
 }
 
 static void hex2str(char *str, int buflen, const unsigned char *buf) {
     static const char h2a[] = "0123456789ABCDEF";
+
     for (; buflen > 0; --buflen) {
         unsigned char byte = *buf++;
         *str++ = h2a[byte >> 4];
         *str++ = h2a[byte & 0xF];
     }
+
     *str = '\0';
 }
 
@@ -54,11 +60,10 @@ static int open_device(anya_device_t **dev, uint64_t ecid) {
     anya_error_t error;
 
     if ((error = anya_open(dev, ecid)) != ANYA_E_SUCCESS) {
-        printf("failed to open device, reason: %s\n", anya_strerror(error));
+        ANYA_ERROR("failed to connect - %s", anya_strerror(error));
         return -1;
     }
 
-    printf("found: ");
     anya_print_device(*dev);
 
     return 0;
@@ -89,9 +94,8 @@ int main(int argc, char *const *argv) {
     bool benchmark = false;
     bool sep = false;
 
-    printf("%s\n", BUILD_TAG);
-    printf("made by john (@nyan_satan)\n");
-    printf("\n");
+    ANYA_INFO("%s", BUILD_TAG);
+    ANYA_INFO("made by john (@nyan_satan)\n");
 
     int opt = 0;
     while ((opt = getopt(argc, argv, OPTS)) != -1) {
@@ -99,11 +103,11 @@ int main(int argc, char *const *argv) {
             case 'k': {
                 if (strlen(optarg) == KBAG_SIZE * 2) {
                     if (str2hex(KBAG_SIZE, kbag, optarg) != KBAG_SIZE) {
-                        printf("invalid KBAG\n");
+                        ANYA_ERROR("invalid KBAG");
                         return -1;
                     }
                 } else {
-                    printf("KBAG must be 48 bytes in length\n");
+                    ANYA_ERROR("KBAG must be 48 bytes in length");
                     return -1;
                 }
 
@@ -115,12 +119,12 @@ int main(int argc, char *const *argv) {
                 char *end_ptr;
                 num = strtoull(optarg, &end_ptr, 0);
                 if (*end_ptr != '\0') {
-                    printf("invalid benchmark NUM\n");
+                    ANYA_ERROR("invalid benchmark NUM");
                     return -1;
                 }
 
                 if (num == 0) {
-                    printf("benchmark NUM cannot be zero\n");
+                    ANYA_ERROR("benchmark NUM cannot be zero");
                     return -1;
                 }
 
@@ -137,7 +141,7 @@ int main(int argc, char *const *argv) {
                 char *end_ptr;
                 ecid = strtoull(optarg, &end_ptr, 0);
                 if (*end_ptr != '\0') {
-                    printf("invalid ECID\n");
+                    ANYA_ERROR("invalid ECID");
                     return -1;
                 }
 
@@ -153,15 +157,13 @@ int main(int argc, char *const *argv) {
     }
 
     if (!decrypt && !benchmark) {
-        printf("neither benchmark nor KBAG set\n");
-        printf("\n");
+        ANYA_ERROR("neither benchmark nor KBAG set\n");
         usage(program_name);
         return -1;
     }
 
     if (decrypt && benchmark) {
-        printf("both benchmark and KBAG set\n");
-        printf("\n");
+        ANYA_ERROR("both benchmark and KBAG set\n");
         usage(program_name);
         return -1;
     }
@@ -179,45 +181,45 @@ int main(int argc, char *const *argv) {
         bool result = false;
 
         if ((error = anya_ping_sep(dev, &result)) != ANYA_E_SUCCESS) {
-            printf("failed to check SEP availability - %s\n", anya_strerror(error));
+            ANYA_ERROR("failed to check SEP availability - %s", anya_strerror(error));
             goto out;
         }
 
         if (!result) {
-            printf("SEP is unavailable\n");
+            ANYA_ERROR("SEP is unavailable");
             goto out;
         }
 
-        printf("will use SEP GID\n");
+        ANYA_INFO("will use SEP GID");
     }
 
     if (decrypt) {
         uint8_t key[KBAG_SIZE] = { 0 };
         if ((error = anya_decrypt(dev, kbag, key, 1, sep)) != ANYA_E_SUCCESS) {
-            printf("failed to decrypt KBAG - %s\n", anya_strerror(error));
+            ANYA_ERROR("failed to decrypt KBAG - %s", anya_strerror(error));
             goto out;
         }
 
         char str_key[KBAG_SIZE * 2 + 1] = { 0 };
         hex2str(str_key, KBAG_SIZE, key);
-        printf("%s\n", str_key);
+        ANYA_SUCCESS("%s", str_key);
 
     } else if (benchmark) {
         uint8_t *kbags = malloc(num * KBAG_SIZE);
         if (!kbags) {
-            printf("out of memory!");
+            ANYA_ERROR("out of memory!");
             goto out;
         }
 
         arc4random_buf(kbags, num * KBAG_SIZE);
 
-        printf("decrypting...\n");
+        ANYA_INFO("decrypting...");
 
         struct timeval st, et;
         gettimeofday(&st, NULL);
 
         if ((error = anya_decrypt(dev, kbags, kbags, num, sep)) != ANYA_E_SUCCESS) {
-            printf("failed to decrypt KBAGs - %s\n", anya_strerror(error));
+            ANYA_ERROR("failed to decrypt KBAGs - %s", anya_strerror(error));
             goto out;
         } 
 
@@ -227,7 +229,7 @@ int main(int argc, char *const *argv) {
         float elapsed_sec = (float)elapsed / (1000 * 1000);
         float average_per_sec = (float)num / elapsed_sec;
 
-        printf("decrypted %llu KBAGs in %.3f seconds, average - %.3f KBAGs/sec\n", num, elapsed_sec, average_per_sec);
+        ANYA_SUCCESS("decrypted %llu KBAGs in %.3f seconds, average - %.3f KBAGs/sec", num, elapsed_sec, average_per_sec);
     }
 
     ret = 0;

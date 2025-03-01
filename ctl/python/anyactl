@@ -5,7 +5,7 @@ from time import perf_counter
 from secrets import token_bytes
 
 from anya import *
-from anya.tag import print_tag
+from anya.debug import *
 
 def hexint(string: str) -> int:
     return int(string, 16)
@@ -24,12 +24,14 @@ def main():
 
     print_tag()
 
+    c_api_load()
+
     dev = AnyaDevice(ecid=args.ecid)
 
     try:
         dev.connect()
     except AnyaError as e:
-        print("failed to connect - %s" % str(e))
+        error("failed to connect - %s" % str(e))
         exit(-1)
 
     dev.print_device()
@@ -37,32 +39,28 @@ def main():
     if args.sep:
         try:
             if not dev.ping_sep():
-                print("SEP is unreachable")
-                dev.disconnect()
+                error("SEP is unreachable")
                 exit(-1)
         except AnyaError as e:
-            print("failed to ping SEP - %s" % str(e))
-            dev.disconnect()
+            error("failed to ping SEP - %s" % str(e))
             exit(-1)
 
-        print("will use SEP GID")
+        info("will use SEP GID")
 
     if args.kbag:
         try:
             decoded = decode_kbag(args.kbag)
         except AnyaValueError as e:
-            print("failed to parse KBAG - %s" % str(e))
-            dev.disconnect()
+            error("failed to parse KBAG - %s" % str(e))
             exit(-1)
 
         try:
             key = dev.decrypt_kbag(decoded, sep=args.sep)
         except AnyaError as e:
-            print("failed to decrypt KBAG - %s" % str(e))
-            dev.disconnect()
+            error("failed to decrypt KBAG - %s" % str(e))
             exit(-1)
 
-        print(encode_key(key, True))
+        success(encode_key(key, True))
 
     elif args.count:
         kbags = list()
@@ -70,15 +68,14 @@ def main():
         for i in range(args.count):
             kbags.append(bytes(token_bytes(KBAG_SIZE)))
 
-        print("decrypting...")
+        info("decrypting...")
 
         start = perf_counter()
 
         try:
             dev.decrypt_kbags(kbags, sep=args.sep)
         except AnyaError as e:
-            print("failed to decrypt KBAG - %s" % str(e))
-            dev.disconnect()
+            error("failed to decrypt KBAG - %s" % str(e))
             exit(-1)
 
         end = perf_counter()
@@ -86,7 +83,7 @@ def main():
         delta = end - start
         average = args.count / delta
 
-        print("decrypted %d KBAGs in %.3f seconds, average - %.3f KBAGs/sec" % (args.count, delta, average))
+        success("decrypted %d KBAGs in %.3f seconds, average - %.3f KBAGs/sec" % (args.count, delta, average))
 
     dev.disconnect()
 

@@ -7,3 +7,4 @@ __pycache__
 /ctl/static-libs
 /pure_python
 /anya_tag_db.json
+/ctl/python/anya/__tag.py

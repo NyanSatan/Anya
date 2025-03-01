@@ -3,6 +3,9 @@ try:
 except ImportError:
     TAG = "Anya-???"
 
+from .debug import *
+
 def print_tag() -> str:
-    print(TAG)
-    print("made by john (@nyan_satan)")
+    info(TAG)
+    info("made by john (@nyan_satan)")
+    print()

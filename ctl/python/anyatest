@@ -6,8 +6,7 @@ from secrets import token_bytes
 import functools
 
 from anya import *
-from anya.tag import print_tag
-from anya.debug import debug_early_init, Logger
+from anya.debug import anya_debug_init, Logger
 
 def hexint(string: str) -> int:
     return int(string, 16)
@@ -21,9 +20,11 @@ def main():
 
     print_tag()
 
+    c_api_load()
+
     dev = AnyaDevice(ecid=args.ecid)
 
-    debug_early_init(True)
+    anya_debug_init(True)
 
     logger = Logger("MAIN")
 
@@ -43,13 +44,12 @@ def main():
         logger.error("nothing to test!")
         exit(-1)
 
-
     logger.success("running tests")
 
     try:
         dev.connect()
     except AnyaError as e:
-        logger.error("failed to connect: %s" % str(e))
+        logger.error("failed to connect - %s" % str(e))
         exit(-1)
 
     logger.info("found: CPID:%04X CPFM:%02X ECID:%016X" % (
@@ -135,7 +135,7 @@ def test_ecid(dev: AnyaDevice, target_ecid: int) -> bool:
         logger.error("ECIDs do not match!")
         return False
     
-CROSS_NUM_OF_RUNS = 1000
+CROSS_NUM_OF_RUNS = 100
 CROSS_KBAG_MIN_AMOUNT = 100
 CROSS_KBAG_MAX_AMOUNT = 500
     

@@ -25,7 +25,6 @@ BUILD_TAG_DB := anya_tag_db.json
 TAG := $(shell $(PYTHON) polinatag.py generate . $(BUILD_TAG_DB))
 
 BUILD_DIR := build
-
 PACKAGE_DIR := package
 
 ifeq (,$(findstring private_build,$(TAG)))
