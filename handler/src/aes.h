@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include "firebloom.h"
 
-#define KBAG_SIZE 0x30
-
 enum {
     kAESEncrypt = 0x10,
     kAESDecrypt = 0x11

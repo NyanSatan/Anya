@@ -85,7 +85,7 @@ LDFLAGS += -Wl,-segaddr,__DATA,$(TARGET_DATA_START)
 PROJECT_NAME := anya_handler
 
 SOURCE_ROOT := src
-SOURCES := $(SOURCE_ROOT)/anya_handler.c $(SOURCE_ROOT)/copy.S
+SOURCES := $(SOURCE_ROOT)/main.c $(SOURCE_ROOT)/ap.c $(SOURCE_ROOT)/copy.S
 
 ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 	SOURCES += $(SOURCE_ROOT)/time.c $(SOURCE_ROOT)/coresight.c $(SOURCE_ROOT)/sep.c

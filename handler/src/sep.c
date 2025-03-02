@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "anya.h"
 #include "sep.h"
 #include "aes.h"
 
@@ -92,7 +93,6 @@ int sep_decrypt_kbag(void *kbag, void *output) {
         do {
             REQUIRE_NOERR(sep_read32(TARGET_SEP_AES_BASE + SEP_AES_STS_REG, &sts), fail);
         } while ((sts & 1) != 1);
-
 
         /* updating IV */
         copy128(kbag + SEP_AES_BLK * i, iv);

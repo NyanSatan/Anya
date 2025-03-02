@@ -35,4 +35,3 @@ _copy128:
     str q0, [x1]
     ret
 #endif
-
