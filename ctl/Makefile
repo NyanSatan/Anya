@@ -9,10 +9,13 @@ CFLAGS += -arch arm64
 CFLAGS += -arch x86_64
 CFLAGS += -mmacosx-version-min=10.7
 CFLAGS += -Ililirecovery
-CFLAGS += -DBUILD_TAG="\"$(TAG)\""
 
 LDFLAGS := -framework IOKit 
 LDFLAGS += -framework CoreFoundation
+LDFLAGS += -Wl,-no_adhoc_codesign
+
+CODESIGN := codesign
+CODESIGN_FLAGS := -s - -f -i $(TAG)
 
 SOURCES := \
 	anyactl.c \
@@ -32,6 +35,8 @@ DIR_HELPER = mkdir -p $(@D)
 .PHONY: all clean
 
 all: $(RESULT) $(DYLIB_RESULT)
+	@echo "\tcodesigning"
+	@$(CODESIGN) $(CODESIGN_FLAGS) $^
 	@echo "%%%% done building"
 
 $(RESULT): $(SOURCES)

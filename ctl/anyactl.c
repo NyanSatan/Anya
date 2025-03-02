@@ -7,6 +7,14 @@
 #include "libanya/anya.h"
 #include "libanya/log.h"
 
+struct cs_blob {
+    uint32_t type;
+    uint32_t len;
+};
+
+#define CS_OPS_IDENTITY 11
+int csops(pid_t pid, unsigned int  ops, void *useraddr, size_t usersize);
+
 /*
  * These 2 are stolen from @xerub
  */
@@ -69,6 +77,21 @@ static int open_device(anya_device_t **dev, uint64_t ecid) {
     return 0;
 }
 
+static void print_banner() {
+    struct {
+        struct cs_blob ops;
+        char tag[128];
+    } ops = { 0 };
+
+    if (csops(getpid(), CS_OPS_IDENTITY, &ops, sizeof(ops)) < 0) {
+        ANYA_WARNING("csops() failed (?!)");
+    } else {
+        ANYA_INFO("%s", ops.tag);
+    }
+
+    ANYA_INFO("made by john (@nyan_satan)\n");
+}
+
 static void usage(const char *program_name) {
     printf("usage: %s ARG[s]\n", program_name);
     printf("\n");
@@ -94,8 +117,7 @@ int main(int argc, char *const *argv) {
     bool benchmark = false;
     bool sep = false;
 
-    ANYA_INFO("%s", BUILD_TAG);
-    ANYA_INFO("made by john (@nyan_satan)\n");
+    print_banner();
 
     int opt = 0;
     while ((opt = getopt(argc, argv, OPTS)) != -1) {
