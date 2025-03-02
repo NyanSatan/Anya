@@ -11,7 +11,7 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 
-IGNORED_DIRS = [".git", "build"]
+IGNORED_DIRS = [".git", "build", "package"]
 IGNORED_FILES = ["polinatag.py", "__tag.py"]
 
 class AdvanceLevel(IntEnum):

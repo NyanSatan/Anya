@@ -78,13 +78,12 @@ astris:
 ctl:
 	@echo "%%%%%% building the control utility and library"
 	@$(MAKE) -C $(CTL_DIR) TAG="$(TAG)"
-	@echo "%%%%%% copying the control utility and library"
 	@cp -a $(CTL_BUILD_TARGETS) $(BUILD_DIR)
 
 $(HANDLER_TARGETS): handler_%: %
 	@echo "%%%%%% building USB DFU payload for $<"
 	@$(MAKE) -C $(HANDLER_DIR) TARGET=$< TAG="$(TAG)"
-	@cp -a $(HANDLER_BUILD_DIR)/*$(subst $<,/,-)*.bin $(HANDLER_FINAL_BUILD_DIR)
+	@cp -a $(HANDLER_BUILD_DIR)/*$(subst /,-,$<)*.bin $(HANDLER_FINAL_BUILD_DIR)
 
 python:
 	@echo "%%%%%% copying the Python control utility"

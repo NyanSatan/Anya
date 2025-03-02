@@ -17,7 +17,7 @@
 #include "misc.h"
 
 /* build tag string */
-const char __attribute__((used, aligned(16))) BUILD_STRING[] = TARGET_BUILD_STRING;
+const char __attribute__((used, aligned(16))) __tag[64] = "ANYA_TAG_PLACEHOLDER";
 
 /* DFU bRequest selectors */
 enum {
@@ -48,7 +48,7 @@ enum {
 #endif
 
 /*
- * Older platforms (definetely Skye and Cyprus) do not like
+ * Older platforms (definitely Skye and Cyprus) do not like
  * unaligned adresses passed to usb_core_do_transfer()
  *
  * The proper way to fix it is using out_buffer provided

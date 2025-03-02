@@ -4,6 +4,7 @@
 
 ARM_CC ?= xcrun -sdk iphoneos clang
 VMACHO ?= vmacho
+PYTHON ?= python3
 
 #
 # Not user changeable
@@ -27,8 +28,7 @@ TARGET_DATA_START := $(shell printf "0x%x" `echo $$(( $(TARGET_LOADADDR) + $(TAR
 
 TARGET_BUILD_STRING := "Anya USB DFU Handler for $(TARGET_NAME), $(TAG)"
 
-OPTIONS := -DTARGET_BUILD_STRING=\"$(TARGET_BUILD_STRING)\" \
-		   -DTARGET_TRAMPOLINE=$(TARGET_TRAMPOLINE) \
+OPTIONS := -DTARGET_TRAMPOLINE=$(TARGET_TRAMPOLINE) \
 		   -DTARGET_LOADADDR=$(TARGET_LOADADDR) \
 		   -DTARGET_KBAG_BUFFER_SIZE=$(TARGET_KBAG_BUFFER_SIZE) \
 		   -DTARGET_HANDLE_INTERFACE_REQUEST=$(TARGET_HANDLE_INTERFACE_REQUEST) \
@@ -85,17 +85,19 @@ LDFLAGS += -Wl,-segaddr,__DATA,$(TARGET_DATA_START)
 PROJECT_NAME := anya_handler
 
 SOURCE_ROOT := src
-SOURCES := $(SOURCE_ROOT)/main.c $(SOURCE_ROOT)/ap.c $(SOURCE_ROOT)/copy.S
+BUILD_ROOT := build
+CURRENT_ROOT := $(BUILD_ROOT)/$(TARGET_NAME)/$(SOURCE_ROOT)
+
+OBJECTS := $(CURRENT_ROOT)/main.o $(CURRENT_ROOT)/ap.o $(CURRENT_ROOT)/copy.o
 
 ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
-	SOURCES += $(SOURCE_ROOT)/time.c $(SOURCE_ROOT)/coresight.c $(SOURCE_ROOT)/sep.c
+	OBJECTS += $(CURRENT_ROOT)/time.o $(CURRENT_ROOT)/coresight.o $(CURRENT_ROOT)/sep.o
 
 	ifneq ($(TARGET_HAS_SEP32),true)
-		SOURCES += $(SOURCE_ROOT)/dbgwrap.c
+		OBJECTS += $(CURRENT_ROOT)/dbgwrap.o
 	endif
 endif
 
-BUILD_ROOT := build
 TARGET_BASENAME := $(PROJECT_NAME).$(TARGET_NAME)
 TARGET_MACHO := $(BUILD_ROOT)/$(TARGET_BASENAME).o
 TARGET_BIN := $(BUILD_ROOT)/$(TARGET_BASENAME).bin
@@ -105,22 +107,31 @@ DIR_HELPER = mkdir -p $(@D)
 .PHONY: all clean
 
 all: $(TARGET_BIN)
+	@$(PYTHON) tools/postprocess.py $< $(TARGET_BUILD_STRING)
 	@echo "%%%% done building"
 
 $(TARGET_BIN): $(TARGET_MACHO)
 	@echo "\textracting binary"
 	@$(DIR_HELPER)
 	@$(VMACHO) -f $< $@
-	@echo "\tpadding binary"
-	@dd status=none if=/dev/zero bs=1 count=$$(((8 - ($$(stat -f %z $@) % 8)) % 8)) >> $@
 
-$(TARGET_MACHO): $(SOURCES)
-	@echo "\tbuilding"
+$(TARGET_MACHO): $(OBJECTS)
+	@echo "\tlinking"
 	@$(DIR_HELPER)
-	@$(ARM_CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(ARM_CC) $(LDFLAGS) $^ -o $@
+
+$(CURRENT_ROOT)/%.o: $(SOURCE_ROOT)/%.c
+	@echo "\tcompiling C: $<"
+	@$(DIR_HELPER)
+	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@ 
+
+$(CURRENT_ROOT)/%.o: $(SOURCE_ROOT)/%.S
+	@echo "\tcompiling ASM: $<"
+	@$(DIR_HELPER)
+	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@ 
 
 clean:
 	@rm -rf $(BUILD_ROOT)
 	@echo "%%%% done cleaning"
 
--include $(TARGET_OBJ:.o=.d)
+-include $(OBJECTS:.o=.d)
