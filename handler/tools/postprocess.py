@@ -1,7 +1,7 @@
 import sys
 
 PLACEHOLDER = "ANYA_TAG_PLACEHOLDER"
-MAX_LEN = 128
+MAX_LEN = 96
 
 def main():
     try:

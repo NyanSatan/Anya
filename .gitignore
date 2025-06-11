@@ -3,6 +3,7 @@ build
 .vscode
 .DS_Store
 __pycache__
+/.tag
 /misc
 /ctl/static-libs
 /pure_python

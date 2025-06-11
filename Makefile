@@ -20,9 +20,20 @@ VALID_HANDLER_TARGETS ?= \
 
 PYTHON ?= python3
 
-BUILD_TAG_DB := anya_tag_db.json
+BUILD_TAG_BASE_FILE := .tag
 
-TAG := $(shell $(PYTHON) polinatag.py generate . $(BUILD_TAG_DB))
+ifneq (,$(wildcard $(BUILD_TAG_BASE_FILE)))
+	DIRTY := $(shell git diff-files --quiet; echo $$?)
+	TAG_RAW := $(shell printf $(shell cat $(BUILD_TAG_BASE_FILE)))
+
+	ifeq ($(DIRTY),0)
+		TAG := $(TAG_RAW)
+	else
+		TAG := $(TAG_RAW)-dirty
+	endif
+else
+	TAG := $(shell printf "Anya-private_build...%s" $(shell TZ=UTC date "+%Y-%m-%d...%H-%M-%S"))
+endif
 
 BUILD_DIR := build
 PACKAGE_DIR := package
@@ -62,7 +73,6 @@ HANDLER_TARGETS := $(addprefix handler_,$(VALID_HANDLER_TARGETS))
 .PHONY: all astris ctl python package clean distclean $(HANDLER_TARGETS) $(VALID_HANDLER_TARGETS)
 
 all: $(HANDLER_TARGETS) astris ctl python
-	@$(shell $(PYTHON) polinatag.py commit $(BUILD_TAG_DB))
 	@echo "%%%%%% all done"
 
 package: all

@@ -17,7 +17,7 @@
 #include "misc.h"
 
 /* build tag string */
-const char __attribute__((used, aligned(16))) __tag[64] = "ANYA_TAG_PLACEHOLDER";
+const char __attribute__((used, aligned(16))) __tag[96] = "ANYA_TAG_PLACEHOLDER";
 
 /* DFU bRequest selectors */
 enum {
