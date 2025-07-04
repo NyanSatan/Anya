@@ -99,7 +99,7 @@ static void usage(const char *program_name) {
     printf("\t-k KBAG\tspecifies KBAG to be decrypted\n");
     printf("\t-b NUM\truns benchmark with NUM random KBAGs\n");
     printf("\n");
-    printf("you can also use these one with both of the above:\n");
+    printf("you can also use these ones with both of the above:\n");
     printf("\t-s\tuses SEP GID (if possible)\n");
     printf("\t-e ECID\t(hexa)decimal ECID to look for\n");
     printf("\n");
@@ -212,7 +212,7 @@ int main(int argc, char *const *argv) {
             goto out;
         }
 
-        ANYA_INFO("will use SEP GID");
+        ANYA_MISC("will use SEP GID");
     }
 
     if (decrypt) {
@@ -224,7 +224,7 @@ int main(int argc, char *const *argv) {
 
         char str_key[KBAG_SIZE * 2 + 1] = { 0 };
         hex2str(str_key, KBAG_SIZE, key);
-        ANYA_SUCCESS("%s", str_key);
+        fprintf(stdout, "%s", str_key);
 
     } else if (benchmark) {
         uint8_t *kbags = malloc(num * KBAG_SIZE);
@@ -235,7 +235,7 @@ int main(int argc, char *const *argv) {
 
         arc4random_buf(kbags, num * KBAG_SIZE);
 
-        ANYA_INFO("decrypting...");
+        ANYA_MISC("decrypting...");
 
         struct timeval st, et;
         gettimeofday(&st, NULL);

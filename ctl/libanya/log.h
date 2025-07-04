@@ -15,10 +15,10 @@
 
 #define BREAK   "\n"
 
-#define ANYA_MISC(__format, ...)    printf(__format BREAK, ##__VA_ARGS__);
-#define ANYA_INFO(__format, ...)    printf(ANSI_START ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
-#define ANYA_SUCCESS(__format, ...) printf(ANSI_START ANSI_GREEN ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
-#define ANYA_WARNING(__format, ...) printf(ANSI_START ANSI_YELLOW ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
-#define ANYA_ERROR(__format, ...)   printf(ANSI_START ANSI_RED ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
+#define ANYA_MISC(__format, ...)    fprintf(stderr, __format BREAK, ##__VA_ARGS__);
+#define ANYA_INFO(__format, ...)    fprintf(stderr, ANSI_START ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
+#define ANYA_SUCCESS(__format, ...) fprintf(stderr, ANSI_START ANSI_GREEN ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
+#define ANYA_WARNING(__format, ...) fprintf(stderr, ANSI_START ANSI_YELLOW ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
+#define ANYA_ERROR(__format, ...)   fprintf(stderr, ANSI_START ANSI_RED ANSI_DELIM ANSI_BOLD ANSI_END __format ANSI_START ANSI_RESET ANSI_END BREAK, ##__VA_ARGS__);
 
 #endif

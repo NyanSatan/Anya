@@ -1,12 +1,13 @@
 import os
 from ctypes import *
+from types import NoneType
 
 from .exceptions import *
 from . import KBAG_SIZE
 from .debug import *
 
 class AnyaUSBDFUDevice:
-    def __init__(self, ecid: int = None):
+    def __init__(self, ecid: int | NoneType = None):
         self.ecid = ecid if ecid else 0
         self.connected = False
 

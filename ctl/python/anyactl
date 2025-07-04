@@ -60,7 +60,7 @@ def main():
             error("failed to decrypt KBAG - %s" % str(e))
             exit(-1)
 
-        success(encode_key(key, True))
+        print(encode_key(key, True), file=sys.stdout)
 
     elif args.count:
         kbags = list()

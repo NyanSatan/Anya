@@ -112,7 +112,8 @@ out_failure:
 }
 
 void anya_print_device(anya_device_t *dev) {
-    printf(
+    fprintf(
+        stderr,
         SEQ_BOLD "CPID:" SEQ_RESET "%04X " SEQ_BOLD "CPFM:" SEQ_RESET "%02X " SEQ_BOLD "ECID:" SEQ_RESET "%016llX\n",
         dev->cpid,
         dev->cpfm,

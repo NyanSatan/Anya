@@ -2,8 +2,9 @@
 #define ANYA_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
-#include <lilirecovery.h>
+#include "../lilirecovery/lilirecovery.h"
 
 #define CPFM_SECURE_STATUS      (1 << 0)
 #define CPFM_PRODUCTION_STATUS  (1 << 1)

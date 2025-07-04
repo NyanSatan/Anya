@@ -5,7 +5,7 @@ except ImportError:
 
 from .debug import *
 
-def print_tag() -> str:
+def print_tag():
     info(TAG)
     info("made by john (@nyan_satan)")
     print()

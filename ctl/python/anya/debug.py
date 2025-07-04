@@ -1,3 +1,4 @@
+import sys
 import time
 
 NONE   = ""
@@ -18,23 +19,23 @@ def anya_debug_init(debug: bool):
     start_time = time.time()   
     debug_enabled = debug
 
-def _log(color: str, args: list, kwargs: dict):
-    print((BOLD + color), end="")
-    print(*args, **kwargs, end="")
-    print(RESET)
+def _log(color: str, args: tuple, kwargs: dict):
+    print(color, end="", file=sys.stderr)
+    print(*args, **kwargs, end="", file=sys.stderr)
+    print(RESET, file=sys.stderr)
 
 def debug(*args, **kwargs):
     if debug_enabled:
-        _log(PURPLE, args, kwargs)
+        _log(PURPLE+BOLD, args, kwargs)
 
 def success(*args, **kwargs):
-    _log(GREEN, args, kwargs)
+    _log(GREEN+BOLD, args, kwargs)
 
 def warning(*args, **kwargs):
-    _log(YELLOW, args, kwargs)
+    _log(YELLOW+BOLD, args, kwargs)
 
 def error(*args, **kwargs):
-    _log(RED, args, kwargs)
+    _log(RED+BOLD, args, kwargs)
 
 def info(*args, **kwargs):
     _log(NONE, args, kwargs)
