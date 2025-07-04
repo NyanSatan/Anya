@@ -67,6 +67,8 @@ ifeq ($(TARGET_HAS_FIREBLOOM),true)
 			   -DTARGET_FIREBLOOM_BYTE_TYPE=$(TARGET_FIREBLOOM_BYTE_TYPE)
 endif
 
+OPTIONS += -DTARGET_BUILD_STRING=\"$(TARGET_BUILD_STRING)\"
+
 CFLAGS := $(OPTIONS)
 CFLAGS += -fno-builtin
 CFLAGS += -Os
@@ -107,7 +109,6 @@ DIR_HELPER = mkdir -p $(@D)
 .PHONY: all clean
 
 all: $(TARGET_BIN)
-	@$(PYTHON) tools/postprocess.py $< $(TARGET_BUILD_STRING)
 	@echo "%%%% done building"
 
 $(TARGET_BIN): $(TARGET_MACHO)
