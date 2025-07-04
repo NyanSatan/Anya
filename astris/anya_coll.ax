@@ -245,7 +245,7 @@ namespace eval ::anya {
         }
     }
 
-    proc after_dart_enable_usb {} {
+    proc after_dart_enable_aes {} {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x100001E94 }
@@ -256,7 +256,7 @@ namespace eval ::anya {
         }
     }
 
-    proc dart_enable_usb_bl_relative {} {
+    proc dart_enable_aes_bl_relative {} {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x1E80 }
@@ -267,7 +267,7 @@ namespace eval ::anya {
         }
     }
 
-    proc dart_disable_usb_bl_relative {} {
+    proc dart_disable_aes_bl_relative {} {
         variable soc
         switch $soc {
             "Coll A0"     { return 0x1F24 }
@@ -562,12 +562,12 @@ namespace eval ::anya {
 
     # This is to fix memory leak somewhere deep inside of DART code
     puts "Hooking aes_hw_crypto_pre_op\(\)..."
-    wait_for_bp [after_dart_enable_usb]
+    wait_for_bp [after_dart_enable_aes]
 
     for {set i 0} {$i < 5} {incr i} {
-        ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_enable_usb_bl_relative] + $i * 4] 0xD503201F
+        ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_enable_aes_bl_relative] + $i * 4] 0xD503201F
     }
-    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_disable_usb_bl_relative]] 0xD503201F
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_disable_aes_bl_relative]] 0xD503201F
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
