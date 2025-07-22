@@ -7,5 +7,4 @@ from .debug import *
 
 def print_tag():
     info(TAG)
-    info("made by john (@nyan_satan)")
-    print()
+    info("made by john (@nyan_satan)\n")

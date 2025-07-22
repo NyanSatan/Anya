@@ -224,7 +224,7 @@ int main(int argc, char *const *argv) {
 
         char str_key[KBAG_SIZE * 2 + 1] = { 0 };
         hex2str(str_key, KBAG_SIZE, key);
-        fprintf(stdout, "%s", str_key);
+        fprintf(stdout, "%s\n", str_key);
 
     } else if (benchmark) {
         uint8_t *kbags = malloc(num * KBAG_SIZE);

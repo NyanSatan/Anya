@@ -38,7 +38,7 @@ def error(*args, **kwargs):
     _log(RED+BOLD, args, kwargs)
 
 def info(*args, **kwargs):
-    _log(NONE, args, kwargs)
+    _log(BOLD, args, kwargs)
 
 class Logger:
     def __init__(self, name: str) -> None:

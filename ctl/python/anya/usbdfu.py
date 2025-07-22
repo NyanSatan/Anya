@@ -40,11 +40,12 @@ class AnyaUSBDFUDevice:
         return c_api.anya_get_ecid(self._connection)
 
     def print_device(self):
-        print((BOLD + "found: CPID:" + RESET + "%04X " + BOLD + "CPFM:" + RESET + "%02X " + BOLD + "ECID:" + RESET + "%016X") % (
+        print((BOLD + "CPID:" + RESET + "%04X " + BOLD + "CPFM:" + RESET + "%02X " + BOLD + "ECID:" + RESET + "%016X") % (
                 self.get_cpid(),
                 self.get_cpfm(),
                 self.get_ecid()
-            )
+            ),
+            file=sys.stderr
         )
 
     def ping_sep(self) -> bool:
