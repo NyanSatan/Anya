@@ -49,7 +49,8 @@ ASTRIS_TARGETS := \
 	$(ASTRIS_DIR)/anya.ax \
 	$(ASTRIS_DIR)/anya_4k.ax \
 	$(ASTRIS_DIR)/anya_crete.ax \
-	$(ASTRIS_DIR)/anya_coll.ax
+	$(ASTRIS_DIR)/anya_coll.ax \
+	$(ASTRIS_DIR)/anya_palma1c.ax
 
 CTL_DIR := ctl
 CTL_BUILD_TARGETS := \
