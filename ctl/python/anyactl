@@ -45,7 +45,7 @@ def main():
             error("failed to ping SEP - %s" % str(e))
             exit(-1)
 
-        info("will use SEP GID")
+        misc("will use SEP GID")
 
     if args.kbag:
         try:
@@ -68,7 +68,7 @@ def main():
         for i in range(args.count):
             kbags.append(bytes(token_bytes(KBAG_SIZE)))
 
-        info("decrypting...")
+        misc("decrypting...")
 
         start = perf_counter()
 
