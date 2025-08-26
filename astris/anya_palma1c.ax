@@ -37,7 +37,7 @@ namespace eval ::anya {
     proc main_core {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return ACCP0-0 }
+            "Palma_1c A0"  { return ACCP0-0 }
             default  {
                 data_provider_error
             }
@@ -47,7 +47,7 @@ namespace eval ::anya {
     proc rom_base {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x100000000 }
+            "Palma_1c A0"  { return 0x100000000 }
             default  {
                 data_provider_error
             }
@@ -57,7 +57,7 @@ namespace eval ::anya {
     proc sram_base {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1FC000000 }
+            "Palma_1c A0"  { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -67,7 +67,7 @@ namespace eval ::anya {
     proc sram_len {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0xF00000 }
+            "Palma_1c A0"  { return 0xF00000 }
             default  {
                 data_provider_error
             }
@@ -77,7 +77,7 @@ namespace eval ::anya {
     proc io_base {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x200000000 }
+            "Palma_1c A0"  { return 0x200000000 }
             default  {
                 data_provider_error
             }
@@ -87,7 +87,7 @@ namespace eval ::anya {
     proc io_page_count {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 80 }
+            "Palma_1c A0"  { return 81 }
             default  {
                 data_provider_error
             }
@@ -97,7 +97,7 @@ namespace eval ::anya {
     proc rom_base_new_pa {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1FCE80000 }
+            "Palma_1c A0"  { return 0x1FCE80000 }
             default  {
                 data_provider_error
             }
@@ -107,7 +107,7 @@ namespace eval ::anya {
     proc loadaddr {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1FC088000 }
+            "Palma_1c A0"  { return 0x1FC088000 }
             default  {
                 data_provider_error
             }
@@ -117,7 +117,7 @@ namespace eval ::anya {
     proc platform_loadarea_get_size_relative {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x8614 }
+            "Palma_1c A0"  { return 0x8614 }
             default  {
                 data_provider_error
             }
@@ -127,7 +127,7 @@ namespace eval ::anya {
     proc loadarea_new_size {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0xE78000 }
+            "Palma_1c A0"  { return 0xDF8000 }
             default  {
                 data_provider_error
             }
@@ -137,7 +137,7 @@ namespace eval ::anya {
     proc new_mair_el1 {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x4400FF04 }
+            "Palma_1c A0"  { return 0x4400FF04 }
             default  {
                 data_provider_error
             }
@@ -147,7 +147,7 @@ namespace eval ::anya {
     proc new_tcr_el1 {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x10004365D6A516 }
+            "Palma_1c A0"  { return 0x10004365D6A516 }
             default  {
                 data_provider_error
             }
@@ -157,7 +157,7 @@ namespace eval ::anya {
     proc arm_set_ttbr0 {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x100007750 }
+            "Palma_1c A0"  { return 0x100007750 }
             default  {
                 data_provider_error
             }
@@ -167,7 +167,7 @@ namespace eval ::anya {
     proc arm_flush_tlb {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1000077A0 }
+            "Palma_1c A0"  { return 0x1000077A0 }
             default  {
                 data_provider_error
             }
@@ -177,7 +177,7 @@ namespace eval ::anya {
     proc boot_selected_hook {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1000007A0 }
+            "Palma_1c A0"  { return 0x1000007A4 }
             default  {
                 data_provider_error
             }
@@ -187,7 +187,7 @@ namespace eval ::anya {
     proc boot_selected_reg {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return x26 }
+            "Palma_1c A0"  { return x26 }
             default  {
                 data_provider_error
             }
@@ -197,37 +197,37 @@ namespace eval ::anya {
     proc boot_selected_new_value {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 7 }
+            "Palma_1c A0"  { return 7 }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc after_dart_enable_usb {} {
+    proc after_dart_enable_aes {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x100001E60 }
+            "Palma_1c A0"  { return 0x100001E60 }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc dart_enable_usb_bl_relative {} {
+    proc dart_enable_aes_bl_relative {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1E4C }
+            "Palma_1c A0"  { return 0x1E4C }
             default  {
                 data_provider_error
             }
         }
     }
 
-    proc dart_disable_usb_bl_relative {} {
+    proc dart_disable_aes_bl_relative {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x1EF0 }
+            "Palma_1c A0"  { return 0x1EF0 }
             default  {
                 data_provider_error
             }
@@ -237,7 +237,7 @@ namespace eval ::anya {
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x100007CC0 }
+            "Palma_1c A0"  { return 0x100007CC0 }
             default  {
                 data_provider_error
             }
@@ -247,7 +247,7 @@ namespace eval ::anya {
     proc handle_interface_request_hook {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return 0x10001FFCC }
+            "Palma_1c A0"  { return 0x10001FFCC }
             default  {
                 data_provider_error
             }
@@ -257,7 +257,7 @@ namespace eval ::anya {
     proc handle_interface_request_hook_reg {} {
         variable soc
         switch $soc {
-            "Palma_1c A1"  { return x16 }
+            "Palma_1c A0"  { return x16 }
             default  {
                 data_provider_error
             }
@@ -515,12 +515,12 @@ namespace eval ::anya {
 
     # This is to fix memory leak somewhere deep inside of DART code
     puts "Hooking aes_hw_crypto_pre_op\(\)..."
-    wait_for_bp [after_dart_enable_usb]
+    wait_for_bp [after_dart_enable_aes]
 
     for {set i 0} {$i < 5} {incr i} {
-        ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_enable_usb_bl_relative] + $i * 4] 0xD503201F
+        ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_enable_aes_bl_relative] + $i * 4] 0xD503201F
     }
-    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_disable_usb_bl_relative]] 0xD503201F
+    ::astris::console::native::mem -32 -memap 4 [expr [rom_base_new_pa] + [dart_disable_aes_bl_relative]] 0xD503201F
 
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
