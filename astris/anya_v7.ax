@@ -5,8 +5,6 @@
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
 #
-# TODO
-#
 
 namespace eval ::anya {
     #
