@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "../lilirecovery/lilirecovery.h"
+#include <lilirecovery.h>
 
 #define CPFM_SECURE_STATUS      (1 << 0)
 #define CPFM_PRODUCTION_STATUS  (1 << 1)
