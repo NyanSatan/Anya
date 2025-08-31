@@ -8,6 +8,7 @@ CFLAGS := -O3
 CFLAGS += -arch arm64
 CFLAGS += -arch x86_64
 CFLAGS += -mmacosx-version-min=10.7
+CFLAGS += -Ililirecovery
 
 LDFLAGS := -framework IOKit 
 LDFLAGS += -framework CoreFoundation

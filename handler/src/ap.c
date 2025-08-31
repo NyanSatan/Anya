@@ -13,7 +13,7 @@ uint8_t kbag_buffer[KBAG_MAX_COUNT * (KBAG_SIZE + PADDING_SIZE)];
 
 /* operations for AP decrypt */
 size_t copyin(void *in, void *out, size_t count);
-size_t copyout(void *in, void *out, size_t count);
+void   copyout(void *in, void *out, size_t count);
 
 int ap_decrypt_kbags(void *kbags, void *output, uint32_t count) {
     /* copying KBAGs to our buffer */

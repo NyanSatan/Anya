@@ -1,0 +1,152 @@
+#
+# Anya's Astris script (armv7 edition)
+# 
+# Brings up device to Anya mode - basically SecureROM DFU,
+# but with custom handle_interface_request() that decrypts
+# KBAGs sent over USB
+#
+
+namespace eval ::anya {
+    #
+    # Data providers 
+    #
+
+    set soc [::astris::console::native::soc full]
+
+    proc data_provider_error {} {
+        variable soc
+        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
+    }
+
+    proc main_core {} {
+        return CPU0
+    }
+
+    proc before_tlb_flush {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return 0x826A }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc trampoline {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return 0x48807000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_force_dfu_ret {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return 0x648A }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return 0x95B6 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc handle_interface_request_intercept_reg {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return r2 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_iboot_flags_ret {} {
+        variable soc
+        switch $soc {
+            "M8 A5"     { return 0x46F0 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    #
+    # Flow routines
+    #
+
+    proc wait_for_state {state} {
+        while {true} {
+            if {[::astris::console::native::support::check_state [list $state]]} {
+                return
+            } else {
+                after 50
+            }
+        }
+    }
+
+    proc wait_for_bp {addr} {
+        set bp [::astris::console::native::bp set $addr]
+        ::astris::console::native::go
+        wait_for_state "HardwareBreak"
+        ::astris::console::native::bp clear $bp
+    }
+
+    proc wait_for_run {} {
+        ::astris::console::native::go 
+        wait_for_state "Run"
+    }
+
+    #
+    # Actual logic
+    #
+
+    if {![info exists env(ANYA_PAYLOAD)]} {
+        error "ANYA_PAYLOAD variable not set"
+    }
+
+    set payload $::env(ANYA_PAYLOAD)
+    set payload_base [trampoline]
+
+    ::astris::soc::fromreset
+
+    ::astris::console::native::cpu [main_core]
+
+    wait_for_bp [before_tlb_flush]
+
+    puts "Uploading USB handler..."
+    ::astris::console::native::load -memap 4 $payload $payload_base
+
+    puts "Forcing DFU..."
+    wait_for_bp [platform_get_force_dfu_ret]
+    ::astris::console::native::reg r0 0x1
+
+    puts "Patching iBoot flags..."
+    wait_for_bp [platform_get_iboot_flags_ret]
+    ::astris::console::native::reg r0 [expr [::astris::console::native::reg r0] | [expr 1 << 6]]
+
+    puts "Overriding USB handler ptr..."
+    wait_for_bp [handle_interface_request_intercept]
+    ::astris::console::native::reg [handle_interface_request_intercept_reg] [expr $payload_base + 1]
+
+    puts "Warming up SEP..."
+    ::astris::console::native::cpu "SEP"
+    ::astris::console::native::halt -q
+    ::astris::console::native::go
+    ::astris::console::native::cpu [main_core]
+
+    wait_for_run
+
+    puts "DONE!"
+}

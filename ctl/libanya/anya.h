@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "../lilirecovery/lilirecovery.h"
+#include <lilirecovery.h>
 
 #define CPFM_SECURE_STATUS      (1 << 0)
 #define CPFM_PRODUCTION_STATUS  (1 << 1)
@@ -13,10 +13,11 @@ typedef struct anya_device anya_device_t;
 
 typedef enum {
     ANYA_E_SUCCESS = 0,
-    ANYA_E_OUT_OF_MEMORY,
+    ANYA_E_OUT_OF_MEMORY = -66,
     ANYA_E_NO_DEVICE,
     ANYA_E_NOT_ANYA_DEVICE,
     ANYA_E_USB_ERROR,
+    ANYA_E_TIMEOUT,
     ANYA_E_HANDLER_ERROR,
     ANYA_E_UNKNOWN_ERROR
 } anya_error_t;

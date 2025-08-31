@@ -49,7 +49,7 @@ void copy128(void *src, void *dest);
  */
 
 static
-uint64_t (*platform_get_cpfm)() = (void *)TARGET_PLATFORM_GET_CPFM;
+uint32_t (*platform_get_cpfm)() = (void *)TARGET_PLATFORM_GET_CPFM;
 
 bool sep_ping() {
     return (platform_get_cpfm() & 1) == 0;

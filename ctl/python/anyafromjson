@@ -72,7 +72,7 @@ def main():
             error("failed to ping SEP - %s" % str(e))
             exit(-1)
 
-        info("will use SEP GID")
+        misc("will use SEP GID")
 
     total_count = len(kbags)
 

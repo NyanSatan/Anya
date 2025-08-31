@@ -37,20 +37,14 @@ endif
 
 BUILD_DIR := build
 PACKAGE_DIR := package
-
-ifeq (,$(findstring private_build,$(TAG)))
-	PACKAGE_FILE := $(PACKAGE_DIR)/$(TAG).tar.xz
-else
-	PACKAGE_FILE := $(PACKAGE_DIR)/Anya-private-$(shell TZ=UTC date "+%Y-%m-%d_%H-%M-%S").tar.xz
-endif
+PACKAGE_FILE := $(PACKAGE_DIR)/$(TAG).tar.xz
 
 ASTRIS_DIR := astris
 ASTRIS_TARGETS := \
 	$(ASTRIS_DIR)/anya.ax \
 	$(ASTRIS_DIR)/anya_4k.ax \
-	$(ASTRIS_DIR)/anya_crete.ax \
-	$(ASTRIS_DIR)/anya_coll.ax \
-	$(ASTRIS_DIR)/anya_palma1c.ax
+	$(ASTRIS_DIR)/anya_v7.ax \
+	$(ASTRIS_DIR)/anya_tbm.ax
 
 CTL_DIR := ctl
 CTL_BUILD_TARGETS := \

@@ -6,7 +6,8 @@
 
 #define ANYA_IBOOT_FLAG (1 << 6)
 
-#define ANYA_USB_TIMEOUT 1000
+// Slower targets like M8 (SEP) might actually hit 1s timeout
+#define ANYA_USB_TIMEOUT 2000
 
 #define DFU_MAX_PACKET_SIZE     0x800
 #define ANYA_MAX_PACKET_SIZE    0x8000
@@ -47,6 +48,7 @@ typedef struct __attribute__((packed)) {
 #define MIN(x, y)       (x < y ? x : y)
 
 anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
+    int tr_ret;
     irecv_error_t irecv_ret;
     anya_error_t error = ANYA_E_SUCCESS;
     irecv_client_t client = NULL;
@@ -74,8 +76,8 @@ anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
         goto out_failure;
     }
 
-    if (irecv_usb_control_transfer(client, 0x21, ANYA_CLEAR_KBAG, 0, 0, NULL, 0, ANYA_USB_TIMEOUT) != 0) {
-        error = ANYA_E_USB_ERROR;
+    if ((tr_ret = irecv_usb_control_transfer(client, 0x21, ANYA_CLEAR_KBAG, 0, 0, NULL, 0, ANYA_USB_TIMEOUT)) != 0) {
+        error = tr_ret == IRECV_E_TIMEOUT ? ANYA_E_TIMEOUT : ANYA_E_USB_ERROR;
         goto out_failure;
     }
 
@@ -144,21 +146,24 @@ anya_error_t anya_close(anya_device_t **dev) {
 }
 
 anya_error_t anya_ping_sep(anya_device_t *dev, bool *res) {
-    if (irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_PING_SEP, 0, 0, (unsigned char *)res, sizeof(*res), ANYA_USB_TIMEOUT) != sizeof(*res)) {
-        return ANYA_E_USB_ERROR;
+    int tr_ret;
+
+    if ((tr_ret = irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_PING_SEP, 0, 0, (unsigned char *)res, sizeof(*res), ANYA_USB_TIMEOUT)) != sizeof(*res)) {
+        return tr_ret == IRECV_E_TIMEOUT ? ANYA_E_TIMEOUT : ANYA_E_USB_ERROR;
     }
 
     return ANYA_E_SUCCESS;
 }
 
-static size_t dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
+static int dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
+    int tr_ret;
     size_t index = 0;
 
     while (index != size) {
         size_t amount = MIN(DFU_MAX_PACKET_SIZE, size - index);
 
-        if (irecv_usb_control_transfer(dev->conn, 0x21, DFU_DNLOAD, 0, 0, data + index, amount, ANYA_USB_TIMEOUT) != amount) {
-            return -1;
+        if ((tr_ret = irecv_usb_control_transfer(dev->conn, 0x21, DFU_DNLOAD, 0, 0, data + index, amount, ANYA_USB_TIMEOUT)) != amount) {
+            return tr_ret == IRECV_E_TIMEOUT ? ANYA_E_TIMEOUT : ANYA_E_USB_ERROR;
         }
 
         index += amount;
@@ -168,6 +173,7 @@ static size_t dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
 }
 
 anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count, bool sep) {
+    int tr_ret;
     off_t offset = 0;
 
     while (count != 0) {
@@ -186,12 +192,12 @@ anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], s
 
         size_t packet_size = sizeof(anya_packet_hdr_t) + curr_count * KBAG_SIZE;
 
-        if (dfu_send_data(dev, dev->io_buffer, packet_size) != packet_size) {
-            return ANYA_E_USB_ERROR;
+        if ((tr_ret = dfu_send_data(dev, dev->io_buffer, packet_size)) != packet_size) {
+            return tr_ret;
         }
 
-        if (irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_DECRYPT_KBAG, 0, 0, dev->io_buffer, packet_size, ANYA_USB_TIMEOUT) != packet_size) {
-            return ANYA_E_USB_ERROR;
+        if ((tr_ret = irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_DECRYPT_KBAG, 0, 0, dev->io_buffer, packet_size, ANYA_USB_TIMEOUT)) != packet_size) {
+            return tr_ret == IRECV_E_TIMEOUT ? ANYA_E_TIMEOUT : ANYA_E_USB_ERROR;
         }
 
         if (packet->magic != ANYA_MAGIC) {
@@ -232,6 +238,8 @@ const char *anya_strerror(anya_error_t error) {
             return "not Anya device";
         case ANYA_E_USB_ERROR:
             return "USB error";
+        case ANYA_E_TIMEOUT:
+            return "USB timeout";
         case ANYA_E_HANDLER_ERROR:
             return "invalid response from handler";
         case ANYA_E_UNKNOWN_ERROR:

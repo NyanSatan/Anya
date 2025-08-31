@@ -40,6 +40,9 @@ def error(*args, **kwargs):
 def info(*args, **kwargs):
     _log(BOLD, args, kwargs)
 
+def misc(*args, **kwargs):
+    print(*args, **kwargs)
+
 class Logger:
     def __init__(self, name: str) -> None:
         self._name = name.upper()

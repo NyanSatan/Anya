@@ -69,14 +69,22 @@ endif
 
 OPTIONS += -DTARGET_BUILD_STRING=\"$(TARGET_BUILD_STRING)\"
 
-CFLAGS := $(OPTIONS)
-CFLAGS += -fno-builtin
+ifeq ($(TARGET_HAS_ARMV7),true)
+	ARCH := -arch armv7
+else
+	ARCH := -arch arm64
+endif
+
+CFLAGS := $(ARCH)
+CFLAGS += $(OPTIONS)
+CFLAGS += -fno-builtin -fno-pie
 CFLAGS += -Os
 CFLAGS += -MMD
-CFLAGS += -arch arm64
 CFLAGS += -fno-stack-protector
 
-LDFLAGS := -nostdlib
+LDFLAGS := $(ARCH)
+LDFLAGS += -Wl,-no_pie
+LDFLAGS += -nostdlib
 LDFLAGS += -static
 LDFLAGS += -Wl,-preload
 LDFLAGS += -Wl,-order_file,misc/sym_order.txt
@@ -90,7 +98,13 @@ SOURCE_ROOT := src
 BUILD_ROOT := build
 CURRENT_ROOT := $(BUILD_ROOT)/$(TARGET_NAME)/$(SOURCE_ROOT)
 
-OBJECTS := $(CURRENT_ROOT)/main.o $(CURRENT_ROOT)/ap.o $(CURRENT_ROOT)/copy.o
+OBJECTS := $(CURRENT_ROOT)/main.o $(CURRENT_ROOT)/ap.o
+
+ifeq ($(TARGET_HAS_ARMV7),true)
+	OBJECTS += $(CURRENT_ROOT)/copy32.o
+else
+	OBJECTS += $(CURRENT_ROOT)/copy64.o
+endif
 
 ifeq ($(TARGET_CAN_HAVE_SEP_SUPPORT),true)
 	OBJECTS += $(CURRENT_ROOT)/time.o $(CURRENT_ROOT)/coresight.o $(CURRENT_ROOT)/sep.o
