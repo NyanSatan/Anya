@@ -16,7 +16,8 @@ VALID_HANDLER_TARGETS ?= \
 	Ellis/A0 Ellis/B0_B1 \
 	Staten/B1 \
 	Crete/A0 Crete/B1 \
-	Coll/A0
+	Coll/A0 \
+	Palma_1c/A0
 
 PYTHON ?= python3
 

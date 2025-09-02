@@ -7,7 +7,7 @@
 #define ANYA_IBOOT_FLAG (1 << 6)
 
 // Slower targets like M8 (SEP) might actually hit 1s timeout
-#define ANYA_USB_TIMEOUT 2000
+#define ANYA_USB_TIMEOUT        (2000)
 
 #define DFU_MAX_PACKET_SIZE     0x800
 #define ANYA_MAX_PACKET_SIZE    0x8000
