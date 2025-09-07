@@ -26,6 +26,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x826A }
+            "M8P A0"    { return 0x73BA }
             default  {
                 data_provider_error
             }
@@ -36,6 +37,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x48807000 }
+            "M8P A0"    { return 0x48807000 }
             default  {
                 data_provider_error
             }
@@ -46,6 +48,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x648A }
+            "M8P A0"    { return 0x54AA }
             default  {
                 data_provider_error
             }
@@ -56,6 +59,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x95B6 }
+            "M8P A0"    { return 0x8706 }
             default  {
                 data_provider_error
             }
@@ -66,6 +70,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return r2 }
+            "M8P A0"    { return r2 }
             default  {
                 data_provider_error
             }
@@ -76,6 +81,7 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x46F0 }
+            "M8P A0"    { return 0x472C }
             default  {
                 data_provider_error
             }
