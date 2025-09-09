@@ -11,6 +11,8 @@
 ### AP
 
 * **Alcatraz A0/B0** - Apple A7
+* **M8 A5** - Apple S1P/S2
+* **M8P A0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
 * **Cyprus A0/B0/B1** - Apple A12
@@ -24,10 +26,13 @@
 * **Staten B1** - Apple M2
 * **Crete A0/B1** - Apple A16
 * **Coll A0** - Apple A17
+* **Palma_1c A0** - Apple M3 Max (16-core)
 
 ### SEP
 
 * **Alcatraz A0/B0** - Apple A7
+* **M8 A5** - Apple S1P/S2
+* **M8P A0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
 * **Cyprus A0/B1** - Apple A12
@@ -39,6 +44,7 @@
 * **Staten B1** - Apple M2
 * **Crete A0/B1** - Apple A16
 * **Coll A0** - Apple A17
+* **Palma_1c A0** - Apple M3 Max (16-core)
 
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
@@ -48,6 +54,19 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 ## Changelog
 <details>
+
+### Beta 11
+
+* AP TBM platforms (Apple A16 & A17) support is now implemented in a unified script - `anya_tbm.ax`
+    * `anya_crete.ax` & `anya_coll.ax` scripts were removed
+
+* Added **Palma_1c A0** (Apple M3 Max, 16-core) support
+    * Implemented in the `anya_tbm.ax` script as well
+
+* Added **M8 A5** & **M8P A0** support (Apple S1P/S2 & S3) - just for the sake of their SEP
+    * Use `anya_v7.ax` script for these platforms
+
+* Little improvements here and there in the control utilities
 
 ### Beta 10
 
@@ -170,15 +189,15 @@ List of environmental variables you *might* need to provide:
 * `ARM_OBJCOPY` - [vmacho](https://github.com/Siguza/misc/blob/master/vmacho.c), needed to extract raw code from a Mach-O
 * `CC` - C compiler used to compile **anyactl** (client utility), by default it is Clang
 * `PYTHON` - Python 3 interpreter used by some build scripts
-* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Current list of valid targets is **Alcatraz A0**, **Alcatraz B0**, **Gibraltar B0**, **Skye/A0**, **Cyprus/A0**, **Cyprus/B0**, **Cyprus/B1**, **M9/B0_B1**, **Aruba/A1**, **Cebu**, **Sicily/A0**, **Sicily/B0**, **Sicily/B1**, **Turks/A0**, **Turks/B0**, **Tonga/B1**, **Ellis/A0**, **Ellis/B0_B1**, **Staten/B1**, **Crete/A0**, **Crete/B1** and **Coll/A0**
+* `VALID_HANDLER_TARGETS` - list of targets to build USB DFU handler for. Such as **Alcatraz/A0**, **Tonga/B1**, **Ellis/B0_B1**, etc. (space-separated)
 
 In the end you'll get a structure like this in the `build/` folder:
 
 ```
 anya.ax
+anya_v7.ax
 anya_4k.ax
-anya_coll.ax
-anya_crete.ax
+anya_tbm.ax
 anyactl
 libanya.dylib
 payloads/
@@ -186,24 +205,7 @@ payloads/anya_handler.Alcatraz-B0.bin
 payloads/anya_handler.Skye-A0.bin
 payloads/anya_handler.M9-B0_B1.bin
 payloads/anya_handler.Cebu.bin
-payloads/anya_handler.Ellis-A0.bin
-payloads/anya_handler.Cyprus-B0.bin
-payloads/anya_handler.Tonga-B1.bin
-payloads/anya_handler.Crete-B1.bin
-payloads/anya_handler.Cyprus-B1.bin
-payloads/anya_handler.Ellis-B0_B1.bin
-payloads/anya_handler.Coll-A0.bin
-payloads/anya_handler.Cyprus-A0.bin
-payloads/anya_handler.Gibraltar-B0.bin
-payloads/anya_handler.Sicily-B1.bin
-payloads/anya_handler.Aruba-A1.bin
-payloads/anya_handler.Crete-A0.bin
-payloads/anya_handler.Sicily-B0.bin
-payloads/anya_handler.Turks-B0.bin
-payloads/anya_handler.Staten-B1.bin
-payloads/anya_handler.Sicily-A0.bin
-payloads/anya_handler.Turks-A0.bin
-payloads/anya_handler.Alcatraz-A0.bin
+...
 python/
 python/anyactl
 python/anya/
@@ -220,6 +222,7 @@ python/anyatest
 
 * Compiled Anya
 * Astris (Sky tools or later)
+    * Certain newer platforms require newer Astris
 
 ### Usage
 
@@ -231,10 +234,14 @@ ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 
 For certain platforms, you might need to use a different script:
 
-* **Coll** (A17) - `anya_coll.ax`
-    * This needs Sydney+ Astris
-* **Crete** (A16) - `anya_crete.ax`
-* **Alcatraz** (A7) - `anya_4k.ax`
+* **Crete**, **Coll** & **Palma_1c** - `anya_tbm.ax`
+    * Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot
+    * Sky tools have very limited support for Crete, however `anya_tbm.ax` provides fallback functions to make execution of the script possible
+        * **Coll**+ requires Sydney+ Astris
+
+* **Alcatraz** - `anya_4k.ax`
+
+* **M8** & **M8P** - `anya_v7.ax`
 
 ***Warning**: this will force reset your device via `fromreset` Astris command! This will reset a SoC and catch it on the very first cycle. Other peripherals might be not so lucky though, so better put your device into iBoot recovery or SecureROM DFU mode before doing this! On devices with a display the DFU mode is strictly recommended, otherwise you'll see weird glitches on it or this may even potentially damage it!*
 
@@ -316,37 +323,44 @@ This bit is not used by iBoot/SecureROM (except for macOS iBoot, apparently), so
 Starting from now on you can use `anyactl`, usage is quite straight-forward:
 
 ```
-noone@noones-MacBook-Air Anya % build/anyactl
+➜  Anya git:(beta-11) ✗ build/anyactl 
+Anya-beta-11
+made by john (@nyan_satan)
+
+neither benchmark nor KBAG set
+
 usage: build/anyactl ARG[s]
 
 where ARG[s] must be one of the following:
         -k KBAG specifies KBAG to be decrypted
         -b NUM  runs benchmark with NUM random KBAGs
+
+you can also use these ones with both of the above:
         -s      uses SEP GID (if possible)
-
-you can also use this one with both of the above:
         -e ECID (hexa)decimal ECID to look for
-
-noone@noones-MacBook-Air Anya %
 ```
 
 Benchmark output example:
 
 ```
-noone@noones-MacBook-Air Anya % build/anyactl -b 10000                                                              
-found: CPID:8020 CPFM:01 ECID:REDACTED
+➜  Anya git:(beta-11) ✗ build/anyactl -b 10000
+Anya-beta-11
+made by john (@nyan_satan)
+
+CPID:8020 CPFM:01 ECID:REDACTED
 decrypting...
-decrypted 10000 KBAGs in 0.495929 seconds, average - 20164.175781 KBAGs/sec
-noone@noones-MacBook-Air Anya %
+decrypted 10000 KBAGs in 0.495 seconds, average - 20164.175 KBAGs/sec
 ```
 
 KBAG decryption output example:
 
 ```
-noone@noones-MacBook-Air Anya % build/anyactl -k 570375E980979CB973D5B761510B56E06A3DE617629CD46B97321E997A5D0560DE765F91805E61D1129A1E7954354815
-found: CPID:8020 CPFM:01 ECID:REDACTED
+➜  Anya git:(beta-11) ✗ build/anyactl -k 570375E980979CB973D5B761510B56E06A3DE617629CD46B97321E997A5D0560DE765F91805E61D1129A1E7954354815
+Anya-beta-11
+made by john (@nyan_satan)
+
+CPID:8020 CPFM:01 ECID:REDACTED
 991D32CE7633203427C8F26875C8538BB53F61EA6B0AD124E8EDBB5146F807C1BF5AC497D0DF66CE1994D7C5146D4570
-noone@noones-MacBook-Air Anya %
 ```
 
 ***Warning**: since we're using prototype devices here, you obviously need to provide a development KBAG, not production (development one usually comes second in an Image4)!*
@@ -362,25 +376,19 @@ All the necessary code is already included in AP USB handler payload on supporte
 Now you are all set to decrypt SEP KBAGs, or to use a benchmark - just add `-s` flag to `anyactl`:
 
 ```
-noone@noones-MacBook-Air Anya % build/anyactl -s -b 1000
-found: CPID:8101 CPFM:00 ECID:REDACTED
+➜  Anya git:(beta-11) ✗ build/anyactl -sb 1000
+Anya-beta-11
+made by john (@nyan_satan)
+
+CPID:8020 CPFM:01 ECID:REDACTED
 will use SEP GID
 decrypting...
-decrypted 1000 KBAGs in 0.514751 seconds, average - 1942.686768 KBAGs/sec
-noone@noones-MacBook-Air Anya % 
+decrypted 1000 KBAGs in 0.514 seconds, average - 1942.686 KBAGs/sec
 ```
 
 (Yes, unfortunately SEP mode is far slower than AP)
 
 ***Important note**: Astris needs to be not running if you wanna use SEP GID, as it will interfere*
-
-### Crete (A16) & Coll (A17) notes
-
-For Apple A16 & A17 targets use `anya_crete.ax` & `anya_coll.ax` scripts respectively instead of usual `anya.ax`. `ANYA_SEP_WARMUP=1` variable might be required in some cases. Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot
-
-Sky tools have very limited support for Crete, however `anya_crete.ax` provides fallback functions to make execution of the script possible
-
-Coll (likely) needs Sydney+ in any case
 
 
 ## Python
@@ -499,8 +507,6 @@ noone@noones-MacBook-Air Anya %
 ## TODOs
 
 * Support DFU-only TBM targets
-* Improve build system - for the current one is really bad
-* Common offset database - so there won't be a need to duplicate some offsets/values in the Astris script and USB handlers configs
 
 ## Credits
 
