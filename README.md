@@ -11,7 +11,7 @@
 ### AP
 
 * **Alcatraz A0/B0** - Apple A7
-* **M8 A5** - Apple S1P/S2
+* **M8 A5** - Apple S1P/S2/T1
 * **M8P A0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
@@ -31,7 +31,7 @@
 ### SEP
 
 * **Alcatraz A0/B0** - Apple A7
-* **M8 A5** - Apple S1P/S2
+* **M8 A5** - Apple S1P/S2/T1
 * **M8P A0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
@@ -63,7 +63,7 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 * Added **Palma_1c A0** (Apple M3 Max, 16-core) support
     * Implemented in the `anya_tbm.ax` script as well
 
-* Added **M8 A5** & **M8P A0** support (Apple S1P/S2 & S3) - just for the sake of their SEP
+* Added **M8 A5** & **M8P A0** support (Apple S1P/S2/T1 & S3) - just for the sake of their SEP
     * Use `anya_v7.ax` script for these platforms
 
 * Little improvements here and there in the control utilities
