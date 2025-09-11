@@ -513,8 +513,9 @@ noone@noones-MacBook-Air Anya %
 * @axi0mX - for the idea of replacing USB handler (used in **ipwndfu**)
 * @pimskeks and other people behind **libimobiledevice** project - for **libirecovery**
 * @P5_2005 - for a lot of tests on the devices that I don't have
-* dellaquila.federica (that's Instagram handle) - for the mascot
+* chenurn - for Palma_1c/A0 bring-up tests
 * People behind **pongoOS** - for SEP AES decryption algorithm
+* dellaquila.federica (that's Instagram handle) - for the mascot
 
 ## Legacy credits
 
