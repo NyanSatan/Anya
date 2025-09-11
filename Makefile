@@ -4,6 +4,8 @@
 
 VALID_HANDLER_TARGETS ?= \
 	Alcatraz/A0 Alcatraz/B0 \
+	M8/A5 \
+	M8P/A0 \
 	Gibraltar/B0 \
 	Skye/A0 \
 	Cyprus/A0 Cyprus/B0 Cyprus/B1 \
