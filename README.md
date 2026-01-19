@@ -37,7 +37,7 @@
 * **Skye A0** - Apple A11
 * **Cyprus A0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
-* **Sicily A0/B1** - Apple A14
+* **Sicily A0/B0/B1** - Apple A14
 * **Turks A0/B0** - Apple S6/S7/S8
 * **Tonga B1** - Apple M1
 * **Ellis A0/B0/B1** - Apple A15
@@ -49,7 +49,6 @@
 Some platforms have all required offsets for SEP support, but it's disabled due to lack of testing:
 
 * **Cebu** - Apple A13
-* **Sicily B0** - Apple A14
 
 
 ## Changelog
