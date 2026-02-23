@@ -1,6 +1,6 @@
 #
 # Anya's Astris script
-# 
+#
 # Brings up device to Anya mode - basically SecureROM DFU,
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
@@ -13,7 +13,7 @@
 
 namespace eval ::anya {
     #
-    # Data providers 
+    # Data providers
     #
 
     set soc [::astris::console::native::soc full]
@@ -391,9 +391,9 @@ namespace eval ::anya {
                 ::astris::console::native::go
             }
 
-            ::astris::console::native::explore    
+            ::astris::console::native::explore
             ::astris::console::native::cpu [main_core]
-            
+
         } else {
             ::astris::console::native::go
         }
@@ -403,7 +403,7 @@ namespace eval ::anya {
     }
 
     proc wait_for_run {} {
-        ::astris::console::native::go 
+        ::astris::console::native::go
         wait_for_state "Run"
     }
 
@@ -413,12 +413,12 @@ namespace eval ::anya {
 
     proc mmu_l3_page_make {addr} {
         set addr [expr $addr >> 14]
-        set e 0b11            
+        set e 0b11
         set e [expr $e | 1 << 2]
         set e [expr $e | 0b111 << 5]
         set e [expr $e | 0b11 << 9]
         set e [expr $e | $addr << 14]
-        
+
         return $e
     }
 
@@ -444,7 +444,7 @@ namespace eval ::anya {
         variable payload_base
 
         puts "Dealing with MMU..."
-        
+
         wait_for_bp [before_tlb_flush]
 
         puts "Uploading USB handler..."
@@ -458,7 +458,7 @@ namespace eval ::anya {
         variable payload_base
 
         puts "Dealing with MMU..."
-        
+
         wait_for_bp [platform_setup_boot_trampoline_exit]
 
         puts "Uploading USB handler..."
@@ -489,7 +489,7 @@ namespace eval ::anya {
 
     if {[needs_reconnect_after_fromreset]} {
         after 100
-        ::astris::console::native::explore    
+        ::astris::console::native::explore
     }
 
     ::astris::console::native::cpu [main_core]

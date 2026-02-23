@@ -140,12 +140,12 @@ $(TARGET_MACHO): $(OBJECTS)
 $(CURRENT_ROOT)/%.o: $(SOURCE_ROOT)/%.c
 	@echo "\tcompiling C: $<"
 	@$(DIR_HELPER)
-	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@ 
+	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@
 
 $(CURRENT_ROOT)/%.o: $(SOURCE_ROOT)/%.S
 	@echo "\tcompiling ASM: $<"
 	@$(DIR_HELPER)
-	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@ 
+	@$(ARM_CC) $(CFLAGS) $(OPTIONS) -c $< -o $@
 
 clean:
 	@rm -rf $(BUILD_ROOT)

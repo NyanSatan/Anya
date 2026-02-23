@@ -136,7 +136,7 @@ int main(int argc, char *const *argv) {
                 decrypt = true;
                 break;
             }
-    
+
             case 'b': {
                 char *end_ptr;
                 num = strtoull(optarg, &end_ptr, 0);
@@ -153,12 +153,12 @@ int main(int argc, char *const *argv) {
                 benchmark = true;
                 break;
             }
-    
+
             case 's': {
                 sep = true;
                 break;
             }
-    
+
             case 'e': {
                 char *end_ptr;
                 ecid = strtoull(optarg, &end_ptr, 0);
@@ -169,7 +169,7 @@ int main(int argc, char *const *argv) {
 
                 break;
             }
-    
+
             case '?':
             default: {
                 usage(program_name);
@@ -243,7 +243,7 @@ int main(int argc, char *const *argv) {
         if ((error = anya_decrypt(dev, kbags, kbags, num, sep)) != ANYA_E_SUCCESS) {
             ANYA_ERROR("failed to decrypt KBAGs - %s", anya_strerror(error));
             goto out;
-        } 
+        }
 
         gettimeofday(&et, NULL);
         long elapsed = ((et.tv_sec - st.tv_sec) * (1000 * 1000)) + (et.tv_usec - st.tv_usec);

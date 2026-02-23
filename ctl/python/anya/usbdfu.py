@@ -21,7 +21,7 @@ class AnyaUSBDFUDevice:
 
         if status != 0:
             raise AnyaError(c_api.anya_strerror(status).decode())
-        
+
         self.connected = True
 
     def disconnect(self):
@@ -32,10 +32,10 @@ class AnyaUSBDFUDevice:
 
     def get_cpid(self) -> int:
         return c_api.anya_get_cpid(self._connection)
-    
+
     def get_cpfm(self) -> int:
         return c_api.anya_get_cpfm(self._connection)
-    
+
     def get_ecid(self) -> int:
         return c_api.anya_get_ecid(self._connection)
 
@@ -55,17 +55,17 @@ class AnyaUSBDFUDevice:
 
         if status != 0:
             raise AnyaError(c_api.anya_strerror(status).decode())
-        
+
         return sep_enabled.value
 
     def decrypt_kbags(self, kbags: list[bytes], sep: bool = False) -> list[bytes]:
         all_kbags = b''.join(kbags)
-        
+
         status = c_api.anya_decrypt(self._connection, all_kbags, all_kbags, len(kbags), sep)
 
         if status != 0:
             raise AnyaError(c_api.anya_strerror(status).decode())
-        
+
         result = list()
 
         for i in range(len(kbags)):

@@ -168,7 +168,7 @@ static int dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
 
         index += amount;
     }
-    
+
     return index;
 }
 

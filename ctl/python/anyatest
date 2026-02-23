@@ -134,11 +134,11 @@ def test_ecid(dev: AnyaDevice, target_ecid: int) -> bool:
     else:
         logger.error("ECIDs do not match!")
         return False
-    
+
 CROSS_NUM_OF_RUNS = 100
 CROSS_KBAG_MIN_AMOUNT = 100
 CROSS_KBAG_MAX_AMOUNT = 500
-    
+
 def test_cross(dev: AnyaDevice):
     logger = Logger("CROSS")
 
@@ -173,6 +173,6 @@ def test_cross(dev: AnyaDevice):
             return False
 
     return True
-    
+
 if __name__ == '__main__':
     main()

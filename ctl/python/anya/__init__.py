@@ -1,4 +1,4 @@
-from .exceptions import * 
+from .exceptions import *
 
 KBAG_SIZE = 0x30
 

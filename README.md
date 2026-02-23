@@ -4,7 +4,7 @@
 
 **Anya** is a KBAG decryption kit for JTAGgable iDevice prototypes - lets you decrypt **iBoot** & **SEP** firmwares that Apple keeps encrypting (for whatever reasons)
 
-**iBoot** is no longer encrypted since iOS 18 beta 4, **SEPOS** still remains encrypted as of mid-September 2024  
+**iBoot** is no longer encrypted since iOS 18 beta 4, **SEPOS** still remains encrypted as of mid-September 2024
 
 ## SoC support
 
@@ -74,7 +74,7 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 * Added **Alcatraz A0/B0** support
     * Use `anya_4k.ax` script for these platforms. You might also need older Astris
 
-* Added **Coll A0** support 
+* Added **Coll A0** support
     * Also B0, but it's untested
     * Use `anya_coll.ax` script for this platform
 
@@ -250,8 +250,8 @@ Upon successful execution you will get a log like this one:
 noone@noones-MacBook-Air Anya % ANYA_PAYLOAD=build/payloads/anya_handler.Cyprus-B1.bin astris --script build/anya.ax
 astris v2.7.4
 
-WARNING: This version of tcl is included in macOS for compatibility with legacy software. 
-In future versions of macOS the tcl runtime will not be available by 
+WARNING: This version of tcl is included in macOS for compatibility with legacy software.
+In future versions of macOS the tcl runtime will not be available by
 default, and may require you to install an additional package.
 
 
@@ -322,7 +322,7 @@ This bit is not used by iBoot/SecureROM (except for macOS iBoot, apparently), so
 Starting from now on you can use `anyactl`, usage is quite straight-forward:
 
 ```
-➜  Anya git:(beta-11) ✗ build/anyactl 
+➜  Anya git:(beta-11) ✗ build/anyactl
 Anya-beta-11
 made by john (@nyan_satan)
 
@@ -465,7 +465,7 @@ dev.disconnect() # disconnecting
 Placed in `python/` folder. There're 2 of them - **anyactl** (basically the same thing as the C variant of the ctl):
 
 ```
-noone@noones-MacBook-Air Anya % LIBANYA=build/libanya.dylib build/python/anyactl 
+noone@noones-MacBook-Air Anya % LIBANYA=build/libanya.dylib build/python/anyactl
 usage: anyactl [-h] [-k KBAG] [-b COUNT] [-s] [-e ECID]
 
 Decrypt some KBAG or run a benchmark
@@ -476,7 +476,7 @@ options:
   -b COUNT    run benchmark
   -s          use SEP GID (if possible)
   -e ECID     ECID to look for
-noone@noones-MacBook-Air Anya % 
+noone@noones-MacBook-Air Anya %
 ```
 
 ...and **anyafromjson** - this one is used to decrypt KBAGs in batch from a JSON file:

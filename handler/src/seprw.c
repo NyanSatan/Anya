@@ -57,10 +57,10 @@ static int sep_write32(uint64_t address, uint32_t value) {
 
     /* mrs x1, DBGDTR0 - value to general purpose reg */
     REQUIRE_NOERR(coresight_feed_insn(coresight_base, 0xD5330401, TIMEOUT), fail);
-    
+
     /* str w1, [x0], 4 - actual write */
     REQUIRE_NOERR(coresight_feed_insn(coresight_base, 0xB8004401, TIMEOUT), fail);
-    
+
     return 0;
 
 fail:

@@ -1,6 +1,6 @@
 #
 # Anya's Astris script (4K edition)
-# 
+#
 # Brings up device to Anya mode - basically SecureROM DFU,
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
@@ -11,7 +11,7 @@
 
 namespace eval ::anya {
     #
-    # Data providers 
+    # Data providers
     #
 
     set soc [::astris::console::native::soc full]
@@ -120,7 +120,7 @@ namespace eval ::anya {
     }
 
     proc wait_for_run {} {
-        ::astris::console::native::go 
+        ::astris::console::native::go
         wait_for_state "Run"
     }
 

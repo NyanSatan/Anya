@@ -1,7 +1,7 @@
 /*
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
  *
- * Remember, no data! 
+ * Remember, no data!
  * No preinitialized data allowed here!
  *
  * ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
@@ -79,7 +79,7 @@ static int anya_packet_decrypt() {
 
     /* checking if we are trying to decrypt SEP KBAGs*/
     if (packet->flags & AnyaPacketFlagSEP) {
-#if WITH_SEP       
+#if WITH_SEP
         if (sep_status == SEP_UNSUPPORTED) {
             return -1;
         } else if (sep_status == SEP_UNKNOWN) {

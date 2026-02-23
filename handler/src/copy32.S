@@ -70,6 +70,6 @@ _copy128:
     strd    r2, r3, [r1], #0x8
     ldrd    r2, r3, [r0], #0x8
     strd    r2, r3, [r1], #0x8
-    
+
     bx      lr
 #endif

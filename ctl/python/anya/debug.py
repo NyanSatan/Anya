@@ -16,7 +16,7 @@ debug_enabled = False
 def anya_debug_init(debug: bool):
     global start_time, debug_enabled
 
-    start_time = time.time()   
+    start_time = time.time()
     debug_enabled = debug
 
 def _log(color: str, args: tuple, kwargs: dict):

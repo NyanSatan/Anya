@@ -44,7 +44,7 @@ def main():
     except json.JSONDecodeError:
         error("input cannot be decoded")
         exit(-1)
-        
+
     if type(kbags) is not list:
         error("you must provide a list of dicts in input JSON")
         print()
@@ -95,7 +95,7 @@ def main():
             exit(-1)
 
     decryption_start = perf_counter()
-    
+
     try:
         unencoded_keys = dev.decrypt_kbags(decoded_kbags, sep=args.sep)
     except AnyaError as e:

@@ -49,10 +49,10 @@ static int sep_write32(uint64_t address, uint32_t value) {
 
     /* write value to DBGDTR0 */
     REQUIRE_NOERR(coresight_write(coresight_base, (uint64_t)value, TIMEOUT), fail);
-    
+
     /* stc p14, c5, [r0], 4 - actual write */
     REQUIRE_NOERR(coresight_feed_insn(coresight_base, 0xECA05E01, TIMEOUT), fail);
-    
+
     return 0;
 
 fail:
