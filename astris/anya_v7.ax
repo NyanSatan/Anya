@@ -1,6 +1,6 @@
 #
 # Anya's Astris script (armv7 edition)
-# 
+#
 # Brings up device to Anya mode - basically SecureROM DFU,
 # but with custom handle_interface_request() that decrypts
 # KBAGs sent over USB
@@ -8,7 +8,7 @@
 
 namespace eval ::anya {
     #
-    # Data providers 
+    # Data providers
     #
 
     set soc [::astris::console::native::soc full]
@@ -26,7 +26,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x826A }
+            "M8 B0"     { return 0x827A }
             "M8P A0"    { return 0x73BA }
+            "M8P B0"    { return 0x740A }
             default  {
                 data_provider_error
             }
@@ -36,8 +38,10 @@ namespace eval ::anya {
     proc trampoline {} {
         variable soc
         switch $soc {
-            "M8 A5"     { return 0x48807000 }
-            "M8P A0"    { return 0x48807000 }
+            "M8 A5"     -
+            "M8 B0"     { return 0x48807000 }
+            "M8P A0"    -
+            "M8P B0"    { return 0x48807000 }
             default  {
                 data_provider_error
             }
@@ -48,7 +52,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x648A }
+            "M8 B0"     { return 0x649A }
             "M8P A0"    { return 0x54AA }
+            "M8P B0"    { return 0x54EA }
             default  {
                 data_provider_error
             }
@@ -59,7 +65,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x95B6 }
+            "M8 B0"     { return 0x95C6 }
             "M8P A0"    { return 0x8706 }
+            "M8P B0"    { return 0x8752 }
             default  {
                 data_provider_error
             }
@@ -70,7 +78,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return r2 }
+            "M8 B0"     { return r2 }
             "M8P A0"    { return r2 }
+            "M8P B0"    { return r2 }
             default  {
                 data_provider_error
             }
@@ -81,7 +91,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "M8 A5"     { return 0x46F0 }
+            "M8 B0"     { return 0x4718 }
             "M8P A0"    { return 0x472C }
+            "M8P B0"    { return 0x4780 }
             default  {
                 data_provider_error
             }
@@ -110,7 +122,7 @@ namespace eval ::anya {
     }
 
     proc wait_for_run {} {
-        ::astris::console::native::go 
+        ::astris::console::native::go
         wait_for_state "Run"
     }
 
