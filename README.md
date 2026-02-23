@@ -11,8 +11,8 @@
 ### AP
 
 * **Alcatraz A0/B0** - Apple A7
-* **M8 A5** - Apple S1P/S2/T1
-* **M8P A0** - Apple S3
+* **M8 A5/B0** - Apple S1P/S2/T1
+* **M8P A0/B0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
 * **Cyprus A0/B0/B1** - Apple A12
@@ -31,8 +31,8 @@
 ### SEP
 
 * **Alcatraz A0/B0** - Apple A7
-* **M8 A5** - Apple S1P/S2/T1
-* **M8P A0** - Apple S3
+* **M8 A5/B0** - Apple S1P/S2/T1
+* **M8P A0/B0** - Apple S3
 * **Gibraltar B0** - Apple T2
 * **Skye A0** - Apple A11
 * **Cyprus A0/B1** - Apple A12
@@ -53,6 +53,12 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 ## Changelog
 <details>
+
+### Beta 12
+
+* Enabled **Sicily B0** SEP support
+
+* Added support for **M8 B0** & **M8P B0** support (latest revisions of Apple S1P/S2/T1 & S3)
 
 ### Beta 11
 
