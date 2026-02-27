@@ -1,11 +1,6 @@
-#
-# This is disabled for now,
-# since I have got no hardware that can boot into iBoot
-#
-
 TARGET_NAME = Coll-B0
 
-TARGET_TRAMPOLINE 	= 0x10007C000
+TARGET_TRAMPOLINE 	= 0x1FC054000
 TARGET_LOADADDR 	= 0x1FC07C000
 
 TARGET_HAS_FIREBLOOM = true

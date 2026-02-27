@@ -58,6 +58,8 @@ namespace eval ::anya {
             "Staten B1"     { return ECORE0 }
             "Crete A0"      -
             "Crete B1"      { return PCORE0 }
+            "Coll A0"       -
+            "Coll B0"       { return PCORE0 }
             default  {
                 data_provider_error
             }
@@ -68,7 +70,9 @@ namespace eval ::anya {
         variable soc
         switch $soc {
             "Crete A0"      -
-            "Crete B1"      { return 1 }
+            "Crete B1"      -
+            "Coll A0"       -
+            "Coll B0"       { return 1 }
             default         { return 0 }
         }
     }
@@ -158,6 +162,8 @@ namespace eval ::anya {
             "Turks B0"      { return 0x10000CDA4 }
             "Crete A0"      { return 0x10002CD3C }
             "Crete B1"      { return 0x10002F254 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x10002CA20 }
             default  {
                 data_provider_error
             }
@@ -190,6 +196,8 @@ namespace eval ::anya {
             "Staten B1"     { return 0x1FC000000 }
             "Crete A0"      -
             "Crete B1"      { return 0x1FC000000 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -222,6 +230,8 @@ namespace eval ::anya {
             "Staten B1"     { return 0x1FC02C000 }
             "Crete A0"      -
             "Crete B1"      { return 0x1FC040000 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x1FC054000 }
             default  {
                 data_provider_error
             }
@@ -252,8 +262,10 @@ namespace eval ::anya {
             "Ellis B0"      -
             "Ellis B1"      { return 0x10000883C }
             "Staten B1"     { return 0x1000095EC }
-            "Crete A0"      { return 0x10000C4B0 }
-            "Crete B1"      { return 0x10000C30C }
+            "Crete A0"      { return 0x10000C48C }
+            "Crete B1"      { return 0x10000C2E8 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x100009D70 }
             default  {
                 data_provider_error
             }
@@ -286,6 +298,8 @@ namespace eval ::anya {
             "Staten B1"     { return 0x100015170 }
             "Crete A0"      { return 0x1000224B4 }
             "Crete B1"      { return 0x100023D84 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x100020010 }
             default  {
                 data_provider_error
             }
@@ -318,6 +332,8 @@ namespace eval ::anya {
             "Staten B1"     { return x16 }
             "Crete A0"      -
             "Crete B1"      { return x16 }
+            "Coll A0"       -
+            "Coll B0"       { return x16 }
             default  {
                 data_provider_error
             }
@@ -331,6 +347,8 @@ namespace eval ::anya {
             "Turks B0"      { return 0x100001884 }
             "Crete A0"      -
             "Crete B1"      { return 0x1000007D0 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x10000079C }
             default         { return 0 }
         }
     }
@@ -342,6 +360,8 @@ namespace eval ::anya {
             "Turks B0"      { return x20 }
             "Crete A0"      -
             "Crete B1"      { return x0 }
+            "Coll A0"       -
+            "Coll B0"       { return x27 }
             default {
                 data_provider_error
             }
@@ -355,6 +375,8 @@ namespace eval ::anya {
             "Turks B0"      { return 10 }
             "Crete A0"      -
             "Crete B1"      { return 6 }
+            "Coll A0"       -
+            "Coll B0"       { return 7 }
             default {
                 data_provider_error
             }
@@ -387,6 +409,8 @@ namespace eval ::anya {
             "Staten B1"     { return 0x100008144 }
             "Crete A0"      { return 0x10000A08C }
             "Crete B1"      { return 0x100009EE4 }
+            "Coll A0"       { return 0x100007DD0 }
+            "Coll B0"       { return 0x100007E00 }
             default  {
                 data_provider_error
             }
