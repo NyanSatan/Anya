@@ -13,25 +13,13 @@
 
 namespace eval ::anya {
     #
-    # Data providers
+    # Offsets & etc.
     #
 
-    set soc [::astris::console::native::soc full]
-    set soc_name [::astris::console::native::soc]
-
-    proc data_provider_error {} {
-        variable soc
-        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
-    }
-
-    proc l2_page_size {} {
-        return 0x2000000
-    }
-
-    proc l3_page_size {} {
-        return 0x4000
-    }
-
+    # The core SoC boots up from.
+    # According to certain Astris scripts,
+    # this can differ even within the same SoC model,
+    # however I have never ever seen that
     proc main_core {} {
         variable soc
         switch $soc {
@@ -60,110 +48,6 @@ namespace eval ::anya {
             "Crete B1"      { return PCORE0 }
             "Coll A0"       -
             "Coll B0"       { return PCORE0 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    proc is_tbm_platform {} {
-        variable soc
-        switch $soc {
-            "Crete A0"      -
-            "Crete B1"      -
-            "Coll A0"       -
-            "Coll B0"       { return 1 }
-            default         { return 0 }
-        }
-    }
-
-    proc needs_reconnect_after_fromreset {} {
-        variable soc
-        switch $soc {
-            "Turks A0" { return 1 }
-            default    { return 0 }
-        }
-    }
-
-    proc needs_reconnect_after_bp {} {
-        variable soc
-        switch $soc {
-            "Gibraltar B0"  { return 1 }
-            default         { return 0 }
-        }
-    }
-
-    proc is_mmu_late_deal {} {
-        variable soc
-        switch $soc {
-            "Tonga B1"      -
-            "Ellis A0"      -
-            "Ellis B0"      -
-            "Ellis B1"      -
-            "Staten B1"     { return 1 }
-            default         { return 0 }
-        }
-    }
-
-    #
-    # The next 2 are only for late MMU deal devices
-    #
-
-    proc platform_setup_boot_trampoline_exit {} {
-        variable soc
-        switch $soc {
-            "Tonga B1"      { return 0x100007B44 }
-            "Ellis A0"      -
-            "Ellis B0"      -
-            "Ellis B1"      { return 0x1000078C4 }
-            "Staten B1"     { return 0x100008674 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    proc arch_tlb_flush {} {
-        variable soc
-        switch $soc {
-            "Tonga B1"      { return 0x1000004D0 }
-            "Ellis A0"      -
-            "Ellis B0"      -
-            "Ellis B1"      { return 0x100000554 }
-            "Staten B1"     { return 0x100000554 }
-            default  {
-                data_provider_error
-            }
-        }
-    }
-
-    #
-    # The next one is only for early MMU deal devices
-    #
-
-    proc before_tlb_flush {} {
-        variable soc
-        switch $soc {
-            "Gibraltar B0"  { return 0x1000016F4 }
-            "Skye A0"       { return 0x1000016F4 }
-            "Cyprus A0"     -
-            "Cyprus B0"     -
-            "Cyprus B1"     { return 0x100001704 }
-            "M9 B0"         -
-            "M9 B1"         { return 0x1000016F8 }
-            "Aruba A1"      { return 0x10000171C }
-            "Cebu A0"       -
-            "Cebu B0"       -
-            "Cebu B1"       { return 0x10000180C }
-            "Sicily A0"     { return 0x10000CBD4 }
-            "Sicily B0"     { return 0x10000C544 }
-            "Sicily B1"     { return 0x10000C884 }
-            "Turks A0"      { return 0x10000D114 }
-            "Turks B0"      { return 0x10000CDA4 }
-            "Crete A0"      { return 0x10002CD3C }
-            "Crete B1"      { return 0x10002F254 }
-            "Coll A0"       -
-            "Coll B0"       { return 0x10002CA20 }
             default  {
                 data_provider_error
             }
@@ -204,6 +88,9 @@ namespace eval ::anya {
         }
     }
 
+    # Boot trampoline address,
+    # on somewhat modern platforms it's just predefined,
+    # and not allocated on heap like on H4/H5 & etc.
     proc trampoline {} {
         variable soc
         switch $soc {
@@ -238,6 +125,76 @@ namespace eval ::anya {
         }
     }
 
+    #
+    # The next 2 are only for late MMU deal devices
+    #
+
+    # Point at the end of that function that sets up boot trampoline
+    proc platform_setup_boot_trampoline_exit {} {
+        variable soc
+        switch $soc {
+            "Tonga B1"      { return 0x100007B44 }
+            "Ellis A0"      -
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x1000078C4 }
+            "Staten B1"     { return 0x100008674 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    # Gotta flush the TLB after we wrote our PTE
+    proc arch_tlb_flush {} {
+        variable soc
+        switch $soc {
+            "Tonga B1"      { return 0x1000004D0 }
+            "Ellis A0"      -
+            "Ellis B0"      -
+            "Ellis B1"      { return 0x100000554 }
+            "Staten B1"     { return 0x100000554 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    #
+    # The next one is only for early MMU deal devices
+    #
+
+    # Point when all TT stuff is already written, TTBR set
+    # and ROM is about to flush TLB
+    proc before_tlb_flush {} {
+        variable soc
+        switch $soc {
+            "Gibraltar B0"  { return 0x1000016F4 }
+            "Skye A0"       { return 0x1000016F4 }
+            "Cyprus A0"     -
+            "Cyprus B0"     -
+            "Cyprus B1"     { return 0x100001704 }
+            "M9 B0"         -
+            "M9 B1"         { return 0x1000016F8 }
+            "Aruba A1"      { return 0x10000171C }
+            "Cebu A0"       -
+            "Cebu B0"       -
+            "Cebu B1"       { return 0x10000180C }
+            "Sicily A0"     { return 0x10000CBD4 }
+            "Sicily B0"     { return 0x10000C544 }
+            "Sicily B1"     { return 0x10000C884 }
+            "Turks A0"      { return 0x10000D114 }
+            "Turks B0"      { return 0x10000CDA4 }
+            "Crete A0"      { return 0x10002CD3C }
+            "Crete B1"      { return 0x10002F254 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x10002CA20 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    # Exit from platform_get_force_dfu()
     proc platform_get_force_dfu_ret {} {
         variable soc
         switch $soc {
@@ -272,6 +229,8 @@ namespace eval ::anya {
         }
     }
 
+    # Point where the function pointer just made it into register
+    # and is about to be stored to USB internal state structure
     proc handle_interface_request_intercept {} {
         variable soc
         switch $soc {
@@ -306,6 +265,7 @@ namespace eval ::anya {
         }
     }
 
+    # Registers used for that may vary
     proc handle_interface_request_intercept_reg {} {
         variable soc
         switch $soc {
@@ -340,6 +300,8 @@ namespace eval ::anya {
         }
     }
 
+    # Point where it still makes sense to
+    # override boot selector via register write
     proc override_boot_selector_addr {} {
         variable soc
         switch $soc {
@@ -368,6 +330,7 @@ namespace eval ::anya {
         }
     }
 
+    # We want the good ole USB DFU
     proc override_boot_selector_value {} {
         variable soc
         switch $soc {
@@ -383,6 +346,8 @@ namespace eval ::anya {
         }
     }
 
+    # At exit from this function,
+    # so we can override its' result
     proc platform_get_iboot_flags_ret {} {
         variable soc
         switch $soc {
@@ -415,6 +380,55 @@ namespace eval ::anya {
                 data_provider_error
             }
         }
+    }
+
+    #
+    # Parameters that control Anya setup flow,
+    # explained in the main logic code
+    #
+
+    proc needs_reconnect_after_fromreset {} {
+        variable soc
+        switch $soc {
+            "Turks A0"      { return 1 }
+            default         { return 0 }
+        }
+    }
+
+    proc needs_reconnect_after_bp {} {
+        variable soc
+        switch $soc {
+            "Gibraltar B0"  { return 1 }
+            default         { return 0 }
+        }
+    }
+
+    proc is_mmu_late_deal {} {
+        variable soc
+        switch $soc {
+            "Tonga B1"      -
+            "Ellis A0"      -
+            "Ellis B0"      -
+            "Ellis B1"      -
+            "Staten B1"     { return 1 }
+            default         { return 0 }
+        }
+    }
+
+    proc is_tbm_platform {} {
+        variable soc
+        switch $soc {
+            "Crete A0"      -
+            "Crete B1"      -
+            "Coll A0"       -
+            "Coll B0"       { return 1 }
+            default         { return 0 }
+        }
+    }
+
+    proc data_provider_error {} {
+        variable soc
+        error [format "failed to get \"%s\" for %s" [info level -1] $soc]
     }
 
     #
@@ -458,25 +472,27 @@ namespace eval ::anya {
     }
 
     #
-    # Flow routines
+    # Breakpoint routines
     #
 
+    # Wait until CPU core reaches a certain state
     proc wait_for_state {state} {
         while {true} {
             if {[::astris::console::native::support::check_state [list $state]]} {
                 return
             } else {
+                # XXX lower this?
                 after 50
             }
         }
     }
 
+    # Sets a breakpoint, resumes CPU and waits until the breakpoint hits
     proc wait_for_bp {addr} {
         set _bp [bp set $addr]
 
         # Gibraltar B0 loses connection
         # when we let CPU go after setting breakpoint
-
         if {[needs_reconnect_after_bp]} {
             puts "\[wait_for_bp\] Applying Gibraltar workaround"
 
@@ -501,9 +517,19 @@ namespace eval ::anya {
     }
 
     #
-    # Logic routines
+    # MMU routines
+    # XXX very cursed ones, gotta be rewritten
     #
 
+    proc l2_page_size {} {
+        return 0x2000000
+    }
+
+    proc l3_page_size {} {
+        return 0x4000
+    }
+
+    # Creates a good enough PTE for an executable page
     proc mmu_l3_page_make {addr} {
         set addr [expr $addr >> 14]
         set e 0b11
@@ -515,10 +541,7 @@ namespace eval ::anya {
         return $e
     }
 
-    proc mmu_l3_page_entry_find {table page} {
-        return [expr $table + $page * 8]
-    }
-
+    # Finds L3 table at L2 for base address of a region
     proc mmu_l3_table_find {ttbr base} {
         set table_entry_addr [expr $ttbr + $base / [l2_page_size] * 0x8]
         set table_entry [mem -64 $table_entry_addr]
@@ -531,45 +554,42 @@ namespace eval ::anya {
         set t0sz [expr $tcr & 0x3F]
 
         # SoCs with bigger VA space start at lower level tables
+        # XXX verify the bar
         if {$t0sz < 28} {
             set base_table [expr [mem -64 $ttbr] >> 14 << 14 & 0xFFFFFFFFF]
         } else {
             set base_table $ttbr
         }
 
+        # calculate address of PTE in question
         set table [mmu_l3_table_find $base_table $base]
-        set page_entry [mmu_l3_page_entry_find $table [expr [expr $addr - $base] / [l3_page_size]]]
+        set page_idx [expr [expr $addr - $base] / [l3_page_size]]
+        set page_entry [expr $table + $page_idx * 8]
+
+        # write the PTE
         mem -64 $page_entry [mmu_l3_page_make $addr]
     }
 
-    proc mmu_deal_early {} {
+    proc mmu_deal { late } {
         variable payload
         variable payload_base
 
         puts "Dealing with MMU..."
 
-        wait_for_bp [before_tlb_flush]
+        if {$late} {
+            wait_for_bp [platform_setup_boot_trampoline_exit]
+        } else {
+            wait_for_bp [before_tlb_flush]
+        }
 
-        puts "Uploading USB handler..."
-        load -memap 4 -width 8 $payload $payload_base
-
-        mmu_rx_page_set [sram_base] $payload_base
-    }
-
-    proc mmu_deal_late {} {
-        variable payload
-        variable payload_base
-
-        puts "Dealing with MMU..."
-
-        wait_for_bp [platform_setup_boot_trampoline_exit]
-
-        puts "Uploading USB handler..."
+        puts "Uploading USB DFU handler..."
         load -memap 4 -width 8 $payload $payload_base
 
         mmu_rx_page_set [sram_base] $payload_base
 
-        reg pc [arch_tlb_flush]
+        if {$late} {
+            reg pc [arch_tlb_flush]
+        }
     }
 
     #
@@ -721,11 +741,16 @@ namespace eval ::anya {
         error "ANYA_PAYLOAD variable not set"
     }
 
+    # Resolving parameters
+    set soc [::astris::console::native::soc full]
+    set soc_name [::astris::console::native::soc]
+
     set are_we_in_the_sky [expr [is_sky_tools] && [string compare $soc_name "Crete"] == 0]
 
     set payload $::env(ANYA_PAYLOAD)
     set payload_base [trampoline]
 
+    # Fromresetting target to catch AP core at the very first cycle
     if {$are_we_in_the_sky} {
         puts "Sky tools detected, falling back to our own implementations of fromreset & TBM lock clearing"
         fromreset_sky
@@ -733,10 +758,8 @@ namespace eval ::anya {
         ::astris::soc::fromreset
     }
 
-    #
     # Some cursed targets like Turks A0
     # would reconnect for a bit after fromreset
-    #
 
     if {[needs_reconnect_after_fromreset]} {
         after 100
@@ -756,21 +779,34 @@ namespace eval ::anya {
         }
 
         # It was that easy...
+        # TBM uses CTRR to disallow code execution outside of ROM,
+        # but cannot really lock it down, so we just disable it
         puts "Disabling CTRR..."
         reg CTRR_CTL_EL1 0x0
         reg CTRR_CTL_EL2 0x0
     }
 
+    #
+    # Early MMU deal is for older platforms which set up
+    # boot-trampoline at MMU configuration stage (pre Tonga)
+    #
+    # And also TBM-enabled SoCs do not do it at all,
+    # so it makes sense to put our payload here as well,
+    # since it won't be overwritten afterwards
+    #
     if {![is_mmu_late_deal]} {
-        mmu_deal_early
+        mmu_deal 0
     }
 
+    # Making sure SecureROM won't try to boot LLB
     puts "Forcing DFU..."
     wait_for_bp [platform_get_force_dfu_ret]
     reg x0 0x1
 
+    # Tonga+ where they set up boot trampoline much later
+    # after initial MMU setup
     if {[is_mmu_late_deal]} {
-        mmu_deal_late
+        mmu_deal 1
     }
 
     #
@@ -789,10 +825,13 @@ namespace eval ::anya {
         reg [override_boot_selector_reg] [override_boot_selector_value]
     }
 
+    # Bit 6 of IBFL will signify that it's Anya device
+    # and not just ROM DFU
     puts "Patching iBoot flags..."
     wait_for_bp [platform_get_iboot_flags_ret]
     reg x0 [expr [reg x0] | [expr 1 << 6]]
 
+    # Rerouting USB control request handler to our payload
     puts "Overriding USB handler ptr..."
     wait_for_bp [handle_interface_request_intercept]
     reg [handle_interface_request_intercept_reg] $payload_base
