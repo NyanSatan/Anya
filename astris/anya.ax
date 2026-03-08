@@ -575,8 +575,7 @@ namespace eval ::anya {
             if {[::astris::console::native::support::check_state [list $state]]} {
                 return
             } else {
-                # XXX lower this?
-                after 50
+                after 10
             }
         }
     }
@@ -868,6 +867,9 @@ namespace eval ::anya {
     #
     # Actual logic
     #
+
+    # Should speed up
+    ::astris::console::poll none
 
     if {![info exists env(ANYA_PAYLOAD)]} {
         error "ANYA_PAYLOAD variable not set"
