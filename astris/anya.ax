@@ -165,6 +165,9 @@ namespace eval ::anya {
 
     # Point when all TT stuff is already written, TTBR set
     # and ROM is about to flush TLB
+    #
+    # Platforms that need AES DART hack gotta have this address
+    # BEFORE LR is loaded from stack
     proc before_tlb_flush {} {
         variable soc
         switch $soc {
@@ -187,7 +190,7 @@ namespace eval ::anya {
             "Crete A0"      { return 0x10002CD3C }
             "Crete B1"      { return 0x10002F254 }
             "Coll A0"       -
-            "Coll B0"       { return 0x10002CA20 }
+            "Coll B0"       { return 0x10002CA08 }
             default  {
                 data_provider_error
             }
@@ -383,6 +386,97 @@ namespace eval ::anya {
     }
 
     #
+    # Enabling/disabling AES DART too many times leaks heap memory
+    #
+    # We have to wait until AES DART is getting enabled,
+    # and then we patch out the instructions that turn it on/off
+    #
+    # Obviously, ROM is not patchable, since it's a ROM after all,
+    # so we use the old trick with remapping a page from ROM VA
+    # to SRAM PA, so we can actually change instructions
+    #
+
+    proc needs_dart_aes_hack {} {
+        variable soc_name
+        switch $soc_name {
+            "Coll"         { return 1 }
+            "Palma_1c"     { return 1 }
+            default {
+                return 0
+            }
+        }
+    }
+
+    proc platform_get_loadarea_size {} {
+        variable soc
+        switch $soc {
+            "Coll A0"   { return 0x1000086E8 }
+            "Coll B0"   { return 0x100008718 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc platform_get_loadarea_size_var {} {
+        variable soc
+        switch $soc {
+            "Coll A0"   -
+            "Coll B0"   { return 0x1FC039CD8 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc loadaddr {} {
+        variable soc
+        switch $soc {
+            "Coll A0"   -
+            "Coll B0"   { return 0x1FC07C000 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc after_dart_enable_aes {} {
+        variable soc
+        switch $soc {
+            "Coll A0"       -
+            "Coll B0"       { return 0x100001E94 }
+            "Palma_1c A0"   { return 0x100001E60 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc dart_enable_aes_bl_relative {} {
+        variable soc
+        switch $soc {
+            "Coll A0"       -
+            "Coll B0"       { return 0x1E80 }
+            "Palma_1c A0"   { return 0x1E4C }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    proc dart_disable_aes_bl_relative {} {
+        variable soc
+        switch $soc {
+            "Coll A0"       -
+            "Coll B0"       { return 0x1F24 }
+            "Palma_1c A0"   { return 0x1EF0 }
+            default  {
+                data_provider_error
+            }
+        }
+    }
+
+    #
     # Parameters that control Anya setup flow,
     # explained in the main logic code
     #
@@ -516,6 +610,13 @@ namespace eval ::anya {
         wait_for_state "Run"
     }
 
+    proc call {addr} {
+        set pc [reg pc]
+        reg pc $addr
+        reg lr $pc
+        wait_for_bp $pc
+    }
+
     #
     # MMU routines
     # XXX very cursed ones, gotta be rewritten
@@ -548,7 +649,7 @@ namespace eval ::anya {
         return [expr $table_entry >> 14 << 14 & 0xFFFFFFFFF]
     }
 
-    proc mmu_rx_page_set {base addr} {
+    proc mmu_find_pte {base addr} {
         set ttbr [reg ttbr0_el1]
         set tcr [reg tcr_el1]
         set t0sz [expr $tcr & 0x3F]
@@ -566,11 +667,22 @@ namespace eval ::anya {
         set page_idx [expr [expr $addr - $base] / [l3_page_size]]
         set page_entry [expr $table + $page_idx * 8]
 
-        # write the PTE
+        return $page_entry
+    }
+
+    proc mmu_rx_page_set {base addr} {
+        set page_entry [mmu_find_pte $base $addr]
         mem -64 $page_entry [mmu_l3_page_make $addr]
     }
 
-    proc mmu_deal { late } {
+    proc memcpy {src dst len} {
+        for {set i 0} {$i < $len} {set i [expr $i + 8]} {
+            set q [mem -64 [expr $src + $i]]
+            mem -64 [expr $dst + $i] $q
+        }
+    }
+
+    proc mmu_deal {late} {
         variable payload
         variable payload_base
 
@@ -580,6 +692,26 @@ namespace eval ::anya {
             wait_for_bp [platform_setup_boot_trampoline_exit]
         } else {
             wait_for_bp [before_tlb_flush]
+
+            # remapping first ROM page into SRAM in order to
+            # apply AES DART patches (where needed)
+            if {[needs_dart_aes_hack]} {
+                puts "Remapping ROM page..."
+
+                set rom_page 0x100000000
+
+                call [platform_get_loadarea_size]
+
+                set load_size [reg x0]
+                mem -64 [platform_get_loadarea_size_var] [expr [mem -64 [platform_get_loadarea_size_var]] - [l3_page_size]]
+
+                set new_load_size [expr $load_size - [l3_page_size]]
+                set sram_code_page [expr [loadaddr] + $new_load_size]
+                memcpy $rom_page $sram_code_page [l3_page_size]
+
+                set page_entry [mmu_find_pte $rom_page $rom_page]
+                mem -64 $page_entry [mmu_l3_page_make $sram_code_page]
+            }
         }
 
         puts "Uploading USB DFU handler..."
@@ -760,7 +892,6 @@ namespace eval ::anya {
 
     # Some cursed targets like Turks A0
     # would reconnect for a bit after fromreset
-
     if {[needs_reconnect_after_fromreset]} {
         after 100
         explore
@@ -823,6 +954,24 @@ namespace eval ::anya {
         puts "Overriding boot selector..."
         wait_for_bp [override_boot_selector_addr]
         reg [override_boot_selector_reg] [override_boot_selector_value]
+    }
+
+    # This is to fix memory leak somewhere deep inside of DART code
+    if {[needs_dart_aes_hack]} {
+        # It gotta run once, so AES DART
+        # is going to be still enabled at this point
+        # Then we apply the patches, thus keeping it forever enabled
+        puts "Fixing up AES DART leak..."
+        wait_for_bp [after_dart_enable_aes]
+
+        # we remapped this page into SRAM in advance
+        set page_rw [::astris::console::native::mmu walk 0x100000000]
+
+        for {set i 0} {$i < 5} {incr i} {
+            mem -32 [expr $page_rw + [dart_enable_aes_bl_relative] + $i * 4] 0xD503201F
+        }
+
+        mem -32 [expr $page_rw + [dart_disable_aes_bl_relative]] 0xD503201F
     }
 
     # Bit 6 of IBFL will signify that it's Anya device
