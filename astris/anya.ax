@@ -48,6 +48,7 @@ namespace eval ::anya {
             "Crete B1"      { return PCORE0 }
             "Coll A0"       -
             "Coll B0"       { return PCORE0 }
+            "Palma_1c A0"   { return ACCP0-0 }
             default  {
                 data_provider_error
             }
@@ -82,6 +83,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x1FC000000 }
             "Coll A0"       -
             "Coll B0"       { return 0x1FC000000 }
+            "Palma_1c A0"   { return 0x1FC000000 }
             default  {
                 data_provider_error
             }
@@ -119,6 +121,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x1FC040000 }
             "Coll A0"       -
             "Coll B0"       { return 0x1FC054000 }
+            "Palma_1c A0"   { return 0x1FC060000 }
             default  {
                 data_provider_error
             }
@@ -191,6 +194,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x10002F254 }
             "Coll A0"       -
             "Coll B0"       { return 0x10002CA08 }
+            "Palma_1c A0"   { return 0x10002CA08 }
             default  {
                 data_provider_error
             }
@@ -226,6 +230,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x10000C2E8 }
             "Coll A0"       -
             "Coll B0"       { return 0x100009D70 }
+            "Palma_1c A0"   { return 0x1000099EC }
             default  {
                 data_provider_error
             }
@@ -262,6 +267,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x100023D84 }
             "Coll A0"       -
             "Coll B0"       { return 0x100020010 }
+            "Palma_1c A0"   { return 0x10001FFCC }
             default  {
                 data_provider_error
             }
@@ -297,6 +303,7 @@ namespace eval ::anya {
             "Crete B1"      { return x16 }
             "Coll A0"       -
             "Coll B0"       { return x16 }
+            "Palma_1c A0"   { return x16 }
             default  {
                 data_provider_error
             }
@@ -314,6 +321,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x1000007D0 }
             "Coll A0"       -
             "Coll B0"       { return 0x10000079C }
+            "Palma_1c A0"   { return 0x1000007A4 }
             default         { return 0 }
         }
     }
@@ -327,6 +335,7 @@ namespace eval ::anya {
             "Crete B1"      { return x0 }
             "Coll A0"       -
             "Coll B0"       { return x27 }
+            "Palma_1c A0"   { return x26 }
             default {
                 data_provider_error
             }
@@ -343,6 +352,7 @@ namespace eval ::anya {
             "Crete B1"      { return 6 }
             "Coll A0"       -
             "Coll B0"       { return 7 }
+            "Palma_1c A0"   { return 7 }
             default {
                 data_provider_error
             }
@@ -379,6 +389,7 @@ namespace eval ::anya {
             "Crete B1"      { return 0x100009EE4 }
             "Coll A0"       { return 0x100007DD0 }
             "Coll B0"       { return 0x100007E00 }
+            "Palma_1c A0"   { return 0x100007CC0 }
             default  {
                 data_provider_error
             }
@@ -410,8 +421,9 @@ namespace eval ::anya {
     proc platform_get_loadarea_size {} {
         variable soc
         switch $soc {
-            "Coll A0"   { return 0x1000086E8 }
-            "Coll B0"   { return 0x100008718 }
+            "Coll A0"       { return 0x1000086E8 }
+            "Coll B0"       { return 0x100008718 }
+            "Palma_1c A0"   { return 0x100008614 }
             default  {
                 data_provider_error
             }
@@ -421,8 +433,9 @@ namespace eval ::anya {
     proc platform_get_loadarea_size_var {} {
         variable soc
         switch $soc {
-            "Coll A0"   -
-            "Coll B0"   { return 0x1FC039CD8 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x1FC039CD8 }
+            "Palma_1c A0"   { return 0x1FC039D18 }
             default  {
                 data_provider_error
             }
@@ -432,8 +445,9 @@ namespace eval ::anya {
     proc loadaddr {} {
         variable soc
         switch $soc {
-            "Coll A0"   -
-            "Coll B0"   { return 0x1FC07C000 }
+            "Coll A0"       -
+            "Coll B0"       { return 0x1FC07C000 }
+            "Palma_1c A0"   { return 0x1FC088000 }
             default  {
                 data_provider_error
             }
@@ -515,7 +529,8 @@ namespace eval ::anya {
             "Crete A0"      -
             "Crete B1"      -
             "Coll A0"       -
-            "Coll B0"       { return 1 }
+            "Coll B0"       -
+            "Palma_1c A0"   { return 1 }
             default         { return 0 }
         }
     }
