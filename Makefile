@@ -46,8 +46,7 @@ ASTRIS_DIR := astris
 ASTRIS_TARGETS := \
 	$(ASTRIS_DIR)/anya.ax \
 	$(ASTRIS_DIR)/anya_4k.ax \
-	$(ASTRIS_DIR)/anya_v7.ax \
-	$(ASTRIS_DIR)/anya_tbm.ax
+	$(ASTRIS_DIR)/anya_v7.ax
 
 CTL_DIR := ctl
 CTL_BUILD_TARGETS := \
