@@ -4,10 +4,9 @@
 
 **Anya** is a KBAG decryption kit for JTAGgable iDevice prototypes - lets you decrypt **iBoot** & **SEP** firmwares that Apple keeps encrypting (for whatever reasons)
 
-**iBoot** is no longer encrypted since iOS 18 beta 4, **SEPOS** still remains encrypted as of mid-September 2024
+**iBoot** is no longer encrypted since iOS 18 beta 4, **SEPOS** (and **SEPPatches**) still remain encrypted as of middle of March 2026
 
 ## SoC support
-
 ### AP
 
 * **Alcatraz A0/B0** - Apple A7
@@ -53,6 +52,13 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 ## Changelog
 <details>
+
+### Beta 13
+
+* TBM platforms are now supported by the main Anya script (`anya.ax`)
+    * DFU-only devices can work as well now
+    * The bypass is provided by anonymous contributor
+    * The old TBM script (`anya_tbm.ax`) was removed
 
 ### Beta 12
 
@@ -202,7 +208,6 @@ In the end you'll get a structure like this in the `build/` folder:
 anya.ax
 anya_v7.ax
 anya_4k.ax
-anya_tbm.ax
 anyactl
 libanya.dylib
 payloads/
@@ -238,11 +243,6 @@ ANYA_PAYLOAD=path/to/desired/payload astris --script path/to/anya.ax
 ```
 
 For certain platforms, you might need to use a different script:
-
-* **Crete**, **Coll** & **Palma_1c** - `anya_tbm.ax`
-    * Due to the nature of techniques used to overcome TBM, target device must be able to boot local iBoot
-    * Sky tools have very limited support for Crete, however `anya_tbm.ax` provides fallback functions to make execution of the script possible
-        * **Coll**+ requires Sydney+ Astris
 
 * **Alcatraz** - `anya_4k.ax`
 
@@ -401,7 +401,7 @@ decrypted 1000 KBAGs in 0.514 seconds, average - 1942.686 KBAGs/sec
 * Python 3.10+
 * libanya
 
-In the new Anya we no longer use `pyusb`. Instead, we use `libanya` as a backend, which is basically Anya's C library compiled as a dynamic library (powered by `libirecovery`)
+In the new Anya (beta 7+) we no longer use `pyusb`. Instead, we use `libanya` as a backend, which is basically Anya's C library compiled as a dynamic library (powered by `libirecovery`)
 
 `libanya.dylib` must be either in the current working directory, or you need to provide a path to it in `LIBANYA` environment variable. The variable overrides the current working directory's dylib
 
@@ -508,10 +508,6 @@ options:
   -e ECID     (hexadecimal) ECID to look for
 noone@noones-MacBook-Air Anya %
 ```
-
-## TODOs
-
-* Support DFU-only TBM targets
 
 ## Credits
 
