@@ -385,7 +385,7 @@ Now you are all set to decrypt SEP KBAGs, or to use a benchmark - just add `-s` 
 Anya-beta-11
 made by john (@nyan_satan)
 
-CPID:8020 CPFM:01 ECID:REDACTED
+CPID:8020 CPFM:00 ECID:REDACTED
 will use SEP GID
 decrypting...
 decrypted 1000 KBAGs in 0.514 seconds, average - 1942.686 KBAGs/sec
