@@ -1,6 +1,8 @@
 #ifndef ANYA_LOG_H
 #define ANYA_LOG_H
 
+#include <stdio.h>
+
 #define ANSI_START   "\x1b["
 #define ANSI_DELIM   ";"
 #define ANSI_BOLD    "1"

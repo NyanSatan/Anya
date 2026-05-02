@@ -119,7 +119,7 @@ def main():
     total_end = perf_counter()
 
     success(
-        "succesfully decrypted %d KBAGs in %.3f seconds (%.3f KBAGs/sec)" % (
+        "successfully decrypted %d KBAGs in %.3f seconds (%.3f KBAGs/sec)" % (
             total_count,
             decryption_end - decryption_start,
             total_count / (decryption_end - decryption_start)

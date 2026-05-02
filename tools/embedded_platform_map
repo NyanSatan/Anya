@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+
+import argparse
+import plistlib
+from pathlib import Path
+
+def do_targets(args):
+    with open(args.map, "rb") as f:
+        _map = plistlib.load(f)
+
+    result = set()
+    for platform in _map["Platforms"].values():
+        for revision in platform["Revisions"].values():
+            result.add(revision["Payload"])
+
+    for r in result:
+        print(r)
+
+    return 0
+
+def do_scripts(args):
+    with open(args.map, "rb") as f:
+        _map = plistlib.load(f)
+
+    result = set()
+    for platform in _map["Platforms"].values():
+        result.add(platform["Script"])
+
+    for r in result:
+        print(r)
+
+    return 0
+
+BUILD_ROOT = Path("build")
+SCRIPT_ROOT = BUILD_ROOT / "astris"
+PAYLOADS_ROOT = BUILD_ROOT / "payloads"
+
+def _convert_payload_id(payload_name: str) -> str:
+    return "anya_handler.%s.bin" % (payload_name.replace("/", "-"))
+
+def do_consolidate(args):
+    with open(args.map, "rb") as f:
+        _map = plistlib.load(f)
+
+    _map["Scripts"] = {}
+    _map["Payloads"] = {}
+
+    for platform in _map["Platforms"].values():
+        script_name = platform["Script"]
+
+        with open(SCRIPT_ROOT / script_name, "rb") as f:
+            script = f.read()
+
+        _map["Scripts"][script_name] = script
+
+        for revision in platform["Revisions"].values():
+            payload_name = revision["Payload"]
+            if _map["Payloads"].get(payload_name):
+                continue
+
+            with open(PAYLOADS_ROOT / _convert_payload_id(payload_name), "rb") as f:
+                payload = f.read()
+
+            _map["Payloads"][payload_name] = payload
+
+    with open(args.output, "wb") as f:
+        plistlib.dump(_map, f, fmt=plistlib.FMT_BINARY)
+
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("map", type=str)
+
+    subparsers = parser.add_subparsers()
+
+    targets_parser = subparsers.add_parser("targets", help="return list of payload targets")
+    targets_parser.set_defaults(func=do_targets)
+
+    scripts_parser = subparsers.add_parser("scripts", help="return list of Astris scripts")
+    scripts_parser.set_defaults(func=do_scripts)
+
+    consolidate_parser = subparsers.add_parser("consolidate", help="enrich map with payloads and scripts")
+    consolidate_parser.set_defaults(func=do_consolidate)
+    consolidate_parser.add_argument("output", help="output file")
+
+    args = parser.parse_args()
+
+    if not hasattr(args, "func"):
+        parser.print_help()
+        exit(-1)
+
+    ret = args.func(args)
+    exit(ret)
+
+if __name__ == "__main__":
+    main()

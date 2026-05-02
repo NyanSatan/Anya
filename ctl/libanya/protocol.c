@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "compiler.h"
 #include "anya.h"
 #include "log.h"
 
@@ -47,7 +48,7 @@ typedef struct __attribute__((packed)) {
 #define KBAG_MAX_COUNT  ((ANYA_MAX_PACKET_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
 #define MIN(x, y)       (x < y ? x : y)
 
-anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
+EXPORT anya_error_t anya_open(anya_device_t **dev, uint64_t ecid) {
     int tr_ret;
     irecv_error_t irecv_ret;
     anya_error_t error = ANYA_E_SUCCESS;
@@ -113,7 +114,7 @@ out_failure:
     return error;
 }
 
-void anya_print_device(anya_device_t *dev) {
+EXPORT void anya_print_device(anya_device_t *dev) {
     fprintf(
         stderr,
         SEQ_BOLD "CPID:" SEQ_RESET "%04X " SEQ_BOLD "CPFM:" SEQ_RESET "%02X " SEQ_BOLD "ECID:" SEQ_RESET "%016llX\n",
@@ -123,19 +124,19 @@ void anya_print_device(anya_device_t *dev) {
     );
 }
 
-uint16_t anya_get_cpid(anya_device_t *dev) {
+EXPORT uint16_t anya_get_cpid(anya_device_t *dev) {
     return dev->cpid;
 }
 
-uint8_t anya_get_cpfm(anya_device_t *dev) {
+EXPORT uint8_t anya_get_cpfm(anya_device_t *dev) {
     return dev->cpfm;
 }
 
-uint64_t anya_get_ecid(anya_device_t *dev) {
+EXPORT uint64_t anya_get_ecid(anya_device_t *dev) {
     return dev->ecid;
 }
 
-anya_error_t anya_close(anya_device_t **dev) {
+EXPORT anya_error_t anya_close(anya_device_t **dev) {
     irecv_close((*dev)->conn);
     free((*dev)->io_buffer);
     free(*dev);
@@ -145,7 +146,7 @@ anya_error_t anya_close(anya_device_t **dev) {
     return ANYA_E_SUCCESS;
 }
 
-anya_error_t anya_ping_sep(anya_device_t *dev, bool *res) {
+EXPORT anya_error_t anya_ping_sep(anya_device_t *dev, bool *res) {
     int tr_ret;
 
     if ((tr_ret = irecv_usb_control_transfer(dev->conn, 0xA1, ANYA_PING_SEP, 0, 0, (unsigned char *)res, sizeof(*res), ANYA_USB_TIMEOUT)) != sizeof(*res)) {
@@ -172,7 +173,7 @@ static int dfu_send_data(anya_device_t *dev, uint8_t *data, size_t size) {
     return index;
 }
 
-anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count, bool sep) {
+EXPORT anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], size_t count, bool sep) {
     int tr_ret;
     off_t offset = 0;
 
@@ -221,12 +222,12 @@ anya_error_t anya_decrypt(anya_device_t *dev, uint8_t kbags[], uint8_t keys[], s
     return ANYA_E_SUCCESS;
 }
 
-anya_error_t anya_reboot(anya_device_t *dev) {
+EXPORT anya_error_t anya_reboot(anya_device_t *dev) {
     irecv_usb_control_transfer(dev->conn, 0x21, ANYA_REBOOT, 0, 0, NULL, 0, ANYA_USB_TIMEOUT);
     return ANYA_E_SUCCESS;
 }
 
-const char *anya_strerror(anya_error_t error) {
+EXPORT const char *anya_strerror(anya_error_t error) {
     switch (error) {
         case ANYA_E_SUCCESS:
             return "success";

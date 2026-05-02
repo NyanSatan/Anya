@@ -1008,12 +1008,20 @@ namespace eval ::anya {
     # do this or reopen Astris after this script is done
     #
 
-    if {[info exists env(ANYA_SEP_WARMUP)] && $::env(ANYA_SEP_WARMUP)} {
-        puts "Warming up SEP..."
+    puts "Warming up SEP..."
+
+    catch {
         cpu "SEP"
         halt -q
         go
-        cpu [main_core]
+    } err
+
+    cpu [main_core]
+
+    # apparently never really fires due to `go` & `halt`
+    # never really raising an error, but whatever
+    if {$err ne ""} {
+        error "failed to warm up SEP, assuming SoC is Secure and continuing"
     }
 
     wait_for_run
