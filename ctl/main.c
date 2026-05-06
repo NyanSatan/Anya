@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <spawn.h>
 #include <sys/time.h>
+#include <sys/param.h>
 #include <mach-o/getsect.h>
 
 #include "libanya/utils.h"
@@ -109,7 +110,7 @@ static void usage(const char *program_name) {
     printf("load\n");
     printf("  brings device up to Anya mode\n");
     printf("    -p PROBE\tspecify Astris probe name\n");
-    printf("    -s PATH\toverride Anya script\n");
+    printf("    -s PATH\toverride Anya Astris script\n");
     printf("    -c PATH\toverride Anya DFU shellcode\n");
     printf("\n");
 
@@ -133,7 +134,12 @@ static void usage(const char *program_name) {
 }
 
 #define LOAD_ARGS   ":p:s:c:"
-#define TEMP_FILE   "/tmp/anya.XXXXXX"
+
+#define ASTRIS_ROOT_VAR     "ANYA_ASTRIS_ROOT"
+#define DEFAULT_ASTRIS_ROOT "//"    // single slash doesn't work for some idiotic reason
+#define ASTRIS_BINARY       "usr/local/bin/astris"
+
+#define TEMP_FILE           "/tmp/anya.XXXXXX"
 
 int do_load(int argc, char *const *argv) {
     int ret = -1;
@@ -145,10 +151,18 @@ int do_load(int argc, char *const *argv) {
     bool script_needs_delete = false;
     bool shellcode_needs_delete = false;
 
+    char astris_root[MAXPATHLEN] = DEFAULT_ASTRIS_ROOT;
+    char astris_binary[MAXPATHLEN] = {0};
+
     char *soc = NULL;
     char *rev = NULL;
 
-    bool astris_inited = astris_api_init() == 0;
+    const char *astris_root_override = getenv(ASTRIS_ROOT_VAR);
+    if (astris_root_override) {
+        snprintf(astris_root, sizeof(astris_root), "/%s", astris_root_override);
+    }
+
+    bool astris_inited = astris_api_init(astris_root) == 0;
     bool map_inited = platform_map_init() == 0;
 
     char c;
@@ -251,12 +265,15 @@ int do_load(int argc, char *const *argv) {
         shellcode_needs_delete = true;
     }
 
-    ANYA_INFO("\n============ Launching Astris ============");
-
-    uint64_t start = now_usec();
+    snprintf(astris_binary, sizeof(astris_binary), "%s/%s", astris_root, ASTRIS_BINARY);
 
     char *astris_argv[] = {
-        "astris",
+        astris_binary,
+        probe,
+        "--astris-root",
+        astris_root,
+        "--boosterpack-root",
+        astris_root,
         "--script",
         script_path,
         NULL
@@ -266,8 +283,12 @@ int do_load(int argc, char *const *argv) {
 
     extern char **environ;
 
+    uint64_t start = now_usec();
+
+    ANYA_INFO("\n============ Launching Astris ============");
+
     pid_t pid;
-    int spawn = posix_spawnp(&pid, astris_argv[0], NULL, NULL, astris_argv, environ);
+    int spawn = posix_spawn(&pid, astris_argv[0], NULL, NULL, astris_argv, environ);
     if (spawn != 0) {
         ANYA_ERROR("failed to spawn Astris (%d)", spawn);
         goto out;

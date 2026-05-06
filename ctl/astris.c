@@ -2,6 +2,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/param.h>
 #include "astris.h"
 #include "libanya/log.h"
 
@@ -32,6 +33,7 @@ int         (*AXconn_probelist)(AXconn_t *info, const char *host, AXprobe_t **pr
 void        (*AXconn_probelist_free)(AXprobe_t *probelist, int probecount);
 const char* (*AXversion_src_short_get)(void);
 const char* (*AXstrerror)(int astrisErr);
+int         (*AXbooster_init_with_paths)(AXconn_t *conn, char *boosterpack_paths[], int len);
 
 #define ASTRIS_ERR_OK           (0)
 #define AXJTAG_EXPLORE_APONLY   (0x00000010)
@@ -47,18 +49,23 @@ const char* (*AXstrerror)(int astrisErr);
         } \
     } while (0)
 
-#define ASTRIS_LIB_PATH "/usr/local/lib/libastris-python-proxy.dylib"
+#define ASTRIS_LIB_PATH "usr/local/lib/libastris-python-proxy.dylib"
+
+static char boosterpack_root[MAXPATHLEN] = {0};
 
 long astris_version = 0;
 
-int astris_api_init() {
+int astris_api_init(const char *astris_root) {
     int ret = -1;
+    char *version = NULL;
+    char astris_lib[MAXPATHLEN] = {0};
 
-    void *handle = dlopen(ASTRIS_LIB_PATH, RTLD_LAZY);
+    snprintf(astris_lib, sizeof(astris_lib), "%s/%s", astris_root, ASTRIS_LIB_PATH);
+
+    void *handle = dlopen(astris_lib, RTLD_LAZY);
     if (!handle) {
         ANYA_WARNING("couldn't open Astris library");
         ANYA_WARNING("%s", dlerror());
-        dlclose(handle);
         goto out;
     }
 
@@ -72,24 +79,35 @@ int astris_api_init() {
     SOFT_LINK(handle, AXconn_probelist_free, out);
     SOFT_LINK(handle, AXversion_src_short_get, out);
     SOFT_LINK(handle, AXstrerror, out);
+    SOFT_LINK(handle, AXbooster_init_with_paths, out);
 
-    char *version = strdup(AXversion_src_short_get());
-    char *b_part = strchr(version, 'b');
+    version = strdup(AXversion_src_short_get());
 
-    *b_part = '\0';
+    char *break_point = strchr(version, '.');
+    if (!break_point) {
+        /* for tags with major part only */
+        break_point = strchr(version, 'b');
+    }
+
+    *break_point = '\0';
 
     char *stop = NULL;
     long version_num = strtol(version, &stop, 10);
 
     if (*stop != '\0') {
+        ANYA_WARNING("failed to parse Astris version");
         goto out;
     }
 
     astris_version = version_num;
 
+    strlcpy(boosterpack_root, astris_root, sizeof(boosterpack_root));
+
     ret = 0;
 
 out:
+    free(version);
+
     return ret;
 }
 
@@ -104,6 +122,13 @@ int astris_soc_identify(const char *probe, char **soc, char **rev) {
         ANYA_ERROR("failed to create Astris connection object");
         goto out;
     }
+
+    char *boosterpack_paths[] = {
+        boosterpack_root
+    };
+
+    /* gotta do it manually for custom Astris roots */
+    AXbooster_init_with_paths(conn, boosterpack_paths, 1);
 
     ret = AXconn_connect(conn, probe, 0, 0);
     if (ret != ASTRIS_ERR_OK) {
@@ -147,6 +172,7 @@ out:
 /* Later Dawn Astris added another field to AXprobe struct */
 #define ASTRIS_VERSION_USBC_PROBE_THRESHOLD (2400)
 
+/* XXX will break on 32-bit CPUs, but do we care? */
 #define PROBE_AT_IDX(arr, idx) \
     ((AXprobe_t *)((void *)arr + idx * (astris_version > ASTRIS_VERSION_USBC_PROBE_THRESHOLD ? 24 : 16)))
 
@@ -162,8 +188,8 @@ int astris_probe_pick(char **probe) {
     }
 
     int count = 0;
-    ret = AXconn_probelist(conn, NULL, &probes, &count);
-    if (ret != ASTRIS_ERR_OK) {
+    int astris_ret = AXconn_probelist(conn, NULL, &probes, &count);
+    if (astris_ret != ASTRIS_ERR_OK) {
         ANYA_ERROR("cannot get probe list (%s)", AXstrerror(ret));
         goto fail;
     }
@@ -184,7 +210,7 @@ int astris_probe_pick(char **probe) {
         ANYA_INFO("Select probe from the list below:");
 
         for (int i = 0; i < count; i++) {
-            printf("\t%c) %s%s\n", i + 'a', PROBE_AT_IDX(probes, i)->probeName, PROBE_AT_IDX(probes, i)->probeStatus == PROBE_STAT_BUSY ? " [Busy]" : "");
+            fprintf(stderr, "\t%c) %s%s\n", i + 'a', PROBE_AT_IDX(probes, i)->probeName, PROBE_AT_IDX(probes, i)->probeStatus == PROBE_STAT_BUSY ? " [Busy]" : "");
         }
 
         char c = getchar();

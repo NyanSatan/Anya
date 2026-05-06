@@ -22,6 +22,130 @@
 				</dict>
 			</dict>
 		</dict>
+
+		<key>M8</key>
+		<dict>
+			<key>Script</key>
+			<string>anya_v7.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A5</key>
+				<dict>
+					<key>Payload</key>
+					<string>M8/A5</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>M8/B0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>M8P</key>
+		<dict>
+			<key>Script</key>
+			<string>anya_v7.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>M8P/A0</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>M8P/B0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Gibraltar</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Gibraltar/B0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Skye</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Skye/A0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Cyprus</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Cyprus/A0</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Cyprus/B0</string>
+				</dict>
+				<key>B1</key>
+				<dict>
+					<key>Payload</key>
+					<string>Cyprus/B1</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>M9</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>M9/B0_B1</string>
+				</dict>
+				<key>B1</key>
+				<dict>
+					<key>Payload</key>
+					<string>M9/B0_B1</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Aruba</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A1</key>
+				<dict>
+					<key>Payload</key>
+					<string>Aruba/A1</string>
+				</dict>
+			</dict>
+		</dict>
+
 		<key>Cebu</key>
 		<dict>
 			<key>Script</key>
@@ -45,6 +169,64 @@
 				</dict>
 			</dict>
 		</dict>
+
+		<key>Sicily</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Sicily/A0</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Sicily/B0</string>
+				</dict>
+				<key>B1</key>
+				<dict>
+					<key>Payload</key>
+					<string>Sicily/B1</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Turks</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Turks/A0</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Turks/B0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Tonga</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>B1</key>
+				<dict>
+					<key>Payload</key>
+					<string>Tonga/B1</string>
+				</dict>
+			</dict>
+		</dict>
+
 		<key>Ellis</key>
 		<dict>
 			<key>Script</key>
@@ -68,6 +250,21 @@
 				</dict>
 			</dict>
 		</dict>
+
+		<key>Staten</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>B1</key>
+				<dict>
+					<key>Payload</key>
+					<string>Staten/B1</string>
+				</dict>
+			</dict>
+		</dict>
+
 		<key>Crete</key>
 		<dict>
 			<key>Script</key>
@@ -83,6 +280,39 @@
 				<dict>
 					<key>Payload</key>
 					<string>Crete/B1</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Coll</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Coll/A0</string>
+				</dict>
+				<key>B0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Coll/B0</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<key>Palma_1c</key>
+		<dict>
+			<key>Script</key>
+			<string>anya.ax</string>
+			<key>Revisions</key>
+			<dict>
+				<key>A0</key>
+				<dict>
+					<key>Payload</key>
+					<string>Palma_1c/A0</string>
 				</dict>
 			</dict>
 		</dict>

@@ -21,8 +21,14 @@ LDFLAGS += -Wl,-no_adhoc_codesign
 CODESIGN := codesign
 CODESIGN_FLAGS := -s - -f -i $(TAG)
 
+ifneq ($(ENABLE_DEBUGGING),)
+    CFLAGS += -gfull
+    LDFLAGS += -gfull
+    CODESIGN_FLAGS += --entitlements gta.entitlements
+endif
+
 ifneq ($(PLATFORM_MAP),)
-    LDFLAGS += -Wl,-sectcreate,__TEXT,__platform_map,$(PLATFORM_MAP)
+    CTL_LDFLAGS := -Wl,-sectcreate,__TEXT,__platform_map,$(PLATFORM_MAP)
 endif
 
 LIB_SOURCES := \
@@ -32,13 +38,13 @@ LIB_SOURCES := \
 
 CTL_SOURCES := \
 	$(LIB_SOURCES) \
-	map.m \
+	map.m  \
 	batch.m \
 	astris.c \
 	main.c
 
 RESULT := $(BUILD_ROOT)/Anya
-DYLIB_RESULT := $(BUILD_ROOT)/Anya.dylib
+DYLIB_RESULT := $(BUILD_ROOT)/libanya.dylib
 
 DIR_HELPER = mkdir -p $(@D)
 
@@ -52,7 +58,7 @@ all: $(RESULT) $(DYLIB_RESULT)
 $(RESULT): $(CTL_SOURCES)
 	@echo "\tbuilding anyactl"
 	@$(DIR_HELPER)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(CTL_SOURCES) -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(CTL_LDFLAGS) $(CTL_SOURCES) -o $@
 
 $(DYLIB_RESULT): $(LIB_SOURCES)
 	@echo "\tbuilding libanya"

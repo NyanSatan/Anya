@@ -35,7 +35,7 @@ ASTRIS_TARGETS := $(addprefix $(ASTRIS_DIR)/,$(shell $(EMBEDDED_PLATFORM_MAP_TOO
 CTL_DIR := ctl
 CTL_BUILD_TARGETS := \
 	$(CTL_DIR)/build/Anya \
-	$(CTL_DIR)/build/Anya.dylib
+	$(CTL_DIR)/build/libanya.dylib
 
 HANDLER_DIR := handler
 HANDLER_BUILD_DIR := $(HANDLER_DIR)/build

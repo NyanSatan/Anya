@@ -92,7 +92,7 @@ LDFLAGS += -Wl,-e,_anya_handle_interface_request
 LDFLAGS += -Wl,-seg1addr,$(TARGET_TRAMPOLINE)
 LDFLAGS += -Wl,-segaddr,__DATA,$(TARGET_DATA_START)
 
-PROJECT_NAME := anya_handler
+PROJECT_NAME := Anya
 
 SOURCE_ROOT := src
 BUILD_ROOT := build

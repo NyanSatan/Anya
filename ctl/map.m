@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <mach-o/dyld.h>
+#include <dlfcn.h>
 #include <mach-o/getsect.h>
 #include <Foundation/Foundation.h>
 #include "libanya/log.h"
@@ -10,7 +10,7 @@ int platform_map_init() {
     NSError *err = nil;
 
     unsigned long size = 0;
-    void *map_plist = getsectiondata((void *)_dyld_get_image_header(0), "__TEXT", "__platform_map", &size);
+    void *map_plist = getsectiondata(dlsym(RTLD_MAIN_ONLY, "_mh_execute_header"), "__TEXT", "__platform_map", &size);
 
     if (!map_plist) {
         ANYA_WARNING("no platform map embedded in this build!");
