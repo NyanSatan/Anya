@@ -36,6 +36,7 @@ const char* (*AXstrerror)(int astrisErr);
 int         (*AXbooster_init_with_paths)(AXconn_t *conn, char *boosterpack_paths[], int len);
 
 #define ASTRIS_ERR_OK           (0)
+#define AXJTAG_EXPLORE_GENTLY   (0x00000002)
 #define AXJTAG_EXPLORE_APONLY   (0x00000010)
 
 // ==================== Astris API linking ====================
@@ -149,11 +150,31 @@ int astris_soc_identify(const char *probe, char **soc, char **rev) {
         goto out;
     }
 
-    const char *_rev = AXconn_identify_rev(conn);
+    const char *_rev = NULL;
+    bool tried = false;
 
-    if (!_rev) {
-        ANYA_ERROR("cannot identify SoC revision");
-        goto out;
+    while (true) {
+       _rev = AXconn_identify_rev(conn);
+
+        if (!_rev) {
+            if (!tried) {
+                /* if we failed to detect revision, try to explore target further */
+                ret = AXjtag_explore(conn, AXJTAG_EXPLORE_GENTLY);
+                if (ret < ASTRIS_ERR_OK) {
+                    ANYA_ERROR("cannot re-explore target (%s)", AXstrerror(ret));
+                    goto out;
+                }
+
+                tried = true;
+                continue;
+
+            } else {
+                ANYA_ERROR("cannot identify SoC revision");
+                goto out;
+            }
+        }
+
+        break;
     }
 
     *soc = strdup(_soc);
