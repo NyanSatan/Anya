@@ -336,43 +336,41 @@ out:
 
 #define COMMON_DECRYPT_ARGS   ":se:"
 
-static int _parse_decrypt_args(int argc, char *const *argv, bool *sep, uint64_t *ecid) {
-    char c;
-    while ((c = getopt(argc, argv, COMMON_DECRYPT_ARGS)) != -1) {
-        switch (c) {
-            case 's': {
-                *sep = true;
-                break;
-            }
-
-            case 'e': {
-                if (parse_uint64(optarg, ecid) != 0) {
-                    ANYA_ERROR("invalid ECID");
-                    return -1;
-                }
-
-                break;
-            }
-
-            case ':': {
-                ANYA_ERROR("-%c needs argument\n", optopt);
-                return -1;
-            }
-
-            case '?': {
-                ANYA_ERROR("unknown argument -%c\n", optopt);
-                return -1;
-            }
-
-            default:
-                abort();
+static int _parse_decrypt_args(char c, bool *sep, uint64_t *ecid) {
+    switch (c) {
+        case 's': {
+            *sep = true;
+            break;
         }
+
+        case 'e': {
+            if (parse_uint64(optarg, ecid) != 0) {
+                ANYA_ERROR("invalid ECID");
+                return -1;
+            }
+
+            break;
+        }
+
+        case ':': {
+            ANYA_ERROR("-%c needs argument", optopt);
+            return -1;
+        }
+
+        case '?': {
+            ANYA_ERROR("unknown argument -%c", optopt);
+            return -1;
+        }
+
+        default:
+            abort();
     }
 
     return 0;
 }
 
-int do_kbag(const char *kbag, int argc, char *const *argv) {
+int do_kbag(int argc, char *const *argv) {
+    const char *kbag = NULL;
     uint8_t kbag_decoded[KBAG_SIZE] = { 0 };
     uint8_t key[KBAG_SIZE] = { 0 };
     char str_key[KBAG_SIZE * 2 + 1] = { 0 };
@@ -383,6 +381,28 @@ int do_kbag(const char *kbag, int argc, char *const *argv) {
     bool has_sep = false;
     int ret = -1;
 
+    char c;
+    while (optind < argc) {
+        if ((c = getopt(argc, argv, COMMON_DECRYPT_ARGS)) != -1) {
+            if (_parse_decrypt_args(c, &sep, &ecid) != 0) {
+                return -2;
+            }
+        } else {
+            if (!kbag) {
+                kbag = argv[optind];
+                optind++;
+            } else {
+                ANYA_ERROR("bad arguments");
+                return -2;
+            }
+        }
+    }
+
+    if (!kbag) {
+        ANYA_ERROR("KBAG was not provided");
+        return -2;
+    }
+
     if (strlen(kbag) != KBAG_SIZE * 2) {
         ANYA_ERROR("KBAG must be 48 bytes in length");
         goto out;
@@ -390,10 +410,6 @@ int do_kbag(const char *kbag, int argc, char *const *argv) {
 
     if (str2hex(KBAG_SIZE, kbag_decoded, kbag) != KBAG_SIZE) {
         ANYA_ERROR("invalid KBAG");
-        goto out;
-    }
-
-    if (_parse_decrypt_args(argc, argv, &sep, &ecid) != 0) {
         goto out;
     }
 
@@ -428,7 +444,9 @@ out:
     return ret;
 }
 
-int do_batch(const char *in, const char *out, int argc, char *const *argv) {
+int do_batch(int argc, char *const *argv) {
+    const char *in = NULL;
+    const char *out = NULL;
     bool sep = false;
     uint64_t ecid = 0;
     void *batch_ctx = NULL;
@@ -438,8 +456,34 @@ int do_batch(const char *in, const char *out, int argc, char *const *argv) {
     bool has_sep = false;
     int ret = -1;
 
-    if (_parse_decrypt_args(argc, argv, &sep, &ecid) != 0) {
-        return -1;
+    char c;
+    while (optind < argc) {
+        if ((c = getopt(argc, argv, COMMON_DECRYPT_ARGS)) != -1) {
+            if (_parse_decrypt_args(c, &sep, &ecid) != 0) {
+                return -2;
+            }
+        } else {
+            if (!in) {
+                in = argv[optind];
+                optind++;
+            } else if (!out) {
+                out = argv[optind];
+                optind++;
+            } else {
+                ANYA_ERROR("bad arguments");
+                return -2;
+            }
+        }
+    }
+
+    if (!in) {
+        ANYA_ERROR("no input was provided");
+        return -2;
+    }
+
+    if (!out) {
+        ANYA_ERROR("no output was provided");
+        return -2;
     }
 
     if (batch_init(in, &batch_ctx) != 0) {
@@ -509,7 +553,8 @@ out:
     return ret;
 }
 
-int do_bench(const char *count, int argc, char *const *argv) {
+int do_bench(int argc, char *const *argv) {
+    const char *count = NULL;
     bool sep = false;
     uint64_t ecid = 0;
     uint64_t _count = 0;
@@ -518,13 +563,31 @@ int do_bench(const char *count, int argc, char *const *argv) {
     bool has_sep = false;
     int ret = -1;
 
-    if (parse_uint64(count, &_count) != 0) {
-        ANYA_ERROR("invalid count");
-        return -1;
+    char c;
+    while (optind < argc) {
+        if ((c = getopt(argc, argv, COMMON_DECRYPT_ARGS)) != -1) {
+            if (_parse_decrypt_args(c, &sep, &ecid) != 0) {
+                return -2;
+            }
+        } else {
+            if (!count) {
+                count = argv[optind];
+                optind++;
+            } else {
+                ANYA_ERROR("bad arguments");
+                return -2;
+            }
+        }
     }
 
-    if (_parse_decrypt_args(argc, argv, &sep, &ecid) != 0) {
-        return -1;
+    if (!count) {
+        ANYA_ERROR("no count was provided");
+        return -2;
+    }
+
+    if (parse_uint64(count, &_count) != 0) {
+        ANYA_ERROR("invalid count");
+        goto out;
     }
 
     if (open_anya_device(&dev, ecid, &has_sep) != 0) {
@@ -584,31 +647,32 @@ int main(int argc, char *const *argv) {
     opterr = 0;
 
     const char *verb = argv[1];
+    argc -= 1;
+    argv += 1;
+
+    int ret = -1;
 
     if (strcmp(verb, "load") == 0) {
-        return do_load(argc-1, argv+1);
+        ret = do_load(argc, argv);
     }
 
     if (strcmp(verb, "kbag") == 0) {
-        if (argc < 3) {
-            goto usage;
-        }
-        return do_kbag(argv[2], argc-2, argv+2);
+        ret = do_kbag(argc, argv);
     }
 
     if (strcmp(verb, "batch") == 0) {
-        if (argc < 4) {
-            goto usage;
-        }
-        return do_batch(argv[2], argv[3], argc-3, argv+3);
+        ret = do_batch(argc, argv);
     }
 
     if (strcmp(verb, "bench") == 0) {
-        if (argc < 3) {
-            goto usage;
-        }
-        return do_bench(argv[2], argc-2, argv+2);
+        ret = do_bench(argc, argv);
     }
+
+    if (ret == -2) {
+        goto usage;
+    }
+
+    return ret;
 
 usage:
     usage(argv[0]);
