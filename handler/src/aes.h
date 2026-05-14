@@ -11,6 +11,7 @@ enum {
 };
 
 enum {
+    /* GID key, 256-bit to be precise */
     kAESTypeGID  = 0x20000200
 };
 

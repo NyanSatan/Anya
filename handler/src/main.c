@@ -77,7 +77,7 @@ static int anya_packet_decrypt() {
         return -1;
     }
 
-    /* checking if we are trying to decrypt SEP KBAGs*/
+    /* checking if we are trying to decrypt SEP KBAGs */
     if (packet->flags & AnyaPacketFlagSEP) {
 #if WITH_SEP
         if (sep_status == SEP_UNSUPPORTED) {

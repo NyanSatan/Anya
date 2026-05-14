@@ -15,7 +15,7 @@ typedef struct __attribute__((packed)) {
 } anya_packet_hdr_t;
 
 /* KBAG properties */
-#define KBAG_SIZE 0x30
+#define KBAG_SIZE       (0x30)
 #define KBAG_MAX_COUNT  ((TARGET_KBAG_BUFFER_SIZE - sizeof(anya_packet_hdr_t)) / KBAG_SIZE)
 
 #endif
