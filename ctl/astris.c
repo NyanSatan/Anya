@@ -118,6 +118,9 @@ int astris_soc_identify(const char *probe, char **soc, char **rev) {
     int ret = -1;
     AXconn_t *conn = NULL;
 
+    /* if this starts with ':' Astris will destroy the string */
+    char *_probe = strdup(probe);
+
     conn = AXconn_create();
     if (!conn) {
         ANYA_ERROR("failed to create Astris connection object");
@@ -131,7 +134,7 @@ int astris_soc_identify(const char *probe, char **soc, char **rev) {
     /* gotta do it manually for custom Astris roots */
     AXbooster_init_with_paths(conn, boosterpack_paths, 1);
 
-    ret = AXconn_connect(conn, probe, 0, 0);
+    ret = AXconn_connect(conn, _probe, 0, 0);
     if (ret != ASTRIS_ERR_OK) {
         ANYA_ERROR("cannot connect to Astris probe (%s)", AXstrerror(ret));
         goto out;
@@ -186,6 +189,8 @@ out:
     if (conn) {
         AXconn_destroy(conn);
     }
+
+    free(_probe);
 
     return ret;
 }

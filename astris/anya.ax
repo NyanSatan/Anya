@@ -1021,7 +1021,7 @@ namespace eval ::anya {
     # apparently never really fires due to `go` & `halt`
     # never really raising an error, but whatever
     if {$err ne ""} {
-        error "failed to warm up SEP, assuming SoC is Secure and continuing"
+        puts "WARNING: failed to warm up SEP, assuming SoC is Secure and continuing"
     }
 
     wait_for_run
