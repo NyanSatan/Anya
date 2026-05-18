@@ -26,11 +26,10 @@ def main():
     parser.add_argument("-e", dest="ecid", type=hexint, help="(hexadecimal) ECID to look for")
     parser.add_argument(dest="in_path", help="input file")
     parser.add_argument(dest="out_path", help="output file")
+    parser.add_argument("-p", dest="probe", help="probe for JTAG backend")
     args = parser.parse_args()
 
     print_tag()
-
-    c_api_load()
 
     try:
         with open(args.in_path, "r") as f:
@@ -53,7 +52,7 @@ def main():
 
     total_start = perf_counter()
 
-    dev = AnyaDevice(ecid=args.ecid)
+    dev = AnyaDevice(args)
 
     try:
         dev.connect()

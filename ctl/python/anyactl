@@ -16,6 +16,7 @@ def main():
     parser.add_argument("-b", dest="count", type=int, help="run benchmark")
     parser.add_argument("-s", dest="sep", action="store_true", help="use SEP GID (if possible)")
     parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for")
+    parser.add_argument("-p", dest="probe", help="probe for JTAG backend")
     args = parser.parse_args()
 
     if (not args.kbag and not args.count) or (args.kbag and args.count):
@@ -24,9 +25,7 @@ def main():
 
     print_tag()
 
-    c_api_load()
-
-    dev = AnyaDevice(ecid=args.ecid)
+    dev = AnyaDevice(args)
 
     try:
         dev.connect()

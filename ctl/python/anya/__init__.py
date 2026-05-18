@@ -24,5 +24,16 @@ def encode_key(key: bytes, to_upper: bool = False) -> str:
         return key_string
 
 from .usbdfu import c_api_load
-from .usbdfu import AnyaUSBDFUDevice as AnyaDevice
+from .usbdfu import AnyaUSBDFUDevice
+from .jtag import astris_api_load
+from .jtag import AnyaAstrisDevice
 from .tag import print_tag
+
+def AnyaDevice(args) -> object:
+    if not args.probe:
+        c_api_load()
+        return AnyaUSBDFUDevice(ecid=args.ecid)
+    else:
+        astris_api_load()
+        return AnyaAstrisDevice(args.probe)
+

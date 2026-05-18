@@ -13,6 +13,7 @@ def hexint(string: str) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description="run tests")
+    parser.add_argument("-p", dest="probe", help="probe for JTAG backend")
     parser.add_argument("-e", dest="ecid", type=hexint, help="ECID to look for and test match")
     parser.add_argument("-k", dest="kbags", action="store_true", help="decrypt the same KBAG many times and test match")
     parser.add_argument("-x", dest="cross", action="store_true", help="decrypt small amounts of KBAGs via AP and SEP sequentially")
@@ -20,9 +21,7 @@ def main():
 
     print_tag()
 
-    c_api_load()
-
-    dev = AnyaDevice(ecid=args.ecid)
+    dev = AnyaDevice(args)
 
     anya_debug_init(True)
 
@@ -52,12 +51,7 @@ def main():
         logger.error("failed to connect - %s" % str(e))
         exit(-1)
 
-    logger.info("found: CPID:%04X CPFM:%02X ECID:%016X" % (
-            dev.get_cpid(),
-            dev.get_cpfm(),
-            dev.get_ecid()
-        )
-    )
+    dev.print_device()
 
     for test in tests:
         if not test():
