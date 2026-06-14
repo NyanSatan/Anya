@@ -50,7 +50,11 @@ int         (*AXbooster_init_with_paths)(AXconn_t *conn, char *boosterpack_paths
         } \
     } while (0)
 
-#define ASTRIS_LIB_PATH "usr/local/lib/libastris-python-proxy.dylib"
+const char *ASTRIS_LIB_CANDIDATES[] = {
+    "usr/local/lib/libastris-python-proxy.dylib",
+    "AppleInternal/Library/Frameworks/Astris.framework/Astris",
+    NULL
+};
 
 static char boosterpack_root[MAXPATHLEN] = {0};
 
@@ -60,14 +64,21 @@ int astris_api_init(const char *astris_root) {
     int ret = -1;
     char *version = NULL;
     char astris_lib[MAXPATHLEN] = {0};
+    void *handle = NULL;
 
-    snprintf(astris_lib, sizeof(astris_lib), "%s/%s", astris_root, ASTRIS_LIB_PATH);
+    for (int i = 0; ; i++) {
+        const char *candidate = ASTRIS_LIB_CANDIDATES[i];
+        if (!candidate) {
+            ANYA_WARNING("couldn't open any Astris library");
+            return -1;
+        }
 
-    void *handle = dlopen(astris_lib, RTLD_LAZY);
-    if (!handle) {
-        ANYA_WARNING("couldn't open Astris library");
-        ANYA_WARNING("%s", dlerror());
-        goto out;
+        snprintf(astris_lib, sizeof(astris_lib), "%s/%s", astris_root, candidate);
+
+        handle = dlopen(astris_lib, RTLD_LAZY);
+        if (handle) {
+            break;
+        }
     }
 
     SOFT_LINK(handle, AXconn_create, out);
