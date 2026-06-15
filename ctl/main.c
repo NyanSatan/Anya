@@ -646,11 +646,12 @@ int main(int argc, char *const *argv) {
 
     opterr = 0;
 
+    const char *program = argv[0];
     const char *verb = argv[1];
     argc -= 1;
     argv += 1;
 
-    int ret = -1;
+    int ret = -2;
 
     if (strcmp(verb, "load") == 0) {
         ret = do_load(argc, argv);
@@ -675,6 +676,6 @@ int main(int argc, char *const *argv) {
     return ret;
 
 usage:
-    usage(argv[0]);
+    usage(program);
     return -1;
 }
