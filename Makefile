@@ -53,9 +53,9 @@ PACKAGE_DIR_HELPER = mkdir -p $(PACKAGE_DIR)
 
 HANDLER_MAKE_TARGETS := $(addprefix handler_,$(VALID_HANDLER_TARGETS))
 
-.PHONY: all ctl astris python package clean distclean $(HANDLER_MAKE_TARGETS) $(VALID_HANDLER_TARGETS)
+.PHONY: all ctl astris python readme package clean distclean $(HANDLER_MAKE_TARGETS) $(VALID_HANDLER_TARGETS)
 
-all: ctl python
+all: ctl python readme
 	@echo "%%%%%% all done"
 
 package: all
@@ -85,6 +85,10 @@ astris:
 python:
 	@echo "%%%%%% copying the Python control utility"
 	@cp -a $(PYTHON_DIR) $(BUILD_DIR)
+
+readme:
+	@echo "%%%%%% copying the README"
+	@cp -a README.md $(BUILD_DIR)
 
 clean:
 	@$(MAKE) -C $(CTL_DIR) clean
