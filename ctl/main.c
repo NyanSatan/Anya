@@ -16,7 +16,7 @@
 #include "batch.h"
 #include "map.h"
 
-// ======================== Misc ========================
+// =========================== Misc ===========================
 
 static int open_anya_device(anya_device_t **dev, uint64_t ecid, bool *has_ecid) {
     anya_error_t error;
@@ -76,7 +76,7 @@ static int write_file(const char *path, const void *buf, size_t len) {
     return 0;
 }
 
-// ======================== Build banner ========================
+// ======================= Build banner =======================
 
 struct cs_blob {
     uint32_t type;
