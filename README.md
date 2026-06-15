@@ -2,7 +2,7 @@
 
 **Anya** is a KBAG decryption kit for JTAGgable iDevice prototypes - lets you decrypt **iBoot** & **SEP** firmwares that Apple keeps encrypting (for whatever reason)
 
-**iBoot** is no longer encrypted since iOS 18.0 beta 4 (Summer 2025), **SEPOS** (and **SEPPatches**) still remain encrypted as of late Spring 2026
+**iBoot** is no longer encrypted since iOS 18.0 beta 4 (Summer 2025), **SEPOS** (and **SEPPatches**) still remain encrypted as of early Summer 2026
 
 ## SoC support
 ### AP
@@ -40,7 +40,26 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 ## Changelog
 <details>
 
-### Beta ???
+### Anya-1
+
+* No longer a beta, I guess
+
+* All the funcionality is now gathered under a single executable - `Anya`
+    * Automatic detection of connected JTAG probe
+        * If there are multiple - menu is shown
+        * Overridable via command line argument
+
+    * Astris script and USB DFU handler are automatically selected
+        * Both scripts & handlers are embedded into the binary
+        * Overridable via command line arguments, if needed
+
+    * SEP warmup is now applied unconditionally
+
+    * JSON KBAG batch decryption is also implemented there
+
+    * So is benchmark
+
+    * Python tools are deprecated, but still included
 
 ### Beta 13
 
