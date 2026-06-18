@@ -40,6 +40,10 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 ## Changelog
 <details>
 
+### Anya-1.0.1
+
+* Fixed a stupid bug where running Anya without any arguments causes a segmentation fault
+
 ### Anya-1
 
 * No longer a beta, I guess
