@@ -640,13 +640,14 @@ out:
 int main(int argc, char *const *argv) {
     print_banner();
 
+    const char *program = argv[0];
+
     if (argc < 2) {
         goto usage;
     }
 
     opterr = 0;
 
-    const char *program = argv[0];
     const char *verb = argv[1];
     argc -= 1;
     argv += 1;
