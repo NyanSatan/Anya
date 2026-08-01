@@ -315,6 +315,8 @@ int do_load(int argc, char *const *argv) {
     ANYA_SUCCESS("\nAnya initialization finished!");
     ANYA_SUCCESS("took - %.2fs", elapsed);
 
+    ret = 0;
+
 out:
     if (script_needs_delete) {
         unlink(script_path);
