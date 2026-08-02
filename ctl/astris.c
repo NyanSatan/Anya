@@ -167,7 +167,7 @@ int astris_soc_identify(const char *probe, char **soc, char **rev) {
     bool tried = false;
 
     while (true) {
-       _rev = AXconn_identify_rev(conn);
+        _rev = AXconn_identify_rev(conn);
 
         if (!_rev) {
             if (!tried) {

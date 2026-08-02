@@ -40,6 +40,12 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 ## Changelog
 <details>
 
+### Anya-1.0.2
+
+* Fixed a bug where successful invocation of `Anya load` returned `-1` instead of `0`
+
+* Fixed auto-detection for **M8**/**M8P** targets (Apple S1P/S2/T1/S3)
+
 ### Anya-1.0.1
 
 * Fixed a stupid bug where running Anya without any arguments causes a segmentation fault
