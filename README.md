@@ -2,7 +2,7 @@
 
 **Anya** is a KBAG decryption kit for JTAGgable iDevice prototypes - lets you decrypt **iBoot** & **SEP** firmwares that Apple keeps encrypting (for whatever reason)
 
-**iBoot** is no longer encrypted since iOS 18.0 beta 4 (Summer 2025), **SEPOS** (and **SEPPatches**) still remain encrypted as of early Summer 2026
+**iBoot** is no longer encrypted since iOS 18.0 beta 4 (Summer 2025), **SEPOS** (and **SEPPatches**) still remain encrypted as of Autumn 2026
 
 ## SoC support
 ### AP
@@ -14,7 +14,7 @@
 * **Skye A0** - Apple A11
 * **Cyprus A0/B0/B1** - Apple A12
 * **M9 B0/B1** - Apple S4/S5
-* **Aruba A1** - Apple A12X/Z
+* **Aruba A0/A1** - Apple A12X/Z
 * **Cebu A0/B0/B1** - Apple A13
 * **Sicily A0/B0/B1** - Apple A14
 * **Turks A0/B0** - Apple S6/S7/S8
@@ -39,6 +39,10 @@ Some platforms have all required offsets for SEP support, but it's disabled due 
 
 ## Changelog
 <details>
+
+### Anya-1.0.3
+
+* Added Aruba A0 support
 
 ### Anya-1.0.2
 
