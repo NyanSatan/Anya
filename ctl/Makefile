@@ -9,7 +9,7 @@ CFLAGS += -arch arm64
 CFLAGS += -arch x86_64
 CFLAGS += -fobjc-arc
 CFLAGS += -fvisibility=hidden
-CFLAGS += -mmacosx-version-min=10.13
+CFLAGS += -mmacosx-version-min=10.11
 CFLAGS += -Wno-deprecated-declarations
 CFLAGS += -Ililirecovery
 
